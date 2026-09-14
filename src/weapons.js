@@ -462,14 +462,26 @@ export class WeaponSystem {
     this.recoilPos.z = lerp(this.recoilPos.z, 0, delta * 18);
     this.recoilRot.x = lerp(this.recoilRot.x, 0, delta * 16);
 
-    // 5. Tactical Sprint & Inspect Animations
-    const isTacSprint = playerState.isTacSprinting && !this.isAiming && !this.isReloading;
+    // 5. Tactical Sprint, Dolphin Dive, Slide & Inspect Animations
+    const isTacSprint = playerState.isTacSprinting && !this.isAiming && !this.isReloading && !playerState.isDiving;
     this.tacSprintAlpha = lerp(this.tacSprintAlpha || 0, isTacSprint ? 1.0 : 0.0, delta * 10);
 
     const sprintRotX = this.tacSprintAlpha * 0.65; // Tilt up 38 degrees
     const sprintRotZ = this.tacSprintAlpha * -0.28;
     const sprintPosY = this.tacSprintAlpha * 0.04;
     const sprintPosZ = this.tacSprintAlpha * -0.05;
+
+    // Dolphin Dive weapon posture
+    const isDive = playerState.isDiving;
+    this.diveAlpha = lerp(this.diveAlpha || 0, isDive ? 1.0 : 0.0, delta * 12);
+    const divePosY = this.diveAlpha * -0.16;
+    const diveRotX = this.diveAlpha * -0.42;
+
+    // Sliding weapon posture
+    const isSlide = playerState.isSliding && !this.isAiming;
+    this.slideAlpha = lerp(this.slideAlpha || 0, isSlide ? 1.0 : 0.0, delta * 12);
+    const slideRotZ = this.slideAlpha * 0.18;
+    const slidePosY = this.slideAlpha * -0.05;
 
     // Inspect Animation
     let inspectRotY = 0;
@@ -485,14 +497,14 @@ export class WeaponSystem {
     // 6. Update Weapon Holder Transform
     this.weaponHolder.position.set(
       this.currentRestPos.x,
-      this.currentRestPos.y + reloadOffsetY + sprintPosY,
+      this.currentRestPos.y + reloadOffsetY + sprintPosY + divePosY + slidePosY,
       this.currentRestPos.z + this.recoilPos.z + sprintPosZ
     );
 
     this.weaponHolder.rotation.set(
-      this.recoilRot.x + sprintRotX + inspectRotX,
+      this.recoilRot.x + sprintRotX + inspectRotX + diveRotX,
       inspectRotY,
-      reloadRotationZ + sprintRotZ + inspectRotZ
+      reloadRotationZ + sprintRotZ + inspectRotZ + slideRotZ
     );
   }
 

@@ -11,6 +11,7 @@ export class GameStateManager {
     this.screenMainMenu = document.getElementById('screen-main-menu');
     this.screenPause = document.getElementById('screen-pause');
     this.screenGameOver = document.getElementById('screen-game-over');
+    this.screenMatchmaking = document.getElementById('screen-matchmaking');
 
     // Modals
     this.modalHowToPlay = document.getElementById('modal-how-to-play');
@@ -52,8 +53,11 @@ export class GameStateManager {
       mode: 'tdm',
       teamSize: 4,
       mapSize: 'small',
-      title: 'TDM 4v4: COURTYARD BLITZ'
+      squadSize: 4,
+      teamPreference: 'auto',
+      title: 'TDM 4v4 (SQUAD): COURTYARD BLITZ'
     };
+    this.mmTimers = [];
 
     this.splashAdvanced = false;
     this.tips = [
@@ -77,6 +81,7 @@ export class GameStateManager {
     if (this.screenGameOver) this.screenGameOver.style.display = 'none';
     if (this.screenAuth) this.screenAuth.style.display = 'none';
     if (this.screenLoading) this.screenLoading.style.display = 'none';
+    if (this.screenMatchmaking) this.screenMatchmaking.style.display = 'none';
     this.game.hud.hide();
 
     // Show Nexora Splash Screen
@@ -172,6 +177,7 @@ export class GameStateManager {
     if (this.screenMainMenu) this.screenMainMenu.style.display = 'none';
     if (this.screenPause) this.screenPause.style.display = 'none';
     if (this.screenGameOver) this.screenGameOver.style.display = 'none';
+    if (this.screenMatchmaking) this.screenMatchmaking.style.display = 'none';
     if (this.game.hud) this.game.hud.hide();
 
     if (document.exitPointerLock) document.exitPointerLock();
@@ -250,12 +256,7 @@ export class GameStateManager {
         this.game.soundEngine.init();
         this.game.soundEngine.resume();
         this.game.soundEngine.playUIClick();
-        this.game.startMode(
-          this.selectedModeConfig.mode,
-          this.selectedModeConfig.teamSize,
-          this.selectedModeConfig.mapSize
-        );
-        this.startGame();
+        this.startMatchmaking();
       });
     }
 
@@ -392,7 +393,7 @@ export class GameStateManager {
       });
     }
 
-    // 3. Mode Selection Modal Handlers
+    // 3. Modular Operation Select Modal Handlers
     const btnCloseMode = document.getElementById('btn-close-mode-select');
     if (btnCloseMode) {
       btnCloseMode.addEventListener('click', () => {
@@ -400,61 +401,82 @@ export class GameStateManager {
       });
     }
 
-    const btnModeWave = document.getElementById('btn-mode-wave');
-    if (btnModeWave) {
-      btnModeWave.addEventListener('click', () => {
-        this.selectedModeConfig = {
-          mode: 'wave',
-          teamSize: 1,
-          mapSize: 'small',
-          title: 'WAVE SURVIVAL (ENDLESS)'
-        };
-        if (this.lobbyModeTitle) this.lobbyModeTitle.textContent = this.selectedModeConfig.title;
+    const btnConfirmMode = document.getElementById('btn-confirm-mode-select');
+    if (btnConfirmMode) {
+      btnConfirmMode.addEventListener('click', () => {
+        this.game.soundEngine.playUIClick();
+        this.applySelectedModeConfig();
         if (this.modalModeSelect) this.modalModeSelect.style.display = 'none';
       });
     }
 
-    const btnMode4v4 = document.getElementById('btn-mode-tdm-4v4');
-    if (btnMode4v4) {
-      btnMode4v4.addEventListener('click', () => {
-        this.selectedModeConfig = {
-          mode: 'tdm',
-          teamSize: 4,
-          mapSize: 'small',
-          title: 'TDM 4v4: COURTYARD BLITZ'
-        };
-        if (this.lobbyModeTitle) this.lobbyModeTitle.textContent = this.selectedModeConfig.title;
-        if (this.modalModeSelect) this.modalModeSelect.style.display = 'none';
+    // Mode Selector Pills (TDM, FFA, WAVE)
+    ['tdm', 'ffa', 'wave'].forEach((m) => {
+      const btn = document.getElementById(`btn-sel-mode-${m}`);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          this.game.soundEngine.playUIClick();
+          this.selectedModeConfig.mode = m;
+          this.updateModeSelectUI();
+        });
+      }
+    });
+
+    // Squad Format Pills (Solo 1P, Duo 2P, Squad 4P)
+    [1, 2, 4].forEach((s) => {
+      const btn = document.getElementById(`btn-sel-squad-${s}`);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          this.game.soundEngine.playUIClick();
+          this.selectedModeConfig.squadSize = s;
+          this.updateModeSelectUI();
+        });
+      }
+    });
+
+    // Team Preference Pills (Auto, Blue Task Force, Red Insurgents)
+    ['auto', 'blue', 'red'].forEach((t) => {
+      const btn = document.getElementById(`btn-sel-team-${t}`);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          this.game.soundEngine.playUIClick();
+          this.selectedModeConfig.teamPreference = t;
+          this.updateModeSelectUI();
+        });
+      }
+    });
+
+    // Map Selector Pills (Small, Medium, Big)
+    [
+      { id: 'small', btn: 'btn-sel-map-small' },
+      { id: 'medium', btn: 'btn-sel-map-med' },
+      { id: 'big', btn: 'btn-sel-map-big' }
+    ].forEach((mp) => {
+      const btn = document.getElementById(mp.btn);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          this.game.soundEngine.playUIClick();
+          this.selectedModeConfig.mapSize = mp.id;
+          this.updateModeSelectUI();
+        });
+      }
+    });
+
+    // Matchmaking Cancel Button
+    const btnCancelMM = document.getElementById('btn-cancel-matchmaking');
+    if (btnCancelMM) {
+      btnCancelMM.addEventListener('click', () => {
+        this.game.soundEngine.playUIClick();
+        this.cancelMatchmaking();
       });
     }
 
-    const btnMode8v8 = document.getElementById('btn-mode-tdm-8v8');
-    if (btnMode8v8) {
-      btnMode8v8.addEventListener('click', () => {
-        this.selectedModeConfig = {
-          mode: 'tdm',
-          teamSize: 8,
-          mapSize: 'medium',
-          title: 'TDM 8v8: THE COMPOUND'
-        };
-        if (this.lobbyModeTitle) this.lobbyModeTitle.textContent = this.selectedModeConfig.title;
-        if (this.modalModeSelect) this.modalModeSelect.style.display = 'none';
-      });
-    }
-
-    const btnMode12v12 = document.getElementById('btn-mode-tdm-12v12');
-    if (btnMode12v12) {
-      btnMode12v12.addEventListener('click', () => {
-        this.selectedModeConfig = {
-          mode: 'tdm',
-          teamSize: 12,
-          mapSize: 'big',
-          title: 'TDM 12v12: ARCHITECT DISTRICT'
-        };
-        if (this.lobbyModeTitle) this.lobbyModeTitle.textContent = this.selectedModeConfig.title;
-        if (this.modalModeSelect) this.modalModeSelect.style.display = 'none';
-      });
-    }
+    // Key Escape to cancel matchmaking if currently active
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Escape' && this.currentState === 'MATCHMAKING') {
+        this.cancelMatchmaking();
+      }
+    });
 
     // 4. Mobile Customizer Hook (return to lobby when closing HUD customizer)
     if (this.game.mobileControls) {
@@ -897,5 +919,267 @@ export class GameStateManager {
     };
     this.game.customization.saveConfig();
   }
+
+  // Operation Selection UI Management
+  updateModeSelectUI() {
+    // 1. Highlight active Mode pill
+    ['tdm', 'ffa', 'wave'].forEach(m => {
+      const el = document.getElementById(`btn-sel-mode-${m}`);
+      if (el) {
+        if (this.selectedModeConfig.mode === m) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      }
+    });
+
+    // 2. Highlight active Squad pill
+    [1, 2, 4].forEach(s => {
+      const el = document.getElementById(`btn-sel-squad-${s}`);
+      if (el) {
+        if (this.selectedModeConfig.squadSize === s) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      }
+    });
+
+    // 3. Highlight active Team pill
+    ['auto', 'blue', 'red'].forEach(t => {
+      const el = document.getElementById(`btn-sel-team-${t}`);
+      if (el) {
+        if (this.selectedModeConfig.teamPreference === t) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      }
+    });
+
+    // 4. Highlight active Map pill
+    [
+      { id: 'small', btn: 'btn-sel-map-small' },
+      { id: 'medium', btn: 'btn-sel-map-med' },
+      { id: 'big', btn: 'btn-sel-map-big' }
+    ].forEach(mp => {
+      const el = document.getElementById(mp.btn);
+      if (el) {
+        if (this.selectedModeConfig.mapSize === mp.id) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      }
+    });
+
+    this.applySelectedModeConfig();
+  }
+
+  applySelectedModeConfig() {
+    const mapNames = {
+      small: 'COURTYARD BLITZ',
+      medium: 'THE COMPOUND',
+      big: 'ARCHITECT DISTRICT'
+    };
+    const mapName = mapNames[this.selectedModeConfig.mapSize] || 'COURTYARD BLITZ';
+
+    if (this.selectedModeConfig.mode === 'wave') {
+      this.selectedModeConfig.teamSize = 1;
+      this.selectedModeConfig.title = `WAVE SURVIVAL: ${mapName}`;
+    } else if (this.selectedModeConfig.mode === 'ffa') {
+      this.selectedModeConfig.teamSize = this.selectedModeConfig.mapSize === 'small' ? 4 : (this.selectedModeConfig.mapSize === 'medium' ? 8 : 12);
+      this.selectedModeConfig.title = `SOLO FFA: ${mapName}`;
+    } else {
+      // TDM
+      const teamCount = this.selectedModeConfig.mapSize === 'small' ? 4 : (this.selectedModeConfig.mapSize === 'medium' ? 8 : 12);
+      this.selectedModeConfig.teamSize = teamCount;
+      const squadLabel = this.selectedModeConfig.squadSize === 1 ? 'SOLO' : (this.selectedModeConfig.squadSize === 2 ? 'DUO' : 'SQUAD');
+      this.selectedModeConfig.title = `TDM ${teamCount}v${teamCount} (${squadLabel}): ${mapName}`;
+    }
+
+    if (this.lobbyModeTitle) {
+      this.lobbyModeTitle.textContent = this.selectedModeConfig.title;
+    }
+  }
+
+  // Tactical Matchmaking Engine with Live Queueing Simulation
+  startMatchmaking() {
+    this.currentState = 'MATCHMAKING';
+    if (this.screenPubgLobby) this.screenPubgLobby.style.display = 'none';
+    if (this.modalModeSelect) this.modalModeSelect.style.display = 'none';
+    if (this.screenMatchmaking) this.screenMatchmaking.style.display = 'flex';
+
+    this.clearMatchmakingTimers();
+
+    // Populate user profile in slot 0
+    const user = this.game.auth && this.game.auth.currentUser ? this.game.auth.currentUser : { name: 'Operator', avatar: 'https://api.dicebear.com/7.x/bottts/svg?seed=AstraAgent' };
+    const slot0Avatar = document.getElementById('mm-slot-0-avatar');
+    const slot0Name = document.getElementById('mm-slot-0-name');
+    if (slot0Avatar) slot0Avatar.src = user.avatar;
+    if (slot0Name) slot0Name.textContent = user.name;
+
+    // Set match parameters info badges
+    const mapNames = { small: 'COURTYARD BLITZ (46m)', medium: 'THE COMPOUND (76m)', big: 'ARCHITECT DISTRICT (116m)' };
+    const squadLabels = { 1: 'SOLO (1P)', 2: 'DUO (2P)', 4: 'SQUAD (4P)' };
+    const teamLabels = { auto: 'AUTO BALANCE', blue: 'BLUE TASK FORCE', red: 'RED INSURGENTS' };
+
+    const infoMode = document.getElementById('mm-info-mode');
+    const infoMap = document.getElementById('mm-info-map');
+    const infoSquad = document.getElementById('mm-info-squad');
+    const infoTeam = document.getElementById('mm-info-team');
+    if (infoMode) infoMode.textContent = this.selectedModeConfig.mode.toUpperCase();
+    if (infoMap) infoMap.textContent = mapNames[this.selectedModeConfig.mapSize] || 'COURTYARD BLITZ';
+    if (infoSquad) infoSquad.textContent = squadLabels[this.selectedModeConfig.squadSize] || 'SQUAD (4P)';
+    if (infoTeam) infoTeam.textContent = teamLabels[this.selectedModeConfig.teamPreference] || 'AUTO BALANCE';
+
+    // Reset Slots 1, 2, 3
+    for (let i = 1; i <= 3; i++) {
+      const slotCard = document.getElementById(`mm-slot-${i}`);
+      const slotName = document.getElementById(`mm-slot-${i}-name`);
+      const slotStatus = document.getElementById(`mm-slot-${i}-status`);
+      const slotIcon = document.getElementById(`mm-slot-${i}-icon`);
+      if (slotCard) {
+        slotCard.className = 'mm-slot-card empty';
+      }
+      if (slotIcon) slotIcon.textContent = '⏳';
+      if (slotName) slotName.textContent = 'SEARCHING...';
+      if (slotStatus) {
+        slotStatus.textContent = 'WAITING';
+        slotStatus.style.background = 'transparent';
+        slotStatus.style.color = '#162a68';
+        slotStatus.style.padding = '0';
+      }
+    }
+
+    const statusBanner = document.getElementById('mm-status-banner');
+    const countdownBanner = document.getElementById('mm-countdown-banner');
+    if (statusBanner) {
+      statusBanner.style.display = 'block';
+      statusBanner.textContent = 'CONNECTING TO NEXORA REGIONAL SERVERS (1/4)...';
+    }
+    if (countdownBanner) countdownBanner.style.display = 'none';
+
+    // Elapsed timer
+    let seconds = 0;
+    const elapsedEl = document.getElementById('mm-elapsed-timer');
+    if (elapsedEl) elapsedEl.textContent = '0:00';
+
+    const intervalTimer = setInterval(() => {
+      seconds++;
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      if (elapsedEl) elapsedEl.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+      if (this.game.soundEngine) this.game.soundEngine.playRadioChirp();
+    }, 1000);
+    this.mmTimers.push(intervalTimer);
+
+    // Progression simulation based on squadSize
+    const squadSize = this.selectedModeConfig.squadSize || 4;
+
+    const fillSlot = (slotIdx, botName, botAvatarSeed) => {
+      const slotCard = document.getElementById(`mm-slot-${slotIdx}`);
+      const slotName = document.getElementById(`mm-slot-${slotIdx}-name`);
+      const slotStatus = document.getElementById(`mm-slot-${slotIdx}-status`);
+      const slotIcon = document.getElementById(`mm-slot-${slotIdx}-icon`);
+      if (slotCard) {
+        slotCard.className = 'mm-slot-card filled';
+      }
+      if (slotIcon) {
+        slotIcon.innerHTML = `<img src="https://api.dicebear.com/7.x/bottts/svg?seed=${botAvatarSeed}" style="width: 44px; height: 44px; border: 1.5px solid #162a68; background: #fff;">`;
+      }
+      if (slotName) slotName.textContent = botName;
+      if (slotStatus) {
+        slotStatus.textContent = 'READY';
+        slotStatus.style.background = '#2255bb';
+        slotStatus.style.color = '#fff';
+        slotStatus.style.padding = '1px 6px';
+        slotStatus.style.fontWeight = '700';
+      }
+      if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+    };
+
+    if (squadSize >= 2) {
+      const t1 = setTimeout(() => {
+        fillSlot(1, 'Ghost-02', 'Ghost02');
+        if (statusBanner) statusBanner.textContent = `SQUAD OPERATOR ACQUIRED (2/${squadSize})...`;
+      }, 1100);
+      this.mmTimers.push(t1);
+    }
+
+    if (squadSize >= 3) {
+      const t2 = setTimeout(() => {
+        fillSlot(2, 'Viper-04', 'Viper04');
+        if (statusBanner) statusBanner.textContent = `SQUAD OPERATOR ACQUIRED (3/${squadSize})...`;
+      }, 2100);
+      this.mmTimers.push(t2);
+    }
+
+    if (squadSize >= 4) {
+      const t3 = setTimeout(() => {
+        fillSlot(3, 'Spectre-06', 'Spectre06');
+        if (statusBanner) statusBanner.textContent = `SQUAD OPERATOR ACQUIRED (4/${squadSize})...`;
+      }, 3100);
+      this.mmTimers.push(t3);
+    }
+
+    // Match Found and Countdown Launch
+    const matchFoundDelay = squadSize === 1 ? 1400 : (squadSize === 2 ? 2400 : 3800);
+
+    const tFound = setTimeout(() => {
+      if (statusBanner) statusBanner.textContent = 'MATCH FOUND! ALL OPERATORS SYNCHRONIZED';
+      if (countdownBanner) {
+        countdownBanner.style.display = 'block';
+        countdownBanner.textContent = 'DEPLOYING IN 3...';
+      }
+      if (this.game.soundEngine) this.game.soundEngine.playRadioSquelch();
+
+      let count = 3;
+      const countInterval = setInterval(() => {
+        count--;
+        if (countdownBanner) {
+          if (count > 0) {
+            countdownBanner.textContent = `DEPLOYING IN ${count}...`;
+            if (this.game.soundEngine) this.game.soundEngine.playRadioChirp();
+          } else {
+            countdownBanner.textContent = 'COMMENCING INFILTRATION...';
+            clearInterval(countInterval);
+            this.clearMatchmakingTimers();
+
+            // Launch Match!
+            setTimeout(() => {
+              if (this.screenMatchmaking) this.screenMatchmaking.style.display = 'none';
+              this.game.startMode(
+                this.selectedModeConfig.mode,
+                this.selectedModeConfig.teamSize,
+                this.selectedModeConfig.mapSize
+              );
+              this.startGame();
+            }, 500);
+          }
+        }
+      }, 1000);
+      this.mmTimers.push(countInterval);
+    }, matchFoundDelay);
+    this.mmTimers.push(tFound);
+  }
+
+  cancelMatchmaking() {
+    this.clearMatchmakingTimers();
+    if (this.screenMatchmaking) this.screenMatchmaking.style.display = 'none';
+    this.showLobby();
+  }
+
+  clearMatchmakingTimers() {
+    if (this.mmTimers && this.mmTimers.length > 0) {
+      this.mmTimers.forEach(t => {
+        clearTimeout(t);
+        clearInterval(t);
+      });
+      this.mmTimers = [];
+    }
+  }
 }
+
 

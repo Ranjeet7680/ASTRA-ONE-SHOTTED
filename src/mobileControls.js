@@ -21,7 +21,8 @@ export class MobileControls {
       'btn-touch-wep3': { x: 54, y: 90, size: 48, opacity: 0.8 },
       'btn-touch-wep4': { x: 62, y: 90, size: 48, opacity: 0.8 },
       'btn-touch-voice': { x: 70, y: 20, size: 52, opacity: 0.85 },
-      'btn-touch-inspect': { x: 80, y: 20, size: 52, opacity: 0.85 }
+      'btn-touch-inspect': { x: 80, y: 20, size: 52, opacity: 0.85 },
+      'btn-touch-dive': { x: 92, y: 32, size: 56, opacity: 0.85 }
     };
 
     this.layout = this.loadLayout();
@@ -196,7 +197,8 @@ export class MobileControls {
       { id: 'btn-touch-wep3', label: '3' },
       { id: 'btn-touch-wep4', label: '4' },
       { id: 'btn-touch-voice', label: 'RAD' },
-      { id: 'btn-touch-inspect', label: 'INSP' }
+      { id: 'btn-touch-inspect', label: 'INSP' },
+      { id: 'btn-touch-dive', label: 'DIVE' }
     ];
 
     this.buttons = {};
@@ -490,8 +492,9 @@ export class MobileControls {
     this.player.keys.left = this.joystick.vectorX < -0.3;
     this.player.keys.right = this.joystick.vectorX > 0.3;
 
-    // Push past 85% forward to trigger sprint
-    if (this.joystick.vectorY < -0.85) {
+    // COD Omnimovement: Push past 80% deflection in ANY direction to trigger omnidirectional sprint
+    const deflection = dist / this.joystick.maxRadius;
+    if (deflection > 0.80) {
       this.player.keys.sprint = true;
     } else {
       this.player.keys.sprint = false;
@@ -525,6 +528,12 @@ export class MobileControls {
         this.player.keys.crouch = isDown;
         if (isDown) {
           this.player.trySlide();
+        }
+        break;
+
+      case 'btn-touch-dive':
+        if (isDown && this.player) {
+          this.player.tryDive();
         }
         break;
 

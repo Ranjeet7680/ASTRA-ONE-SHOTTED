@@ -829,6 +829,64 @@
       box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.25);
     }
 
+    /* Matchmaking Screen & Radar */
+    @keyframes radarSweep {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes pulseTarget {
+      0%, 100% { opacity: 0.2; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+    .radar-sweep-hand {
+      transform-origin: 50% 50%;
+      animation: radarSweep 3.6s infinite linear;
+    }
+    .radar-target-dot {
+      animation: pulseTarget 1.8s infinite ease-in-out;
+    }
+    .mm-slot-card {
+      border: 2px solid #162a68;
+      background: rgba(248, 246, 240, 0.9);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      width: 125px;
+      text-align: center;
+      box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.2);
+      transition: all 0.2s ease;
+    }
+    .mm-slot-card.filled {
+      background: #faf8f2;
+      border-color: #162a68;
+    }
+    .mm-slot-card.empty {
+      border-style: dashed;
+      opacity: 0.65;
+    }
+    .mode-select-pill {
+      font-family: var(--font-tech);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 14px;
+      background: #faf8f2;
+      border: 2px solid #162a68;
+      color: #162a68;
+      cursor: pointer;
+      transition: all 0.12s ease;
+      text-align: center;
+    }
+    .mode-select-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.2);
+    }
+    .mode-select-pill.active {
+      background: #162a68;
+      color: #ffffff;
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
@@ -989,6 +1047,181 @@
         <!-- Guest Login with Nickname -->
         <input type="text" id="input-guest-name" placeholder="ENTER OPERATOR CALLSIGN..." maxlength="16" style="padding: 10px; border: 2px solid #162a68; background: #fff; font-family: 'Space Mono', monospace; font-weight: 700; text-align: center;">
         <button class="sketch-btn" id="btn-login-guest" style="background: #162a68; color: #fff;">PLAY AS GUEST</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3.5 MATCHMAKING LOADING & SQUAD QUEUE SCREEN (AI-GENERATED BLUEPRINT VECTOR BG) -->
+  <div id="screen-matchmaking" class="screen-overlay" style="display: none; z-index: 85; position: relative; overflow: hidden; background: #f8f6f0;">
+    <!-- Procedural Architectural Blueprint Vector SVG Backdrop -->
+    <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.85; pointer-events: none;" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <!-- Blueprint Grid Pattern -->
+        <pattern id="mm-grid-pat" width="40" height="40" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0" x2="40" y2="0" stroke="rgba(22, 42, 104, 0.12)" stroke-width="1" />
+          <line x1="0" y1="0" x2="0" y2="40" stroke="rgba(22, 42, 104, 0.12)" stroke-width="1" />
+        </pattern>
+        <pattern id="mm-subgrid-pat" width="160" height="160" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0" x2="160" y2="0" stroke="rgba(22, 42, 104, 0.28)" stroke-width="1.5" />
+          <line x1="0" y1="0" x2="0" y2="160" stroke="rgba(22, 42, 104, 0.28)" stroke-width="1.5" />
+        </pattern>
+      </defs>
+
+      <!-- Fill patterns -->
+      <rect width="100%" height="100%" fill="url(#mm-grid-pat)" />
+      <rect width="100%" height="100%" fill="url(#mm-subgrid-pat)" />
+
+      <!-- Cross-hatching decorative lines -->
+      <line x1="0" y1="0" x2="1920" y2="1080" stroke="rgba(22, 42, 104, 0.08)" stroke-width="1" stroke-dasharray="8,8" />
+      <line x1="1920" y1="0" x2="0" y2="1080" stroke="rgba(22, 42, 104, 0.08)" stroke-width="1" stroke-dasharray="8,8" />
+
+      <!-- Isometric 3D Wireframe Blueprint Buildings (Left & Right) -->
+      <!-- Left Skyscraper Complex -->
+      <g stroke="#162a68" stroke-width="1.4" fill="none" opacity="0.35">
+        <polygon points="120,700 240,630 360,700 240,770" />
+        <polygon points="120,380 240,310 360,380 240,450" />
+        <line x1="120" y1="700" x2="120" y2="380" />
+        <line x1="240" y1="770" x2="240" y2="450" />
+        <line x1="360" y1="700" x2="360" y2="380" />
+        <line x1="180" y1="735" x2="180" y2="415" stroke-dasharray="4,4" />
+        <line x1="300" y1="735" x2="300" y2="415" stroke-dasharray="4,4" />
+        <line x1="120" y1="620" x2="240" y2="690" />
+        <line x1="240" y1="690" x2="360" y2="620" />
+        <line x1="120" y1="540" x2="240" y2="610" />
+        <line x1="240" y1="610" x2="360" y2="540" />
+        <line x1="120" y1="460" x2="240" y2="530" />
+        <line x1="240" y1="530" x2="360" y2="460" />
+        <line x1="240" y1="310" x2="240" y2="230" stroke-width="2" />
+        <circle cx="240" cy="230" r="4" fill="#c9182b" />
+      </g>
+
+      <!-- Right District Monument Complex -->
+      <g stroke="#162a68" stroke-width="1.4" fill="none" opacity="0.35">
+        <polygon points="1560,780 1680,710 1800,780 1680,850" />
+        <polygon points="1560,460 1680,390 1800,460 1680,530" />
+        <line x1="1560" y1="780" x2="1560" y2="460" />
+        <line x1="1680" y1="850" x2="1680" y2="530" />
+        <line x1="1800" y1="780" x2="1800" y2="460" />
+        <line x1="1560" y1="620" x2="1680" y2="690" />
+        <line x1="1680" y1="690" x2="1800" y2="620" />
+        <line x1="1560" y1="540" x2="1680" y2="610" />
+        <line x1="1680" y1="610" x2="1800" y2="540" />
+        <line x1="1680" y1="390" x2="1680" y2="300" stroke-width="2" />
+        <circle cx="1680" cy="300" r="4" fill="#2255bb" />
+      </g>
+
+      <!-- Center Radar Sweep Rings -->
+      <g transform="translate(960, 520)">
+        <circle cx="0" cy="0" r="320" stroke="rgba(22, 42, 104, 0.2)" stroke-width="1.5" fill="none" />
+        <circle cx="0" cy="0" r="240" stroke="rgba(22, 42, 104, 0.25)" stroke-width="1.5" fill="none" />
+        <circle cx="0" cy="0" r="160" stroke="rgba(22, 42, 104, 0.3)" stroke-width="1.5" fill="none" />
+        <circle cx="0" cy="0" r="80" stroke="rgba(22, 42, 104, 0.4)" stroke-width="1.5" fill="none" />
+        <line x1="-340" y1="0" x2="340" y2="0" stroke="rgba(22, 42, 104, 0.3)" stroke-width="1.5" stroke-dasharray="6,6" />
+        <line x1="0" y1="-340" x2="0" y2="340" stroke="rgba(22, 42, 104, 0.3)" stroke-width="1.5" stroke-dasharray="6,6" />
+
+        <!-- Rotating Radar Sweep Hand -->
+        <g class="radar-sweep-hand">
+          <line x1="0" y1="0" x2="320" y2="0" stroke="#162a68" stroke-width="2" />
+          <path d="M 0 0 L 320 0 A 320 320 0 0 0 277 -160 Z" fill="rgba(22, 42, 104, 0.08)" />
+        </g>
+
+        <!-- Blinking Radar Targets -->
+        <circle cx="140" cy="-110" r="5" fill="#c9182b" class="radar-target-dot" />
+        <circle cx="-180" cy="90" r="5" fill="#2255bb" class="radar-target-dot" style="animation-delay: 0.6s;" />
+        <circle cx="90" cy="190" r="5" fill="#c9182b" class="radar-target-dot" style="animation-delay: 1.2s;" />
+        <circle cx="-120" cy="-140" r="5" fill="#2255bb" class="radar-target-dot" style="animation-delay: 1.8s;" />
+      </g>
+
+      <!-- Technical Telemetry Text & Stamp Borders -->
+      <text x="60" y="60" fill="#162a68" font-family="'Space Mono', monospace" font-size="13" font-weight="700" letter-spacing="2">
+        NEXORA TACTICAL RADAR // SECTOR 07-MUMBAI // ASIA REGION
+      </text>
+      <text x="60" y="82" fill="#c9182b" font-family="'Space Mono', monospace" font-size="11" font-weight="700" letter-spacing="1">
+        LAT 19.0760° N, LON 72.8777° E • ELEVATION +14.2m • SATELLITE UPLINK: LOCKED
+      </text>
+      <text x="1860" y="60" text-anchor="end" fill="#162a68" font-family="'Space Mono', monospace" font-size="13" font-weight="700" letter-spacing="2">
+        ENCRYPTED P2P MATCHMAKING v4.8
+      </text>
+      <text x="1860" y="82" text-anchor="end" fill="#34a853" font-family="'Space Mono', monospace" font-size="11" font-weight="700" letter-spacing="1">
+        ● SERVER TICK: 64Hz • PING: 18ms • LOSS: 0.0%
+      </text>
+    </svg>
+
+    <!-- Center Interactive Matchmaking HUD Card -->
+    <div class="sketch-card" style="max-width: 680px; width: 92%; padding: 36px 32px; z-index: 10; margin: auto; position: relative; box-shadow: 6px 6px 0px rgba(22, 42, 104, 0.35);">
+      <!-- Title & Protocol Header -->
+      <div style="text-align: center; margin-bottom: 18px;">
+        <div style="font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700; color: #c9182b; letter-spacing: 3px; margin-bottom: 4px;">
+          NEXORA OPERATIONAL UPLINK
+        </div>
+        <div class="sketch-title" style="font-size: 38px; margin-bottom: 2px;">MATCHMAKING</div>
+        <div class="sketch-subtitle" style="margin-bottom: 12px;">SEARCHING FOR HOSTILES & SQUADMATES</div>
+
+        <!-- Ping & Region Badge -->
+        <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(22,42,104,0.06); border: 1.5px solid #162a68; padding: 4px 14px; font-size: 12px; font-weight: 700;">
+          <span style="color: #34a853; animation: pulseTarget 1s infinite;">●</span>
+          <span>ASIA-MUMBAI 18ms</span>
+          <span style="opacity: 0.4;">|</span>
+          <span id="mm-timer-pill">ESTIMATED: 0:08</span>
+          <span style="opacity: 0.4;">|</span>
+          <span style="color: #c9182b;">SEARCHING: <span id="mm-elapsed-timer">0:00</span></span>
+        </div>
+      </div>
+
+      <!-- Match Parameters Info Box -->
+      <div style="display: flex; justify-content: space-around; background: #faf8f2; border: 2px solid #162a68; padding: 10px 14px; margin-bottom: 20px; font-size: 12px; font-weight: 700;">
+        <div>MODE: <span id="mm-info-mode" style="color: #162a68;">TDM</span></div>
+        <div>MAP: <span id="mm-info-map" style="color: #2255bb;">COURTYARD BLITZ</span></div>
+        <div>PARTY: <span id="mm-info-squad" style="color: #c9182b;">SQUAD (4P)</span></div>
+        <div>TEAM: <span id="mm-info-team" style="color: #162a68;">BLUE TASK FORCE</span></div>
+      </div>
+
+      <!-- 4 Squad Member Queue Cards -->
+      <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 22px; flex-wrap: wrap;">
+        <!-- Card 0: Host / Player -->
+        <div class="mm-slot-card filled" id="mm-slot-0">
+          <img id="mm-slot-0-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=AstraAgent" style="width: 44px; height: 44px; border: 1.5px solid #162a68; background: #fff;">
+          <div id="mm-slot-0-name" style="font-size: 11px; font-weight: 700; color: #162a68; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px;">Operator</div>
+          <div style="font-size: 9px; background: #162a68; color: #fff; padding: 1px 6px; font-weight: 700;">HOST READY</div>
+        </div>
+
+        <!-- Card 1 -->
+        <div class="mm-slot-card empty" id="mm-slot-1">
+          <div id="mm-slot-1-icon" style="font-size: 24px; opacity: 0.5;">⏳</div>
+          <div id="mm-slot-1-name" style="font-size: 11px; font-weight: 700; opacity: 0.65;">SEARCHING...</div>
+          <div id="mm-slot-1-status" style="font-size: 9px; opacity: 0.5;">WAITING</div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="mm-slot-card empty" id="mm-slot-2">
+          <div id="mm-slot-2-icon" style="font-size: 24px; opacity: 0.5;">⏳</div>
+          <div id="mm-slot-2-name" style="font-size: 11px; font-weight: 700; opacity: 0.65;">SEARCHING...</div>
+          <div id="mm-slot-2-status" style="font-size: 9px; opacity: 0.5;">WAITING</div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="mm-slot-card empty" id="mm-slot-3">
+          <div id="mm-slot-3-icon" style="font-size: 24px; opacity: 0.5;">⏳</div>
+          <div id="mm-slot-3-name" style="font-size: 11px; font-weight: 700; opacity: 0.65;">SEARCHING...</div>
+          <div id="mm-slot-3-status" style="font-size: 9px; opacity: 0.5;">WAITING</div>
+        </div>
+      </div>
+
+      <!-- Live Match Status Banner & Countdown -->
+      <div style="text-align: center; margin-bottom: 22px; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div id="mm-status-banner" style="font-size: 14px; font-weight: 700; color: #162a68; letter-spacing: 2px;">
+          CONNECTING TO REGIONAL MATCHMAKING LOBBY...
+        </div>
+        <div id="mm-countdown-banner" style="font-size: 24px; font-weight: 700; color: #c9182b; letter-spacing: 3px; display: none;">
+          MATCH FOUND! DEPLOYING IN 3...
+        </div>
+      </div>
+
+      <!-- Cancel Button -->
+      <div style="text-align: center;">
+        <button class="sketch-btn danger-btn" id="btn-cancel-matchmaking" style="padding: 10px 28px; font-size: 14px;">
+          ✕ CANCEL MATCHMAKING [ESC]
+        </button>
       </div>
     </div>
   </div>
@@ -1251,34 +1484,112 @@
   </div>
 
   <!-- Modal: Mode & Map Selection -->
-  <div id="modal-mode-select" class="screen-overlay" style="display: none;">
-    <div class="sketch-card" style="max-width: 640px;">
-      <div class="sketch-title" style="font-size: 34px;">OPERATION SELECT</div>
-      <div class="sketch-subtitle" style="margin-bottom: 20px;">CHOOSE GAME MODE & ARENA SCALE</div>
+  <div id="modal-mode-select" class="screen-overlay" style="display: none; z-index: 62;">
+    <div class="sketch-card" style="max-width: 660px; width: 95%; padding: 28px;">
+      <div class="sketch-title" style="font-size: 32px; margin-bottom: 2px;">OPERATION SELECT</div>
+      <div class="sketch-subtitle" style="margin-bottom: 16px;">CONFIGURE GAME MODE, SQUAD FORMAT, TEAM & ARENA</div>
 
-      <div class="sketch-btn-list" style="gap: 12px;">
-        <button class="sketch-btn" id="btn-mode-wave" style="border-left: 6px solid #162a68; text-align: left;">
-          <div><strong>WAVE SURVIVAL (ENDLESS)</strong></div>
-          <div style="font-size: 12px; opacity: 0.75; margin-top: 2px;">Solo tactical holdout against escalating hostile waves.</div>
-        </button>
-
-        <button class="sketch-btn" id="btn-mode-tdm-4v4" style="border-left: 6px solid #2255bb; text-align: left;">
-          <div><strong>TDM: 4 VS 4 (SMALL MAP)</strong></div>
-          <div style="font-size: 12px; opacity: 0.75; margin-top: 2px;">Courtyard Blitz. Compact close-quarters combat. First to 30 kills.</div>
-        </button>
-
-        <button class="sketch-btn" id="btn-mode-tdm-8v8" style="border-left: 6px solid #5522aa; text-align: left;">
-          <div><strong>TDM: 8 VS 8 (MEDIUM MAP)</strong></div>
-          <div style="font-size: 12px; opacity: 0.75; margin-top: 2px;">The Compound. Multi-level balconies, central bridges. First to 50 kills.</div>
-        </button>
-
-        <button class="sketch-btn" id="btn-mode-tdm-12v12" style="border-left: 6px solid #c9182b; text-align: left;">
-          <div><strong>TDM: 12 VS 12 (BIG MAP)</strong></div>
-          <div style="font-size: 12px; opacity: 0.75; margin-top: 2px;">Architect District. Huge 116m battlefield with 3-tier monument. First to 75 kills.</div>
-        </button>
+      <!-- 1. Mode Select Section -->
+      <div style="margin-bottom: 16px; text-align: left;">
+        <div style="font-size: 11px; font-weight: 700; color: #162a68; margin-bottom: 6px; letter-spacing: 1px;">
+          1. SELECT GAME MODE:
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <button class="mode-select-pill active" id="btn-sel-mode-tdm" data-mode="tdm">
+            <div><strong>TEAM DEATHMATCH</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Blue vs Red battle</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-mode-ffa" data-mode="ffa">
+            <div><strong>SOLO FREE-FOR-ALL</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Solo tactical battle</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-mode-wave" data-mode="wave">
+            <div><strong>WAVE SURVIVAL</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Endless hostile waves</div>
+          </button>
+        </div>
       </div>
 
-      <button class="sketch-btn" id="btn-close-mode-select" style="margin-top: 20px;">BACK</button>
+      <!-- 2. Squad Size Section -->
+      <div style="margin-bottom: 16px; text-align: left;">
+        <div style="font-size: 11px; font-weight: 700; color: #162a68; margin-bottom: 6px; letter-spacing: 1px;">
+          2. SQUAD / PARTY FORMAT:
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <button class="mode-select-pill" id="btn-sel-squad-1" data-squad="1">
+            <div><strong>SOLO (1P)</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Single Operator</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-squad-2" data-squad="2">
+            <div><strong>DUO (2P)</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">2-Player Fireteam</div>
+          </button>
+          <button class="mode-select-pill active" id="btn-sel-squad-4" data-squad="4">
+            <div><strong>SQUAD (4P)</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">4-Player Strike Squad</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 3. Team Selection Section -->
+      <div style="margin-bottom: 16px; text-align: left;">
+        <div style="font-size: 11px; font-weight: 700; color: #162a68; margin-bottom: 6px; letter-spacing: 1px;">
+          3. TEAM PREFERENCE:
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <button class="mode-select-pill active" id="btn-sel-team-auto" data-team="auto">
+            <div><strong>AUTO BALANCE</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Best match allocation</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-team-blue" data-team="blue" style="border-left: 4px solid #2255bb;">
+            <div><strong>BLUE TASK FORCE</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Alpha Company</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-team-red" data-team="red" style="border-left: 4px solid #c9182b;">
+            <div><strong>RED INSURGENTS</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Bravo Company</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. Map Arena Selection Section -->
+      <div style="margin-bottom: 20px; text-align: left;">
+        <div style="font-size: 11px; font-weight: 700; color: #162a68; margin-bottom: 6px; letter-spacing: 1px;">
+          4. MAP & ARENA SCALE:
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <button class="mode-select-pill active" id="btn-sel-map-small" data-map="small">
+            <div><strong>COURTYARD BLITZ</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Small 46m Arena • Fast CQC</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-map-med" data-map="medium">
+            <div><strong>THE COMPOUND</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Medium 76m • Balconies & Bridges</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-map-big" data-map="big">
+            <div><strong>ARCHITECT DISTRICT</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Big 116m • 3-Tier Monument</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Hidden compatibility buttons -->
+      <div style="display: none;">
+        <button id="btn-mode-wave"></button>
+        <button id="btn-mode-tdm-4v4"></button>
+        <button id="btn-mode-tdm-8v8"></button>
+        <button id="btn-mode-tdm-12v12"></button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 10px;">
+        <button class="sketch-btn" id="btn-confirm-mode-select" style="background: #162a68; color: #fff; flex: 2; padding: 12px; font-size: 15px;">
+          CONFIRM & APPLY
+        </button>
+        <button class="sketch-btn" id="btn-close-mode-select" style="flex: 1; padding: 12px; font-size: 14px;">
+          BACK
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1436,9 +1747,26 @@
 
   <!-- Modal: Tactical Voice Chat & Radio Callout Wheel (<kbd>V</kbd>) -->
   <div id="modal-voice-wheel" class="screen-overlay" style="display: none; z-index: 65;">
-    <div class="sketch-card" style="max-width: 540px; width: 92%; padding: 28px;">
+    <div class="sketch-card" style="max-width: 560px; width: 92%; padding: 24px;">
       <div class="sketch-title" style="font-size: 28px;">TACTICAL RADIO</div>
-      <div class="sketch-subtitle" style="margin-bottom: 8px; font-size: 13px;">TRANSMIT QUICK ORDER TO SQUAD [V]</div>
+      <div class="sketch-subtitle" style="margin-bottom: 6px; font-size: 13px;">TRANSMIT QUICK ORDER TO SQUAD [V]</div>
+
+      <!-- Indian & English Language Selector -->
+      <div style="margin-bottom: 12px; background: rgba(22,42,104,0.04); padding: 8px; border: 1px dashed rgba(22,42,104,0.3);">
+        <div style="font-size: 10px; font-weight: 700; color: #162a68; margin-bottom: 6px; letter-spacing: 1px;">
+          SELECT VOICE DIALECT & LANGUAGE:
+        </div>
+        <div id="voice-language-selector" style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
+          <button class="sketch-btn voice-lang-pill" data-lang="hi" style="padding: 4px 10px; font-size: 11px;">🇮🇳 हिन्दी (HI)</button>
+          <button class="sketch-btn voice-lang-pill" data-lang="bhoj" style="padding: 4px 10px; font-size: 11px;">🇮🇳 भोजपुरी (BHOJ)</button>
+          <button class="sketch-btn voice-lang-pill" data-lang="ta" style="padding: 4px 10px; font-size: 11px;">🇮🇳 தமிழ் (TAM)</button>
+          <button class="sketch-btn voice-lang-pill" data-lang="bn" style="padding: 4px 10px; font-size: 11px;">🇮🇳 বাংলা (BEN)</button>
+          <button class="sketch-btn voice-lang-pill" data-lang="pa" style="padding: 4px 10px; font-size: 11px;">🇮🇳 ਪੰਜਾਬੀ (PUN)</button>
+          <button class="sketch-btn voice-lang-pill" data-lang="te" style="padding: 4px 10px; font-size: 11px;">🇮🇳 తెలుగు (TEL)</button>
+          <button class="sketch-btn voice-lang-pill" data-lang="en" style="padding: 4px 10px; font-size: 11px;">🌐 ENG (US)</button>
+        </div>
+      </div>
+
       <div style="font-size: 11px; opacity: 0.7; margin-bottom: 12px;">Transmits sound via walkie-talkie & marks real-time minimap ping</div>
 
       <!-- 6 Tactical Callouts Grid -->

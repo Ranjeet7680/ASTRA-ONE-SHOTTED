@@ -30,6 +30,15 @@ export class Player {
     this.tacSprintDuration = 3.5;
     this.lastSprintTapTime = 0;
 
+    // Omnimovement: Dolphin Dive & Directional Tilts
+    this.isDiving = false;
+    this.diveTimer = 0;
+    this.diveDuration = 0.7;
+    this.diveDir = new THREE.Vector3();
+    this.slideDotForward = 1;
+    this.slideDotRight = 0;
+    this.omniPitchOffset = 0;
+
     // Mantling / Vaulting
     this.isMantling = false;
     this.mantleTargetY = 0;
@@ -140,7 +149,8 @@ export class Player {
         case 'ShiftLeft':
         case 'ShiftRight':
           const nowTime = performance.now();
-          if (nowTime - this.lastSprintTapTime < 320 && this.keys.forward) {
+          const isMovingAnyDir = this.keys.forward || this.keys.backward || this.keys.left || this.keys.right;
+          if (nowTime - this.lastSprintTapTime < 340 && isMovingAnyDir) {
             this.isTacSprinting = true;
             this.tacSprintTimer = this.tacSprintDuration;
           }
@@ -150,12 +160,18 @@ export class Player {
         case 'ControlLeft':
         case 'KeyC':
           this.keys.crouch = true;
-          this.trySlide();
+          if (this.isTacSprinting || this.keys.sprint) {
+            this.trySlide();
+          }
+          break;
+        case 'KeyZ':
+          this.tryDive();
           break;
         case 'Space':
-          if (this.isSliding) {
-            // Slide Cancel!
+          if (this.isSliding || this.isDiving) {
+            // Slide / Dive Cancel!
             this.cancelSlide();
+            this.isDiving = false;
             if (this.isGrounded) {
               this.velocity.y = this.jumpForce;
               this.isGrounded = false;
@@ -244,21 +260,34 @@ export class Player {
     document.addEventListener('contextmenu', (e) => e.preventDefault());
   }
 
-  // Call of Duty Style Sliding
+  // Call of Duty Omnidirectional Slide (Black Ops 6 style)
   trySlide() {
     const horizontalSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.z * this.velocity.z);
-    if (this.isGrounded && horizontalSpeed > 3.8 && !this.isSliding) {
+    if (this.isGrounded && horizontalSpeed > 3.0 && !this.isSliding && !this.isDiving) {
       this.isSliding = true;
       this.slideTimer = this.slideDuration;
 
-      // Slide in current movement direction
-      this.slideDir.set(this.velocity.x, 0, this.velocity.z).normalize();
-      this.velocity.x = this.slideDir.x * 12.0;
-      this.velocity.z = this.slideDir.z * 12.0;
+      // Slide in current movement vector
+      if (horizontalSpeed > 0.5) {
+        this.slideDir.set(this.velocity.x, 0, this.velocity.z).normalize();
+      } else {
+        this.camera.getWorldDirection(this.slideDir);
+        this.slideDir.y = 0;
+        this.slideDir.normalize();
+      }
+
+      // Calculate relative camera forward/right dot products for omni-slide camera tilts
+      const forward = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw));
+      const right = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
+      this.slideDotForward = this.slideDir.dot(forward); // +1 forward, -1 backward
+      this.slideDotRight = this.slideDir.dot(right); // +1 right, -1 left
+
+      this.velocity.x = this.slideDir.x * 12.8;
+      this.velocity.z = this.slideDir.z * 12.8;
 
       // Audio & Visual feedback
       this.soundEngine.playSlide();
-      this.effects.addTrauma(0.12);
+      this.effects.addTrauma(0.14);
 
       // Floor dust
       this.effects.createSurfaceImpact(
@@ -271,6 +300,46 @@ export class Player {
   cancelSlide() {
     this.isSliding = false;
     this.slideTimer = 0;
+  }
+
+  // Call of Duty Dolphin Dive (Black Ops 6 Omnidirectional Dive to Prone)
+  tryDive() {
+    if (this.isGrounded && !this.isDiving && !this.isSliding) {
+      const isMoving = this.keys.forward || this.keys.backward || this.keys.left || this.keys.right;
+      if (!isMoving && !this.keys.sprint && !this.isTacSprinting) return false;
+
+      this.isDiving = true;
+      this.diveTimer = this.diveDuration;
+
+      // Determine dive direction from wish direction or camera facing
+      const moveDir = new THREE.Vector3();
+      if (this.keys.forward) moveDir.z -= 1;
+      if (this.keys.backward) moveDir.z += 1;
+      if (this.keys.left) moveDir.x -= 1;
+      if (this.keys.right) moveDir.x += 1;
+
+      if (moveDir.lengthSq() > 0) {
+        moveDir.normalize();
+        const forward = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw));
+        const right = new THREE.Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
+        this.diveDir = new THREE.Vector3()
+          .addScaledVector(forward, -moveDir.z)
+          .addScaledVector(right, moveDir.x).normalize();
+      } else {
+        this.diveDir = new THREE.Vector3(-Math.sin(this.yaw), 0, -Math.cos(this.yaw)).normalize();
+      }
+
+      // Horizontal launch leap
+      this.velocity.y = 3.6;
+      this.velocity.x = this.diveDir.x * 13.8;
+      this.velocity.z = this.diveDir.z * 13.8;
+      this.isGrounded = false;
+
+      this.soundEngine.playSlide();
+      this.effects.addTrauma(0.2);
+      return true;
+    }
+    return false;
   }
 
   // Mantle / Vault over obstacles
@@ -325,6 +394,8 @@ export class Player {
     return {
       isTacSprinting: this.isTacSprinting,
       isInspecting: this.isInspecting,
+      isSliding: this.isSliding,
+      isDiving: this.isDiving,
       inspectProgress: this.isInspecting ? (this.inspectTimer / this.inspectDuration) : 0
     };
   }
@@ -389,6 +460,7 @@ export class Player {
     this.isShooting = false;
     this.isAiming = false;
     this.isSliding = false;
+    this.isDiving = false;
     this.isTacSprinting = false;
     if (document.exitPointerLock) document.exitPointerLock();
     if (this.onPlayerDeath) this.onPlayerDeath();
@@ -404,6 +476,7 @@ export class Player {
     this.isShooting = false;
     this.isAiming = false;
     this.isSliding = false;
+    this.isDiving = false;
     this.isTacSprinting = false;
     this.timeSinceLastDamage = 999;
     this.grenadeCount = this.maxGrenades;
@@ -460,15 +533,16 @@ export class Player {
       if (this.onHealingEffect) this.onHealingEffect(false);
     }
 
-    // Tactical Sprint timer
+    // Tactical Sprint timer (Omnimovement: sprint in any direction)
+    const isMoving = this.keys.forward || this.keys.backward || this.keys.left || this.keys.right;
     if (this.isTacSprinting) {
       this.tacSprintTimer -= delta;
-      if (this.tacSprintTimer <= 0 || !this.keys.forward) {
+      if (this.tacSprintTimer <= 0 || !isMoving) {
         this.isTacSprinting = false;
       }
     }
 
-    // 1. Calculate Desired Movement Vector
+    // 1. Calculate Desired Movement Vector (360-degree Omnimovement)
     const moveDir = new THREE.Vector3();
     if (this.keys.forward) moveDir.z -= 1;
     if (this.keys.backward) moveDir.z += 1;
@@ -486,25 +560,53 @@ export class Player {
       .addScaledVector(forward, -moveDir.z)
       .addScaledVector(right, moveDir.x);
 
-    // Speed calculation
+    // Speed calculation - Omnidirectional Sprinting (COD Omnimovement)
     let currentSpeed = this.moveSpeed;
-    if (this.isTacSprinting && this.keys.forward) {
+    if (this.isTacSprinting && isMoving) {
       currentSpeed *= this.tacSprintMultiplier;
-    } else if (this.keys.sprint && !this.keys.crouch && this.keys.forward) {
+    } else if (this.keys.sprint && !this.keys.crouch && isMoving) {
       currentSpeed *= this.sprintMultiplier;
     } else if (this.keys.crouch) {
       currentSpeed *= this.crouchMultiplier;
     }
 
-    // Sliding Mechanics
+    // Omnimovement: Sliding & Dolphin Diving Mechanics
     let targetRoll = 0;
-    if (this.isSliding) {
+    this.omniPitchOffset = 0;
+
+    if (this.isDiving) {
+      this.diveTimer -= delta;
+      // High-speed airborne dive trajectory
+      this.velocity.x = this.diveDir.x * 13.8;
+      this.velocity.z = this.diveDir.z * 13.8;
+      this.omniPitchOffset = -0.15; // pitch down into dive
+
+      // Check ground landing
+      if (this.isGrounded && this.diveTimer < 0.5) {
+        this.isDiving = false;
+        this.soundEngine.playPlayerDamage();
+        this.landingOffset = -0.22;
+        this.effects.addTrauma(0.22);
+        this.effects.createSurfaceImpact(
+          this.position.clone().setY(this.position.y + 0.05),
+          new THREE.Vector3(0, 1, 0)
+        );
+      }
+      if (this.diveTimer <= 0) {
+        this.isDiving = false;
+      }
+    } else if (this.isSliding) {
       this.slideTimer -= delta;
       const progress = 1 - (this.slideTimer / this.slideDuration);
-      const slideSpeed = lerp(12.0, 3.5, progress);
+      const slideSpeed = lerp(12.8, 3.5, progress);
       this.velocity.x = this.slideDir.x * slideSpeed;
       this.velocity.z = this.slideDir.z * slideSpeed;
-      targetRoll = -0.06; // lean camera into slide
+
+      // Omnidirectional camera tilts
+      targetRoll = (this.slideDotRight || 0) * 0.12; // roll into turn
+      if ((this.slideDotForward || 0) < -0.3) {
+        this.omniPitchOffset = 0.08; // lean back when sliding backward
+      }
 
       if (this.slideTimer <= 0) {
         this.isSliding = false;
@@ -516,6 +618,12 @@ export class Player {
       const targetVelZ = wishDir.z * currentSpeed;
       this.velocity.x = lerp(this.velocity.x, targetVelX, delta * accel);
       this.velocity.z = lerp(this.velocity.z, targetVelZ, delta * accel);
+
+      // Strafe sprint leaning
+      if (this.keys.sprint || this.isTacSprinting) {
+        if (this.keys.left) targetRoll -= 0.045;
+        if (this.keys.right) targetRoll += 0.045;
+      }
     }
 
     // 2. Gravity
@@ -526,7 +634,9 @@ export class Player {
 
     // 4. Smooth Crouch & Slide Height Interpolation
     let targetHeight = this.standingHeight;
-    if (this.isSliding) {
+    if (this.isDiving) {
+      targetHeight = 0.58; // low prone dive height
+    } else if (this.isSliding) {
       targetHeight = this.slideHeight;
     } else if (this.keys.crouch) {
       targetHeight = this.crouchHeight;
@@ -539,7 +649,7 @@ export class Player {
     let bobOffsetY = 0;
     let bobOffsetX = 0;
 
-    if (this.isGrounded && horizontalSpeed > 0.8 && !this.isSliding) {
+    if (this.isGrounded && horizontalSpeed > 0.8 && !this.isSliding && !this.isDiving) {
       const bobFreq = (this.isTacSprinting ? 14 : (this.keys.sprint ? 12 : 8));
       this.bobTimer += delta * bobFreq;
       bobOffsetY = Math.sin(this.bobTimer) * this.bobAmount;
@@ -559,7 +669,7 @@ export class Player {
     this.flinchRoll = lerp(this.flinchRoll || 0, 0, delta * 12);
     this.landingOffset = lerp(this.landingOffset || 0, 0, delta * 12);
 
-    // 6. Camera Position & Rotation with Screen Shake, Landing, & Flinch
+    // 6. Camera Position & Rotation with Screen Shake, Landing, Omnimovement Tilts & Flinch
     const shake = this.effects.shakeOffset;
     this.camera.position.set(
       this.position.x + bobOffsetX + shake.x,
@@ -568,7 +678,7 @@ export class Player {
     );
 
     const euler = new THREE.Euler(
-      this.pitch + shake.pitch + this.flinchPitch,
+      this.pitch + shake.pitch + this.flinchPitch + this.omniPitchOffset,
       this.yaw + shake.yaw,
       this.roll + shake.roll + this.flinchRoll,
       'YXZ'
