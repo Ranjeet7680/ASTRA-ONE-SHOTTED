@@ -1,14 +1,26 @@
+// Professional Blueprint HUD Manager for ASTRA: One Shotted
+// Manages 6-digit score display, Gyroscope status badge, Collapsible Weapon Bar,
+// Directional damage indicators, Crosshair state transitions, and Temporary wave banners.
+
 export class HUD {
   constructor(game = null) {
     this.game = game;
     this.hudContainer = document.getElementById('hud');
     this.scoreDisplay = document.getElementById('score-display');
+    this.gyroBadge = document.getElementById('hud-gyro-badge');
+    this.gyroText = document.getElementById('hud-gyro-text');
+
     this.waveDisplay = document.getElementById('wave-display');
     this.enemiesLeftDisplay = document.getElementById('enemies-left-display');
-
     this.hpDisplay = document.getElementById('hp-display');
     this.hpBar = document.getElementById('hp-bar');
 
+    // Weapon Collapsible Elements
+    this.weaponBar = document.getElementById('hud-weapon-bar');
+    this.weaponPill = document.getElementById('hud-weapon-pill');
+    this.weaponPillName = document.getElementById('weapon-pill-name');
+    this.weaponPillAmmo = document.getElementById('weapon-pill-ammo');
+    this.weaponCards = document.getElementById('hud-weapon-cards');
     this.weaponName = document.getElementById('weapon-name');
     this.weaponDesc = document.getElementById('weapon-desc');
     this.ammoCurrent = document.getElementById('ammo-current');
@@ -16,6 +28,7 @@ export class HUD {
     this.ammoTally = document.getElementById('ammo-tally');
     this.reloadPrompt = document.getElementById('reload-prompt');
 
+    this.crosshair = document.getElementById('crosshair');
     this.hitmarker = document.getElementById('hitmarker');
     this.killFeed = document.getElementById('kill-feed');
     this.waveBanner = document.getElementById('wave-banner');
@@ -39,7 +52,7 @@ export class HUD {
     // Directional damage indicator canvas
     this.damageCanvas = document.getElementById('damage-direction-canvas');
     this.damageCtx = this.damageCanvas ? this.damageCanvas.getContext('2d') : null;
-    this.damageArcs = []; // { angle, alpha, maxAlpha }
+    this.damageArcs = [];
 
     // Screen ink splatter droplets
     this.inkContainer = document.getElementById('damage-ink-splatters');
@@ -51,10 +64,13 @@ export class HUD {
     this.isTDM = false;
     this.hitmarkerTimeout = null;
     this.waveBannerTimeout = null;
+    this.weaponExpandTimeout = null;
+    this.isWeaponExpanded = false;
 
     this.setupCanvasSize();
     window.addEventListener('resize', () => this.setupCanvasSize());
-    this.setupActionButtons();
+    this.setupWeaponBarInteractions();
+    this.setupGyroBadge();
   }
 
   setGame(game) {
@@ -68,35 +84,92 @@ export class HUD {
     }
   }
 
-  setupActionButtons() {
-    // HUD Fullscreen button
-    const btnFullscreen = document.getElementById('btn-hud-fullscreen');
-    if (btnFullscreen) {
-      btnFullscreen.addEventListener('click', () => {
-        if (this.game && this.game.player) {
-          this.game.player.toggleFullscreen();
-        }
+  setupWeaponBarInteractions() {
+    if (this.weaponPill) {
+      this.weaponPill.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.toggleWeaponBar();
       });
     }
 
-    // HUD Full Tactical Map button
-    const btnMap = document.getElementById('btn-hud-map');
-    if (btnMap) {
-      btnMap.addEventListener('click', () => {
-        if (this.game && this.game.minimap) {
-          this.game.minimap.toggleFullMap();
-        }
-      });
-    }
+    this.slots.forEach((slot, index) => {
+      if (slot) {
+        slot.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (this.game && this.game.weapons) {
+            this.game.weapons.switchWeapon(index);
+          }
+          this.collapseWeaponBarDelayed(1500);
+        });
+      }
+    });
+  }
 
-    // HUD Radio Wheel button
-    const btnVoice = document.getElementById('btn-hud-voice-wheel');
-    if (btnVoice) {
-      btnVoice.addEventListener('click', () => {
-        if (this.game && this.game.voiceChat) {
-          this.game.voiceChat.toggleWheel();
-        }
-      });
+  toggleWeaponBar() {
+    if (this.isWeaponExpanded) {
+      this.collapseWeaponBar();
+    } else {
+      this.expandWeaponBar();
+    }
+  }
+
+  expandWeaponBar() {
+    this.isWeaponExpanded = true;
+    if (this.weaponCards) {
+      this.weaponCards.classList.add('expanded');
+    }
+    if (this.weaponPill) {
+      this.weaponPill.classList.add('open');
+    }
+    this.collapseWeaponBarDelayed(2500);
+  }
+
+  collapseWeaponBarDelayed(ms = 2500) {
+    if (this.weaponExpandTimeout) clearTimeout(this.weaponExpandTimeout);
+    this.weaponExpandTimeout = setTimeout(() => {
+      this.collapseWeaponBar();
+    }, ms);
+  }
+
+  collapseWeaponBar() {
+    this.isWeaponExpanded = false;
+    if (this.weaponCards) {
+      this.weaponCards.classList.remove('expanded');
+    }
+    if (this.weaponPill) {
+      this.weaponPill.classList.remove('open');
+    }
+  }
+
+  setupGyroBadge() {
+    if (!this.gyroBadge) return;
+    this.gyroBadge.addEventListener('click', () => {
+      if (!this.game || !this.game.inputManager) return;
+      const im = this.game.inputManager;
+      im.setGyroEnabled(!im.gyroEnabled);
+      this.updateGyroBadge();
+    });
+  }
+
+  updateGyroBadge() {
+    if (!this.gyroBadge || !this.game || !this.game.inputManager) return;
+    const isEnabled = this.game.inputManager.gyroEnabled;
+    if (isEnabled) {
+      this.gyroBadge.classList.add('active');
+      if (this.gyroText) this.gyroText.textContent = 'GYRO ON';
+    } else {
+      this.gyroBadge.classList.remove('active');
+      if (this.gyroText) this.gyroText.textContent = 'GYRO OFF';
+    }
+  }
+
+  // Crosshair state transition when targeting enemy
+  setCrosshairEnemyTarget(isEnemy) {
+    if (!this.crosshair) return;
+    if (isEnemy) {
+      this.crosshair.classList.add('target-enemy');
+    } else {
+      this.crosshair.classList.remove('target-enemy');
     }
   }
 
@@ -110,43 +183,39 @@ export class HUD {
     this.showInkSplatter();
   }
 
-  // Hand-drawn blueprint ink droplet splatters on lens
+  // Blueprint red ink droplet splatters
   showInkSplatter() {
     if (!this.inkContainer) return;
-
-    const count = Math.floor(Math.random() * 2 + 2); // 2 to 3 splatters
+    const count = Math.floor(Math.random() * 2 + 2);
     for (let i = 0; i < count; i++) {
       const drop = document.createElement('div');
       drop.className = 'ink-splatter-droplet';
-      const size = Math.floor(Math.random() * 32 + 24);
-      const posX = Math.floor(Math.random() * 74 + 13);
-      const posY = Math.floor(Math.random() * 74 + 13);
+      const size = Math.floor(Math.random() * 30 + 22);
+      const posX = Math.floor(Math.random() * 70 + 15);
+      const posY = Math.floor(Math.random() * 70 + 15);
       const rot = Math.floor(Math.random() * 360);
 
       drop.style.width = `${size}px`;
       drop.style.height = `${size}px`;
       drop.style.left = `${posX}%`;
       drop.style.top = `${posY}%`;
-      drop.style.setProperty('--rot', `${rot}deg`);
+      drop.style.transform = `rotate(${rot}deg)`;
 
       drop.innerHTML = `
         <svg width="100%" height="100%" viewBox="0 0 40 40">
-          <path d="M20,5 C27,9 35,16 33,25 C31,33 23,36 17,34 C10,32 5,25 7,17 C9,11 14,9 20,5 Z" fill="#c9182b" opacity="0.82" />
-          <circle cx="8" cy="30" r="2.5" fill="#c9182b" opacity="0.65" />
-          <circle cx="32" cy="10" r="2" fill="#c9182b" opacity="0.65" />
-          <circle cx="34" cy="28" r="1.5" fill="#c9182b" opacity="0.65" />
+          <path d="M20,5 C27,9 35,16 33,25 C31,33 23,36 17,34 C10,32 5,25 7,17 C9,11 14,9 20,5 Z" fill="#c9182b" opacity="0.85" />
+          <circle cx="8" cy="30" r="2.5" fill="#c9182b" opacity="0.7" />
+          <circle cx="32" cy="10" r="2" fill="#c9182b" opacity="0.7" />
         </svg>
       `;
 
       this.inkContainer.appendChild(drop);
-
       setTimeout(() => {
         if (drop.parentNode) drop.parentNode.removeChild(drop);
       }, 850);
     }
   }
 
-  // 10s auto-fill healing aura pulse
   setHealingEffect(active) {
     if (!this.healingVignette) return;
     if (active) {
@@ -159,24 +228,29 @@ export class HUD {
   setTDMMode(isTDM) {
     this.isTDM = isTDM;
     if (this.tdmScoreBar) this.tdmScoreBar.style.display = isTDM ? 'flex' : 'none';
-    const waveEl = document.querySelector('.hud-top-right');
-    if (waveEl) waveEl.style.display = isTDM ? 'none' : 'block';
+    const waveEl = document.getElementById('hud-wave-center-pill');
+    if (waveEl) waveEl.style.display = isTDM ? 'none' : 'inline-flex';
   }
 
   updateTDMScore(blue, red, target = 30) {
-    if (this.tdmBlueScore) this.tdmBlueScore.textContent = blue;
-    if (this.tdmRedScore) this.tdmRedScore.textContent = red;
-    if (this.tdmTargetScore) this.tdmTargetScore.textContent = target;
+    const pad = (n) => String(n).padStart(2, '0');
+    if (this.tdmBlueScore) this.tdmBlueScore.textContent = pad(blue);
+    if (this.tdmRedScore) this.tdmRedScore.textContent = pad(red);
+    if (this.tdmTargetScore) this.tdmTargetScore.textContent = pad(target);
   }
 
   updateGrenades(count) {
     if (this.grenadeCountDisplay) this.grenadeCountDisplay.textContent = count;
+    if (this.game && this.game.mobileControls) {
+      this.game.mobileControls.updateGrenades(count);
+    }
   }
 
   show() {
     if (this.hudContainer) this.hudContainer.style.display = 'block';
     if (this.damageCanvas) this.damageCanvas.style.display = 'block';
     if (this.inkContainer) this.inkContainer.style.display = 'block';
+    this.updateGyroBadge();
   }
 
   hide() {
@@ -186,22 +260,31 @@ export class HUD {
     if (this.healingVignette) this.healingVignette.classList.remove('active');
   }
 
+  // 6-digit formatted score (e.g. SCORE 001250)
   setScore(val) {
     this.score = val;
-    if (this.scoreDisplay) this.scoreDisplay.textContent = this.score;
+    if (this.scoreDisplay) {
+      this.scoreDisplay.textContent = String(this.score).padStart(6, '0');
+    }
   }
 
   addScore(amount) {
     this.score += amount;
-    if (this.scoreDisplay) this.scoreDisplay.textContent = this.score;
+    if (this.scoreDisplay) {
+      this.scoreDisplay.textContent = String(this.score).padStart(6, '0');
+    }
   }
 
   updateWave(waveNum) {
-    if (this.waveDisplay) this.waveDisplay.textContent = `WAVE ${waveNum}`;
+    if (this.waveDisplay) {
+      this.waveDisplay.textContent = `WAVE ${String(waveNum).padStart(2, '0')}`;
+    }
   }
 
   updateEnemiesLeft(count) {
-    if (this.enemiesLeftDisplay) this.enemiesLeftDisplay.textContent = `ENEMIES LEFT: ${count}`;
+    if (this.enemiesLeftDisplay) {
+      this.enemiesLeftDisplay.textContent = `ENEMIES ${String(count).padStart(2, '0')}`;
+    }
   }
 
   updateHp(hp, maxHp = 100) {
@@ -231,6 +314,15 @@ export class HUD {
   }
 
   updateWeapon(weapon, activeIndex) {
+    if (!weapon) return;
+
+    // Collapsed Pill Update
+    if (this.weaponPillName) this.weaponPillName.textContent = weapon.name;
+    if (this.weaponPillAmmo) {
+      this.weaponPillAmmo.textContent = `${weapon.currentAmmo} / ${weapon.reserveAmmo}`;
+    }
+
+    // Standard Desktop Display
     if (this.weaponName) this.weaponName.textContent = weapon.name;
     if (this.weaponDesc) this.weaponDesc.textContent = weapon.desc;
     if (this.ammoCurrent) this.ammoCurrent.textContent = weapon.currentAmmo;
@@ -252,6 +344,11 @@ export class HUD {
     });
   }
 
+  onWeaponSwitched(weapon, activeIndex) {
+    this.updateWeapon(weapon, activeIndex);
+    this.expandWeaponBar(); // Auto-expand when switching weapons, collapsing after 2.5s
+  }
+
   showHitmarker(isCrit = false) {
     if (!this.hitmarker) return;
     if (this.hitmarkerTimeout) clearTimeout(this.hitmarkerTimeout);
@@ -265,7 +362,7 @@ export class HUD {
     this.hitmarker.classList.add('active');
     this.hitmarkerTimeout = setTimeout(() => {
       this.hitmarker.classList.remove('active');
-    }, 120);
+    }, 130);
   }
 
   showKillPopup(enemyType, isHeadshot, scoreGain) {
@@ -281,6 +378,7 @@ export class HUD {
     }, 1200);
   }
 
+  // Temporary Wave Banner - Auto hides after 1.5s (never stays permanently!)
   showWaveBanner(title, subtitle) {
     if (!this.waveBanner) return;
     if (this.waveBannerTimeout) clearTimeout(this.waveBannerTimeout);
@@ -291,78 +389,63 @@ export class HUD {
     this.waveBanner.classList.add('show');
     this.waveBannerTimeout = setTimeout(() => {
       this.waveBanner.classList.remove('show');
-    }, 2800);
+    }, 1500); // 1.5 seconds clean temporary display
   }
 
-  // Update loop for damage directional indicator arcs
+  reset() {
+    this.setScore(0);
+    this.collapseWeaponBar();
+    if (this.waveBanner) this.waveBanner.classList.remove('show');
+    if (this.healingVignette) this.healingVignette.classList.remove('active');
+  }
+
+  // Directional damage arcs update
   update(delta) {
     if (!this.damageCtx || !this.damageCanvas) return;
 
     const ctx = this.damageCtx;
     const w = this.damageCanvas.width;
     const h = this.damageCanvas.height;
-
     ctx.clearRect(0, 0, w, h);
 
     if (this.damageArcs.length === 0) return;
 
     const cx = w / 2;
     const cy = h / 2;
-    const radius = Math.min(w, h) * 0.28;
+    const radius = Math.min(w, h) * 0.38;
 
     for (let i = this.damageArcs.length - 1; i >= 0; i--) {
       const arc = this.damageArcs[i];
-      arc.alpha -= delta * 1.5;
+      arc.alpha -= delta * 1.8;
 
       if (arc.alpha <= 0) {
         this.damageArcs.splice(i, 1);
         continue;
       }
 
-      // Draw red directional indicator arc
-      const angle = arc.angle - Math.PI / 2; // Up is forward
-      const span = 0.32; // Arc width in radians
-
       ctx.save();
+      ctx.translate(cx, cy);
+
+      const drawAngle = -arc.angle - Math.PI / 2;
+      const arcSpan = 0.55;
+
       ctx.beginPath();
-      ctx.arc(cx, cy, radius, angle - span, angle + span);
+      ctx.arc(0, 0, radius, drawAngle - arcSpan / 2, drawAngle + arcSpan / 2);
       ctx.strokeStyle = `rgba(201, 24, 43, ${arc.alpha * 0.85})`;
-      ctx.lineWidth = 9;
+      ctx.lineWidth = 14;
       ctx.lineCap = 'round';
       ctx.stroke();
 
-      // Sharp indicator chevron pointing outward
-      const tipDist = radius + 14;
-      const tipX = cx + Math.cos(angle) * tipDist;
-      const tipY = cy + Math.sin(angle) * tipDist;
-
-      const base1X = cx + Math.cos(angle - 0.08) * (radius + 2);
-      const base1Y = cy + Math.sin(angle - 0.08) * (radius + 2);
-
-      const base2X = cx + Math.cos(angle + 0.08) * (radius + 2);
-      const base2Y = cy + Math.sin(angle + 0.08) * (radius + 2);
+      const tipAngle = drawAngle;
+      const tipX = Math.cos(tipAngle) * (radius - 16);
+      const tipY = Math.sin(tipAngle) * (radius - 16);
 
       ctx.beginPath();
-      ctx.moveTo(tipX, tipY);
-      ctx.lineTo(base1X, base1Y);
-      ctx.lineTo(base2X, base2Y);
-      ctx.closePath();
       ctx.fillStyle = `rgba(201, 24, 43, ${arc.alpha * 0.95})`;
+      ctx.arc(tipX, tipY, 4.5, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.restore();
     }
-  }
-
-  reset() {
-    this.setScore(0);
-    this.updateHp(100);
-    if (this.killFeed) this.killFeed.innerHTML = '';
-    this.damageArcs = [];
-    if (this.damageCtx && this.damageCanvas) {
-      this.damageCtx.clearRect(0, 0, this.damageCanvas.width, this.damageCanvas.height);
-    }
-    if (this.inkContainer) this.inkContainer.innerHTML = '';
-    this.setHealingEffect(false);
   }
 }

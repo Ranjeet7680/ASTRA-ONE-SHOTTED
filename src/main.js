@@ -18,6 +18,8 @@ import { LobbyScene } from './lobby.js';
 import { MinimapManager } from './minimap.js';
 import { VoiceChatSystem } from './voiceChat.js';
 import { KillstreakManager } from './killstreaks.js';
+import { InputManager } from './inputManager.js';
+import { BgmManager } from './bgmManager.js';
 
 class Game {
   constructor() {
@@ -50,11 +52,14 @@ class Game {
     this.materials = new MaterialLibrary();
     this.soundEngine = new SoundEngine();
     this.effects = new EffectsManager(this.scene, this.materials);
+    this.inputManager = new InputManager(this);
+    this.bgm = new BgmManager(this);
     this.hud = new HUD(this);
     this.killstreaks = new KillstreakManager(this);
     this.level = new Level(this.scene, this.materials, 'small');
     this.weapons = new WeaponSystem(this.camera, this.materials, this.soundEngine, this.effects);
     this.player = new Player(this.camera, this.domElement, this.level, this.soundEngine, this.effects);
+    this.player.setInputManager(this.inputManager);
     this.combat = new CombatSystem(this.scene, this.camera, this.level, this.effects, this.soundEngine, this.hud, this.killstreaks);
     this.waves = new WaveManager(
       this.scene,
@@ -138,6 +143,7 @@ class Game {
     this.player.onWeaponSwitch = (slotIndex) => {
       if (this.stateManager.currentState !== 'PLAYING') return;
       this.weapons.switchWeapon(slotIndex);
+      this.hud.onWeaponSwitched(this.weapons.activeWeapon, slotIndex);
     };
 
     // Mouse Wheel Scroll Weapon
@@ -145,6 +151,7 @@ class Game {
       if (this.stateManager.currentState !== 'PLAYING') return;
       let nextIndex = (this.weapons.currentWeaponIndex + direction + this.weapons.weapons.length) % this.weapons.weapons.length;
       this.weapons.switchWeapon(nextIndex);
+      this.hud.onWeaponSwitched(this.weapons.activeWeapon, nextIndex);
     };
 
     // Active weapon index query for dynamic FOV
@@ -204,6 +211,9 @@ class Game {
     this.level.setMapSize(mapSize);
     if (this.lobby) {
       this.lobby.hide();
+    }
+    if (this.bgm) {
+      this.bgm.fadeOut(800);
     }
 
     if (mode === 'wave') {

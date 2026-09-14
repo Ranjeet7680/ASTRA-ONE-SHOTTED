@@ -108,9 +108,14 @@ export class Player {
     this.isPointerLocked = false;
     this.isShooting = false;
     this.isAiming = false;
+    this.inputManager = null;
 
     // Setup input listeners
     this.setupInputs();
+  }
+
+  setInputManager(im) {
+    this.inputManager = im;
   }
 
   setupInputs() {
@@ -548,8 +553,22 @@ export class Player {
       if (this.onHealingEffect) this.onHealingEffect(false);
     }
 
+    // Consume Look Delta from InputManager (Gyroscope + Mobile Touch Drag)
+    if (this.inputManager) {
+      const look = this.inputManager.getLookDelta();
+      if (look.dx !== 0 || look.dy !== 0) {
+        this.yaw -= look.dx;
+        this.pitch -= look.dy;
+        const maxPitch = Math.PI / 2 - 0.08;
+        this.pitch = clamp(this.pitch, -maxPitch, maxPitch);
+        this.lastLookDeltaX = (this.lastLookDeltaX || 0) + look.dx;
+        this.lastLookDeltaY = (this.lastLookDeltaY || 0) + look.dy;
+      }
+    }
+
     // Tactical Sprint timer (Omnimovement: sprint in any direction)
-    const isMoving = this.keys.forward || this.keys.backward || this.keys.left || this.keys.right;
+    const isMoving = this.keys.forward || this.keys.backward || this.keys.left || this.keys.right ||
+      (this.inputManager && (Math.abs(this.inputManager.moveVector.x) > 0.1 || Math.abs(this.inputManager.moveVector.z) > 0.1));
     if (this.isTacSprinting) {
       this.tacSprintTimer -= delta;
       if (this.tacSprintTimer <= 0 || !isMoving) {
@@ -563,6 +582,15 @@ export class Player {
     if (this.keys.backward) moveDir.z += 1;
     if (this.keys.left) moveDir.x -= 1;
     if (this.keys.right) moveDir.x += 1;
+
+    // Analog input from mobile joystick via inputManager
+    if (this.inputManager) {
+      const imMove = this.inputManager.getMoveVector();
+      if (imMove.x !== 0 || imMove.z !== 0) {
+        moveDir.x += imMove.x;
+        moveDir.z += imMove.z;
+      }
+    }
 
     if (moveDir.lengthSq() > 0) {
       moveDir.normalize();

@@ -437,30 +437,166 @@
       50% { opacity: 0.2; }
     }
 
-    /* Weapon Selector Slots */
-    .weapon-slots {
+    /* Weapon Selector Slots & Collapsible Pill */
+    #hud-weapon-bar {
       position: absolute;
-      bottom: 28px;
+      bottom: calc(20px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       display: flex;
-      gap: 12px;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+      z-index: 15;
+    }
+
+    #hud-weapon-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(248, 246, 240, 0.94);
+      border: 2px solid var(--ink-blue);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.25);
+      transition: all 0.15s ease;
+    }
+
+    #hud-weapon-pill.open {
+      background: var(--ink-blue);
+      color: #faf8f2;
+    }
+
+    #hud-weapon-cards {
+      display: none;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    #hud-weapon-cards.expanded {
+      display: flex;
+    }
+
+    .weapon-slots {
+      display: flex;
+      gap: 8px;
     }
 
     .weapon-slot {
       padding: 6px 14px;
       border: 1.5px solid rgba(22, 42, 104, 0.4);
-      background: rgba(248, 246, 240, 0.7);
-      font-size: 13px;
+      background: rgba(248, 246, 240, 0.9);
+      font-size: 12px;
       font-weight: 700;
-      border-radius: 3px;
+      border-radius: 4px;
+      cursor: pointer;
       transition: all 0.15s ease;
     }
 
     .weapon-slot.active {
       border: 2px solid var(--ink-blue-dark);
-      background: rgba(22, 42, 104, 0.12);
+      background: rgba(22, 42, 104, 0.15);
       transform: translateY(-4px);
+    }
+
+    /* Top HUD Center Pill */
+    #hud-top-center-bar {
+      position: absolute;
+      top: calc(18px + env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      z-index: 12;
+    }
+
+    #hud-wave-center-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(248, 246, 240, 0.92);
+      border: 2px solid var(--ink-blue);
+      padding: 4px 14px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.2);
+    }
+
+    /* Gyroscope Status Badge */
+    .hud-gyro-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(248, 246, 240, 0.88);
+      border: 1.5px solid var(--ink-blue);
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: all 0.15s ease;
+    }
+
+    .hud-gyro-pill.active {
+      background: var(--ink-blue);
+      color: #faf8f2;
+    }
+
+    .hud-gyro-pill .gyro-dot {
+      color: #34a853;
+    }
+
+    /* Crosshair red detection state */
+    #crosshair.target-enemy .crosshair-line,
+    #crosshair.target-enemy .crosshair-dot {
+      background-color: var(--ink-red) !important;
+    }
+
+    /* BGM Visualizer Animation */
+    .bgm-eq-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 14px;
+      width: 16px;
+    }
+
+    .bgm-eq-bars span {
+      display: block;
+      width: 2.5px;
+      height: 3px;
+      background: #162a68;
+      border-radius: 1px;
+    }
+
+    .bgm-eq-bars.active span:nth-child(1) { animation: eqBar 0.7s infinite alternate ease-in-out; }
+    .bgm-eq-bars.active span:nth-child(2) { animation: eqBar 0.5s infinite alternate ease-in-out 0.15s; }
+    .bgm-eq-bars.active span:nth-child(3) { animation: eqBar 0.8s infinite alternate ease-in-out 0.3s; }
+    .bgm-eq-bars.active span:nth-child(4) { animation: eqBar 0.6s infinite alternate ease-in-out 0.2s; }
+
+    @keyframes eqBar {
+      0% { height: 3px; }
+      100% { height: 14px; }
+    }
+
+    /* START Button Pulse in Lobby */
+    #btn-lobby-start {
+      animation: startGlow 2.5s infinite ease-in-out;
+    }
+
+    @keyframes startGlow {
+      0% { box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.3); }
+      50% { box-shadow: 6px 6px 12px rgba(201, 24, 43, 0.35); }
+      100% { box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.3); }
     }
 
     /* Interactive UI Screens / Modals */
@@ -1550,12 +1686,32 @@
       </div>
     </div>
 
-    <!-- Top Right: Server Info & Quick Icons -->
-    <div style="position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 12px; pointer-events: auto;">
+    <!-- Top Right: Server Info & BGM Player Widget -->
+    <div style="position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 10px; pointer-events: auto;">
+      <!-- BGM Player Widget -->
+      <div id="lobby-bgm-widget" style="background: rgba(248, 246, 240, 0.95); border: 2px solid #162a68; padding: 5px 12px; display: flex; align-items: center; gap: 10px; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.2); font-family: 'Space Mono', monospace;">
+        <div id="bgm-visualizer" class="bgm-eq-bars">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <div style="display: flex; flex-direction: column; min-width: 130px; max-width: 180px;">
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <span style="font-size: 9px; font-weight: 700; color: #c9182b; letter-spacing: 1px;">BGM</span>
+            <span id="bgm-track-title" style="font-size: 11px; font-weight: 700; color: #162a68; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">ASTRA (Main Theme)</span>
+          </div>
+          <span id="bgm-track-hindi" style="font-size: 10px; color: #2255bb; font-weight: 700; opacity: 0.85;">एस्ट्रा (थीम)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 5px;">
+          <button class="sketch-btn" id="bgm-btn-prev" style="padding: 2px 7px; font-size: 11px;" title="Previous Track">⏮</button>
+          <button class="sketch-btn" id="bgm-btn-play" style="padding: 2px 8px; font-size: 11px; background: #162a68; color: #fff;" title="Play/Pause">▶</button>
+          <button class="sketch-btn" id="bgm-btn-next" style="padding: 2px 7px; font-size: 11px;" title="Next Track">⏭</button>
+          <button class="sketch-btn" id="bgm-btn-mute" style="padding: 2px 6px; font-size: 11px;" title="Mute">🔊</button>
+          <button class="sketch-btn" id="bgm-btn-list" style="padding: 2px 7px; font-size: 10px; font-weight: 700;" title="Select Track">TRACKS ▾</button>
+        </div>
+      </div>
+
       <div style="background: rgba(248, 246, 240, 0.88); border: 1.5px solid #162a68; padding: 6px 12px; font-size: 12px; font-weight: 700; color: #162a68;">
         <span style="color: #34a853;">●</span> 24ms (REGION: ASIA)
       </div>
-      <button class="sketch-btn" id="btn-lobby-audio-toggle" style="padding: 6px 12px; font-size: 13px;">🔊</button>
       <button class="sketch-btn" id="btn-lobby-logout" style="padding: 6px 12px; font-size: 12px;">LOGOUT</button>
     </div>
 
@@ -1600,17 +1756,18 @@
 
     <!-- Bottom Center: Squad Slots -->
     <div style="position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; pointer-events: auto;">
-      <div style="width: 60px; height: 60px; border: 2px solid #162a68; background: rgba(248, 246, 240, 0.8); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">
-        YOU
+      <div id="lobby-squad-0" style="width: 60px; height: 60px; border: 2px solid #162a68; background: rgba(248, 246, 240, 0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">
+        <span style="font-size: 13px;">👑</span>
+        <span>YOU</span>
       </div>
-      <div style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.4); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;">
-        +
+      <div id="lobby-squad-1" class="lobby-squad-btn" style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;" title="Invite AI Teammate">
+        <span>+</span>
       </div>
-      <div style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.4); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;">
-        +
+      <div id="lobby-squad-2" class="lobby-squad-btn" style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;" title="Invite AI Teammate">
+        <span>+</span>
       </div>
-      <div style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.4); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;">
-        +
+      <div id="lobby-squad-3" class="lobby-squad-btn" style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;" title="Invite AI Teammate">
+        <span>+</span>
       </div>
     </div>
   </div>
@@ -1618,33 +1775,42 @@
   <!-- In-Game HUD -->
   <div id="hud">
 
-    <!-- Top Left: Score -->
-    <div class="hud-top-left">
-      SCORE <span class="num" id="score-display">0</span>
+    <!-- Top Left: 6-Digit Score & Gyro Status Badge -->
+    <div class="hud-top-left" style="display: flex; align-items: center; gap: 14px; top: calc(20px + env(safe-area-inset-top)); left: calc(24px + env(safe-area-inset-left));">
+      <div>
+        <span style="font-size: 11px; opacity: 0.75; font-weight: 700; letter-spacing: 1px;">SCORE</span>
+        <span class="num" id="score-display" style="margin-left: 6px; font-size: 22px;">000000</span>
+      </div>
+      <div id="hud-gyro-badge" class="hud-gyro-pill" title="Tap to Toggle Gyroscope">
+        <span class="gyro-dot">◉</span> <span id="hud-gyro-text">GYRO OFF</span>
+      </div>
     </div>
 
-    <!-- Top Right: Wave & Remaining -->
-    <div class="hud-top-right">
-      <div class="wave-label" id="wave-display">WAVE 1</div>
-      <div class="enemies-label" id="enemies-left-display">ENEMIES LEFT: 5</div>
+    <!-- Top Center: Clean Match Score & Wave Indicator -->
+    <div id="hud-top-center-bar">
+      <!-- TDM Score Bar -->
+      <div id="tdm-score-bar" style="display: none; align-items: center; gap: 14px; background: rgba(248, 246, 240, 0.94); padding: 5px 18px; border: 2px solid #162a68; border-radius: 18px; box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.25); font-family: 'Space Mono', monospace; font-weight: 700;">
+        <span style="color: #2255bb; font-size: 16px;">BLUE <span id="tdm-blue-score">00</span></span>
+        <span style="opacity: 0.45; font-size: 12px;">TARGET <span id="tdm-target-score">30</span></span>
+        <span style="color: #c9182b; font-size: 16px;"><span id="tdm-red-score">00</span> RED</span>
+      </div>
+
+      <!-- Wave / Enemies Pill -->
+      <div id="hud-wave-center-pill">
+        <span id="wave-display" style="color: #162a68;">WAVE 01</span>
+        <span style="opacity: 0.4;">•</span>
+        <span id="enemies-left-display" style="color: #c9182b;">ENEMIES 05</span>
+      </div>
     </div>
 
-    <!-- Top Right: End-to-End Circular Blueprint Radar Minimap -->
-    <div id="minimap-container" title="Click or Press [M] to Open Full Tactical Map">
+    <!-- Top Right: End-to-End Circular Blueprint Radar Minimap (Clean, no overlapping action buttons) -->
+    <div id="minimap-container" style="top: calc(20px + env(safe-area-inset-top)); right: calc(24px + env(safe-area-inset-right));" title="Tap or Press [M] to Open Full Tactical Map">
       <canvas id="minimap-canvas" width="160" height="160"></canvas>
       <div id="minimap-coords">X:0 Z:0</div>
     </div>
 
-    <!-- HUD Tactical Action Buttons below Minimap -->
-    <div class="hud-action-bar">
-      <button class="hud-action-btn" id="btn-hud-fullscreen">⛶ FULLSCREEN [F11]</button>
-      <button class="hud-action-btn" id="btn-hud-mic">🎙️ TEAM</button>
-      <button class="hud-action-btn" id="btn-hud-voice-wheel">📻 RADIO WHEEL [V]</button>
-      <button class="hud-action-btn" id="btn-hud-map">🗺️ TACTICAL MAP [M]</button>
-    </div>
-
     <!-- Top Center: Radio Walkie-Talkie Chatter Banner -->
-    <div id="radio-chatter-banner">
+    <div id="radio-chatter-banner" style="top: calc(72px + env(safe-area-inset-top));">
       <div class="radio-led"></div>
       <div style="font-size: 15px;">📻</div>
       <div>
@@ -1653,14 +1819,7 @@
       </div>
     </div>
 
-    <!-- Top Center: TDM Score Bar -->
-    <div id="tdm-score-bar" style="display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); align-items: center; gap: 16px; background: rgba(248, 246, 240, 0.9); padding: 6px 20px; border: 2px solid #162a68; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.25); font-family: 'Space Mono', monospace; font-weight: 700; z-index: 12;">
-      <span style="color: #162a68; font-size: 20px;">BLUE <span id="tdm-blue-score">0</span></span>
-      <span style="opacity: 0.5; font-size: 14px;">TARGET <span id="tdm-target-score">30</span></span>
-      <span style="color: #c9182b; font-size: 20px;"><span id="tdm-red-score">0</span> RED</span>
-    </div>
-
-    <!-- Center Crosshair -->
+    <!-- Center Crosshair with Red Enemy Warning Detection -->
     <div id="crosshair">
       <div class="crosshair-dot"></div>
       <div class="crosshair-line top"></div>
@@ -1682,14 +1841,14 @@
     <!-- Kill Notifications -->
     <div id="kill-feed"></div>
 
-    <!-- Wave Notification Banner -->
+    <!-- Wave Notification Banner (Temporary 1.5s display) -->
     <div id="wave-banner">
       <div class="title" id="wave-banner-title">WAVE 1</div>
       <div class="subtitle" id="wave-banner-subtitle">PREPARE YOUR DEFENSES</div>
     </div>
 
-    <!-- Bottom Left: HP & Grenade -->
-    <div class="hud-bottom-left">
+    <!-- Bottom Left: Compact Blueprint Health Bar -->
+    <div class="hud-bottom-left" style="bottom: calc(24px + env(safe-area-inset-bottom)); left: calc(24px + env(safe-area-inset-left));">
       <div class="hp-label-row">
         <span>HP</span>
         <span class="hp-val" id="hp-display">100</span>
@@ -1697,17 +1856,28 @@
       <div class="hp-bar-container">
         <div class="hp-bar-fill" id="hp-bar"></div>
       </div>
-      <div style="font-size: 13px; font-weight: 700; color: #162a68; margin-top: 4px;">
+      <div style="font-size: 12px; font-weight: 700; color: #162a68; margin-top: 2px;">
         [G] GRENADES: <span id="grenade-count">2</span>
       </div>
     </div>
 
-    <!-- Bottom Center: Weapon Slots -->
-    <div class="weapon-slots">
-      <div class="weapon-slot active" id="slot-1">1: PISTOL</div>
-      <div class="weapon-slot" id="slot-2">2: SHOTGUN</div>
-      <div class="weapon-slot" id="slot-3">3: RIFLE</div>
-      <div class="weapon-slot" id="slot-4">4: SNIPER</div>
+    <!-- Bottom Center: Collapsible Weapon Bar -->
+    <div id="hud-weapon-bar">
+      <!-- Default Collapsed Pill -->
+      <div id="hud-weapon-pill" title="Tap to Expand Weapon Arsenal">
+        <span id="weapon-pill-name">PISTOL</span>
+        <span style="opacity: 0.4;">|</span>
+        <span id="weapon-pill-ammo">12 / 60</span>
+        <span style="font-size: 9px; margin-left: 2px;">▲</span>
+      </div>
+
+      <!-- Expanded 4-Card Bar (auto-collapses after 2.5s) -->
+      <div id="hud-weapon-cards" class="weapon-slots">
+        <div class="weapon-slot active" id="slot-1">1: PISTOL</div>
+        <div class="weapon-slot" id="slot-2">2: SHOTGUN</div>
+        <div class="weapon-slot" id="slot-3">3: RIFLE</div>
+        <div class="weapon-slot" id="slot-4">4: SNIPER</div>
+      </div>
     </div>
 
     <!-- Bottom Right: Ammo & Weapon -->
@@ -2297,19 +2467,76 @@
         <h3>GAME MODES</h3>
         <p><strong>WAVE SURVIVAL:</strong> Solo survival against escalating waves of Grunts, Rushers, Heavies, and Snipers.</p>
         <p><strong>TEAM DEATHMATCH:</strong> Blue Team vs Red Team! 4v4 (Small Map), 8v8 (Medium Map), or 12v12 (Big Map). First team to the kill target wins.</p>
-      </div>
-
       <button class="sketch-btn" id="btn-close-how-to-play">BACK</button>
     </div>
   </div>
 
-  <!-- Modal: Settings -->
-  <div id="modal-settings" class="screen-overlay" style="display: none;">
-    <div class="sketch-card" style="max-width: 560px;">
-      <div class="sketch-title" style="font-size: 32px;">SETTINGS</div>
-      <div class="sketch-subtitle" style="margin-bottom: 16px;">CALIBRATION</div>
+  <!-- Modal: BGM Soundtracks Playlist -->
+  <div id="modal-bgm-tracklist" class="screen-overlay" style="display: none; z-index: 68;">
+    <div class="sketch-card" style="max-width: 540px; width: 92%; padding: 28px;">
+      <div class="sketch-title" style="font-size: 30px;">SOUNDTRACKS</div>
+      <div class="sketch-subtitle" style="margin-bottom: 16px; font-size: 13px;">ASTRA OFFICIAL BGM PLAYLIST</div>
 
-      <div class="modal-content">
+      <div id="bgm-playlist-container" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; text-align: left;">
+        <div class="bgm-tracklist-item active" data-track="0" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1.5px solid #162a68; background: #fff; cursor: pointer;">
+          <div>
+            <div style="font-weight: 700; font-size: 13px; color: #162a68;">1. ASTRA (Main Theme)</div>
+            <div style="font-size: 11px; opacity: 0.7;">एस्ट्रा (थीम म्यूजिक) • ASTRA Soundworks</div>
+          </div>
+          <button class="sketch-btn" style="padding: 3px 10px; font-size: 11px;">▶ PLAY</button>
+        </div>
+
+        <div class="bgm-tracklist-item" data-track="1" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1.5px solid #162a68; background: #fff; cursor: pointer;">
+          <div>
+            <div style="font-weight: 700; font-size: 13px; color: #162a68;">2. Antim Mauka (Last Chance)</div>
+            <div style="font-size: 11px; color: #c9182b; font-weight: 700;">अंतिम मौका • Warzone Studio</div>
+          </div>
+          <button class="sketch-btn" style="padding: 3px 10px; font-size: 11px;">▶ PLAY</button>
+        </div>
+
+        <div class="bgm-tracklist-item" data-track="2" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1.5px solid #162a68; background: #fff; cursor: pointer;">
+          <div>
+            <div style="font-weight: 700; font-size: 13px; color: #162a68;">3. Ek Hi Waar (One Strike)</div>
+            <div style="font-size: 11px; color: #2255bb; font-weight: 700;">एक ही वार • Warzone Studio</div>
+          </div>
+          <button class="sketch-btn" style="padding: 3px 10px; font-size: 11px;">▶ PLAY</button>
+        </div>
+
+        <div class="bgm-tracklist-item" data-track="3" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1.5px solid #162a68; background: #fff; cursor: pointer;">
+          <div>
+            <div style="font-weight: 700; font-size: 13px; color: #162a68;">4. Aakhri Nishana (Final Target)</div>
+            <div style="font-size: 11px; color: #c9182b; font-weight: 700;">आखिरी निशाना • Warzone Studio</div>
+          </div>
+          <button class="sketch-btn" style="padding: 3px 10px; font-size: 11px;">▶ PLAY</button>
+        </div>
+
+        <div class="bgm-tracklist-item" data-track="4" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border: 1.5px solid #162a68; background: #fff; cursor: pointer;">
+          <div>
+            <div style="font-weight: 700; font-size: 13px; color: #162a68;">5. Aakhri Nishana (Tactical Mix)</div>
+            <div style="font-size: 11px; color: #2255bb; font-weight: 700;">आखिरी निशाना (रीमिक्स) • Warzone Studio</div>
+          </div>
+          <button class="sketch-btn" style="padding: 3px 10px; font-size: 11px;">▶ PLAY</button>
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(22,42,104,0.06); padding: 8px 14px; border: 1.5px solid #162a68; margin-bottom: 16px; font-size: 12px; font-weight: 700;">
+        <span>BGM VOLUME:</span>
+        <input type="range" id="bgm-volume-slider" min="0" max="100" value="55" style="width: 140px;">
+      </div>
+
+      <button class="sketch-btn" id="btn-close-bgm-tracklist" style="width: 100%; background: #162a68; color: #fff;">CLOSE PLAYLIST</button>
+    </div>
+  </div>
+
+  <!-- Modal: Settings (with Gyroscope, Audio, and Mobile HUD Calibration) -->
+  <div id="modal-settings" class="screen-overlay" style="display: none; z-index: 70;">
+    <div class="sketch-card" style="max-width: 620px; width: 95%;">
+      <div class="sketch-title" style="font-size: 32px;">SETTINGS</div>
+      <div class="sketch-subtitle" style="margin-bottom: 14px;">CONTROLS & HARDWARE CALIBRATION</div>
+
+      <div class="modal-content" style="text-align: left; max-height: 60vh; overflow-y: auto; padding-right: 4px;">
+        <!-- Audio & Sensitivity -->
+        <div style="font-size: 11px; font-weight: 700; color: #c9182b; letter-spacing: 1px; margin-bottom: 8px;">1. AUDIO & VIEWPORT</div>
         <div class="setting-slider-row">
           <span>MOUSE SENSITIVITY</span>
           <input type="range" id="setting-sens" min="0.5" max="3.0" step="0.1" value="1.0">
@@ -2327,13 +2554,60 @@
           <input type="range" id="setting-fov" min="65" max="105" step="1" value="75">
         </div>
 
-        <div style="margin-top: 18px; text-align: center;">
-          <button class="sketch-btn" id="btn-settings-hud-custom" style="width: 100%; margin-bottom: 8px;">CUSTOMIZE MOBILE HUD BUTTONS</button>
-          <button class="sketch-btn" id="btn-toggle-touch-controls" style="width: 100%;">TOGGLE TOUCH CONTROLS ON/OFF</button>
+        <!-- Gyroscope Aiming Section -->
+        <div style="font-size: 11px; font-weight: 700; color: #c9182b; letter-spacing: 1px; margin: 16px 0 8px 0; border-top: 1.5px dashed rgba(22,42,104,0.25); padding-top: 12px;">
+          2. MOBILE GYROSCOPE AIMING
         </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13px; font-weight: 700;">
+          <span>ENABLE GYROSCOPE AIMING</span>
+          <input type="checkbox" id="setting-gyro-toggle" style="width: 20px; height: 20px; cursor: pointer;">
+        </div>
+
+        <div class="setting-slider-row">
+          <span>GYRO SENSITIVITY (HIPFIRE)</span>
+          <input type="range" id="setting-gyro-sens" min="0.2" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="setting-slider-row">
+          <span>GYRO ADS SENSITIVITY (SCOPED)</span>
+          <input type="range" id="setting-gyro-ads-sens" min="0.1" max="2.0" step="0.05" value="0.6">
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 13px; font-weight: 700;">
+          <span>INVERT VERTICAL GYRO AXIS</span>
+          <input type="checkbox" id="setting-gyro-invert" style="width: 18px; height: 18px; cursor: pointer;">
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <button class="sketch-btn" id="btn-calibrate-gyro" style="flex: 1; padding: 6px 10px; font-size: 12px;" title="Hold phone in comfortable aiming pose and tap">
+            🎯 CALIBRATE GYRO
+          </button>
+          <button class="sketch-btn" id="btn-request-gyro-perm" style="flex: 1; padding: 6px 10px; font-size: 12px;">
+            📱 IOS SENSOR PERMISSION
+          </button>
+        </div>
+
+        <!-- Live Gyro Debug Panel -->
+        <div id="gyro-debug-panel" style="background: rgba(22,42,104,0.05); border: 1.5px solid #162a68; padding: 8px 12px; font-size: 11px; font-family: 'Space Mono', monospace; margin-bottom: 14px;">
+          <div style="font-weight: 700; margin-bottom: 4px;">LIVE GYROSCOPE TELEMETRY:</div>
+          <div id="gyro-debug-text">Sensor: ACTIVE • Pitch: 0° • Roll: 0° • Yaw: 0°</div>
+        </div>
+
+        <!-- Mobile HUD Layout & Accessibility -->
+        <div style="font-size: 11px; font-weight: 700; color: #c9182b; letter-spacing: 1px; margin: 16px 0 8px 0; border-top: 1.5px dashed rgba(22,42,104,0.25); padding-top: 12px;">
+          3. ACCESSIBILITY & MOBILE CONTROLS
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; font-size: 13px; font-weight: 700;">
+          <span>LEFT-HANDED HUD MODE (SWAP SIDES)</span>
+          <input type="checkbox" id="setting-left-handed-toggle" style="width: 20px; height: 20px; cursor: pointer;">
+        </div>
+
+        <button class="sketch-btn" id="btn-toggle-touch-controls" style="width: 100%; font-size: 13px;">FORCE SHOW/HIDE TOUCH CONTROLS</button>
       </div>
 
-      <button class="sketch-btn" id="btn-close-settings">SAVE & CLOSE</button>
+      <button class="sketch-btn" id="btn-close-settings" style="margin-top: 16px; background: #162a68; color: #fff; width: 100%;">SAVE & CLOSE</button>
     </div>
   </div>
 
@@ -2344,7 +2618,6 @@
       <div class="sketch-subtitle">SKETCH SUSPENDED</div>
       <div class="sketch-btn-list">
         <button class="sketch-btn" id="btn-resume">RESUME</button>
-        <button class="sketch-btn" id="btn-pause-custom-hud">CUSTOMIZE HUD BUTTONS</button>
         <button class="sketch-btn" id="btn-pause-settings">SETTINGS</button>
         <button class="sketch-btn" id="btn-pause-restart">RESTART</button>
         <button class="sketch-btn danger-btn" id="btn-pause-quit">QUIT TO MENU</button>
@@ -2352,38 +2625,42 @@
     </div>
   </div>
 
-  <!-- Screen: Game Over -->
-  <div id="screen-game-over" class="screen-overlay" style="display: none;">
-    <div class="sketch-card">
-      <div class="sketch-title" style="color: var(--ink-red);">GAME OVER</div>
-      <div class="sketch-subtitle">ERASED FROM THE BLUEPRINT</div>
+  <!-- Screen: Minimalist Centered Game Over -->
+  <div id="screen-game-over" class="screen-overlay" style="display: none; z-index: 75;">
+    <div class="sketch-card" style="max-width: 520px; width: 92%; padding: 36px 32px;">
+      <div class="sketch-title" style="color: #c9182b; font-size: 42px;">GAME OVER</div>
+      <div class="sketch-subtitle" style="margin-bottom: 20px; font-size: 14px;">TACTICAL BLUEPRINT DEBRIEF</div>
 
-      <div class="gameover-stats">
-        <div class="stat-box">
-          <div class="stat-label">FINAL SCORE</div>
-          <div class="stat-val" id="go-score">0</div>
+      <!-- Minimalist Stats Table -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; text-align: left;">
+        <div style="background: rgba(22,42,104,0.05); border: 1.5px solid #162a68; padding: 10px 14px;">
+          <div style="font-size: 10px; font-weight: 700; opacity: 0.7;">FINAL SCORE</div>
+          <div id="go-score" style="font-size: 24px; font-weight: 700; color: #162a68;">000000</div>
         </div>
-        <div class="stat-box">
-          <div class="stat-label">ROUND / WAVE</div>
-          <div class="stat-val" id="go-wave">0</div>
+        <div style="background: rgba(22,42,104,0.05); border: 1.5px solid #162a68; padding: 10px 14px;">
+          <div style="font-size: 10px; font-weight: 700; opacity: 0.7;">ROUND REACHED</div>
+          <div id="go-wave" style="font-size: 24px; font-weight: 700; color: #162a68;">WAVE 01</div>
         </div>
-        <div class="stat-box">
-          <div class="stat-label">TOTAL KILLS</div>
-          <div class="stat-val" id="go-kills">0</div>
+        <div style="background: rgba(22,42,104,0.05); border: 1.5px solid #162a68; padding: 10px 14px;">
+          <div style="font-size: 10px; font-weight: 700; opacity: 0.7;">HOSTILES ELIMINATED</div>
+          <div id="go-kills" style="font-size: 24px; font-weight: 700; color: #162a68;">0</div>
         </div>
-        <div class="stat-box">
-          <div class="stat-label">HEADSHOTS</div>
-          <div class="stat-val" id="go-headshots">0</div>
+        <div style="background: rgba(22,42,104,0.05); border: 1.5px solid #162a68; padding: 10px 14px;">
+          <div style="font-size: 10px; font-weight: 700; opacity: 0.7;">HEADSHOT CRITICALS</div>
+          <div id="go-headshots" style="font-size: 24px; font-weight: 700; color: #c9182b;">0</div>
+        </div>
+        <div style="grid-column: span 2; background: rgba(22,42,104,0.05); border: 1.5px solid #162a68; padding: 10px 14px; text-align: center;">
+          <div style="font-size: 10px; font-weight: 700; opacity: 0.7;">FIRING ACCURACY</div>
+          <div id="go-accuracy" style="font-size: 22px; font-weight: 700; color: #34a853;">100%</div>
         </div>
       </div>
 
-      <div class="sketch-btn-list">
-        <button class="sketch-btn" id="btn-restart">TRY AGAIN</button>
-        <button class="sketch-btn" id="btn-gameover-menu">MAIN MENU</button>
+      <div style="display: flex; gap: 12px;">
+        <button class="sketch-btn" id="btn-restart" style="background: #162a68; color: #fff; flex: 1; padding: 12px; font-size: 15px;">RESTART</button>
+        <button class="sketch-btn" id="btn-gameover-menu" style="flex: 1; padding: 12px; font-size: 14px;">MAIN MENU</button>
       </div>
     </div>
   </div>
-
 
   <script type="module" src="/src/main.js"></script>
 </body>

@@ -204,6 +204,10 @@ export class GameStateManager {
     if (this.game.lobby) {
       this.game.lobby.show();
     }
+    if (this.game.bgm) {
+      this.game.bgm.fadeIn(1000);
+      this.game.bgm.updateUI();
+    }
     this.game.camera.position.set(0, 1.4, 0);
     this.game.camera.rotation.set(0, 0, 0);
 
@@ -614,6 +618,177 @@ export class GameStateManager {
       });
     }
 
+    // BGM Player Widget Listeners
+    const bgmPlay = document.getElementById('bgm-btn-play');
+    if (bgmPlay) {
+      bgmPlay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.game.bgm) this.game.bgm.togglePlay();
+      });
+    }
+
+    const bgmPrev = document.getElementById('bgm-btn-prev');
+    if (bgmPrev) {
+      bgmPrev.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.game.bgm) this.game.bgm.prevTrack();
+      });
+    }
+
+    const bgmNext = document.getElementById('bgm-btn-next');
+    if (bgmNext) {
+      bgmNext.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.game.bgm) this.game.bgm.nextTrack();
+      });
+    }
+
+    const bgmMute = document.getElementById('bgm-btn-mute');
+    if (bgmMute) {
+      bgmMute.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.game.bgm) this.game.bgm.toggleMute();
+      });
+    }
+
+    const bgmList = document.getElementById('bgm-btn-list');
+    const modalBgm = document.getElementById('modal-bgm-tracklist');
+    if (bgmList && modalBgm) {
+      bgmList.addEventListener('click', (e) => {
+        e.stopPropagation();
+        modalBgm.style.display = 'flex';
+      });
+    }
+
+    const btnCloseBgm = document.getElementById('btn-close-bgm-tracklist');
+    if (btnCloseBgm && modalBgm) {
+      btnCloseBgm.addEventListener('click', () => {
+        modalBgm.style.display = 'none';
+      });
+    }
+
+    const trackItems = document.querySelectorAll('.bgm-tracklist-item');
+    trackItems.forEach((item) => {
+      item.addEventListener('click', () => {
+        const trackIdx = parseInt(item.getAttribute('data-track'), 10);
+        if (this.game.bgm) {
+          this.game.bgm.playTrack(trackIdx);
+        }
+      });
+    });
+
+    const bgmVolSlider = document.getElementById('bgm-volume-slider');
+    if (bgmVolSlider) {
+      bgmVolSlider.addEventListener('input', (e) => {
+        if (this.game.bgm) {
+          this.game.bgm.setVolume(parseFloat(e.target.value) / 100);
+        }
+      });
+    }
+
+    // Squad Slots Bot Invites
+    const squadNames = ['GHOST-01', 'SOAP-02', 'ROACH-03'];
+    const activeSquad = [null, null, null];
+
+    [1, 2, 3].forEach((idx) => {
+      const slotEl = document.getElementById(`lobby-squad-${idx}`);
+      if (slotEl) {
+        slotEl.addEventListener('click', () => {
+          this.game.soundEngine.playUIClick();
+          if (!activeSquad[idx - 1]) {
+            activeSquad[idx - 1] = squadNames[idx - 1];
+            slotEl.innerHTML = `
+              <span style="font-size: 13px;">🤖</span>
+              <span style="font-size: 9px; font-weight: 700; color: #162a68;">${activeSquad[idx - 1]}</span>
+            `;
+            slotEl.style.border = '2px solid #162a68';
+            slotEl.style.background = 'rgba(248, 246, 240, 0.9)';
+          } else {
+            activeSquad[idx - 1] = null;
+            slotEl.innerHTML = `<span>+</span>`;
+            slotEl.style.border = '2px dashed rgba(22, 42, 104, 0.5)';
+            slotEl.style.background = 'rgba(248, 246, 240, 0.5)';
+          }
+          if (this.game.lobby) {
+            this.game.lobby.updateSquadTeammates(activeSquad);
+          }
+        });
+      }
+    });
+
+    // Gyroscope Settings Listeners
+    const gyroToggle = document.getElementById('setting-gyro-toggle');
+    if (gyroToggle && this.game.inputManager) {
+      gyroToggle.checked = this.game.inputManager.gyroEnabled;
+      gyroToggle.addEventListener('change', (e) => {
+        this.game.inputManager.setGyroEnabled(e.target.checked);
+        if (this.game.hud) this.game.hud.updateGyroBadge();
+      });
+    }
+
+    const gyroSens = document.getElementById('setting-gyro-sens');
+    if (gyroSens && this.game.inputManager) {
+      gyroSens.value = this.game.inputManager.gyroSensitivity;
+      gyroSens.addEventListener('input', (e) => {
+        this.game.inputManager.setGyroSensitivity(parseFloat(e.target.value));
+      });
+    }
+
+    const gyroAdsSens = document.getElementById('setting-gyro-ads-sens');
+    if (gyroAdsSens && this.game.inputManager) {
+      gyroAdsSens.value = this.game.inputManager.gyroAdsSensitivity;
+      gyroAdsSens.addEventListener('input', (e) => {
+        this.game.inputManager.setGyroAdsSensitivity(parseFloat(e.target.value));
+      });
+    }
+
+    const gyroInvert = document.getElementById('setting-gyro-invert');
+    if (gyroInvert && this.game.inputManager) {
+      gyroInvert.checked = this.game.inputManager.gyroInvertY;
+      gyroInvert.addEventListener('change', (e) => {
+        this.game.inputManager.setGyroInvertY(e.target.checked);
+      });
+    }
+
+    const btnCalibrateGyro = document.getElementById('btn-calibrate-gyro');
+    if (btnCalibrateGyro && this.game.inputManager) {
+      btnCalibrateGyro.addEventListener('click', () => {
+        this.game.soundEngine.playUIClick();
+        this.game.inputManager.calibrateGyro();
+        btnCalibrateGyro.textContent = '✓ GYRO CALIBRATED';
+        setTimeout(() => {
+          btnCalibrateGyro.textContent = '🎯 CALIBRATE GYRO';
+        }, 1500);
+      });
+    }
+
+    const btnRequestGyro = document.getElementById('btn-request-gyro-perm');
+    if (btnRequestGyro && this.game.inputManager) {
+      btnRequestGyro.addEventListener('click', async () => {
+        this.game.soundEngine.playUIClick();
+        const res = await this.game.inputManager.requestGyroPermission();
+        btnRequestGyro.textContent = res.success ? '✓ PERMISSION ACTIVE' : '✕ DENIED';
+        if (gyroToggle) gyroToggle.checked = this.game.inputManager.gyroEnabled;
+        if (this.game.hud) this.game.hud.updateGyroBadge();
+      });
+    }
+
+    const leftHandToggle = document.getElementById('setting-left-handed-toggle');
+    if (leftHandToggle && this.game.mobileControls) {
+      leftHandToggle.checked = this.game.mobileControls.isLeftHanded;
+      leftHandToggle.addEventListener('change', (e) => {
+        this.game.mobileControls.setLeftHanded(e.target.checked);
+      });
+    }
+
+    setInterval(() => {
+      const debugText = document.getElementById('gyro-debug-text');
+      if (debugText && this.game.inputManager) {
+        const d = this.game.inputManager.getDebugStatus();
+        debugText.textContent = `Sensor: ${d.supported ? 'ACTIVE' : 'N/A'} • Pitch: ${d.beta}° • Roll: ${d.gamma}° • Yaw: ${d.alpha}° • Sens: ${d.sensitivity}x`;
+      }
+    }, 250);
+
     // 9. Sliders
     if (this.settingSens) {
       this.settingSens.addEventListener('input', (e) => {
@@ -744,15 +919,36 @@ export class GameStateManager {
   }
 
   gameOver(score, wave, kills = 0, headshots = 0, isWin = false, deaths = 1, damage = 0) {
-    this.showPostMatch({
-      score: score || 0,
-      kills: kills || 0,
-      deaths: deaths || 1,
-      headshots: headshots || 0,
-      damage: damage || ((kills || 0) * 115),
-      isWin: isWin,
-      modeLabel: typeof wave === 'string' ? wave : `WAVE ${wave || 1} SURVIVAL`
-    });
+    const goScore = document.getElementById('go-score');
+    const goWave = document.getElementById('go-wave');
+    const goKills = document.getElementById('go-kills');
+    const goHeadshots = document.getElementById('go-headshots');
+    const goAccuracy = document.getElementById('go-accuracy');
+
+    if (goScore) goScore.textContent = String(score || 0).padStart(6, '0');
+    if (goWave) goWave.textContent = typeof wave === 'string' ? wave : `WAVE ${String(wave || 1).padStart(2, '0')}`;
+    if (goKills) goKills.textContent = kills || 0;
+    if (goHeadshots) goHeadshots.textContent = headshots || 0;
+    if (goAccuracy) {
+      const shots = (kills * 3) + Math.floor(Math.random() * 6);
+      const acc = shots > 0 ? Math.min(100, Math.round(((kills + headshots) / Math.max(1, shots)) * 100)) : 68;
+      goAccuracy.textContent = `${acc}%`;
+    }
+
+    this.currentState = 'GAME_OVER';
+    if (document.exitPointerLock) document.exitPointerLock();
+    if (this.screenGameOver) this.screenGameOver.style.display = 'flex';
+    if (this.game.bgm) this.game.bgm.fadeIn(1000);
+
+    if (this.game.auth) {
+      this.game.auth.recordMatch({
+        kills: kills || 0,
+        deaths: deaths || 1,
+        headshots: headshots || 0,
+        damage: damage || ((kills || 0) * 115),
+        isWin: isWin
+      });
+    }
   }
 
   showPostMatch(results = {}) {

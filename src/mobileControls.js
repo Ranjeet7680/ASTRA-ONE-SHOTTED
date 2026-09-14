@@ -1,112 +1,99 @@
+// Professional AAA Mobile FPS Touch Controls for ASTRA: One Shotted
+// Clean Blueprint Aesthetic with Non-Overlapping Diamond Combat Cluster,
+// Left Movement Joystick + Quick Grenade Badge, Collapsible Tactical Drawer,
+// and Multi-Touch Pointer Events.
+
 export class MobileControls {
   constructor(player, weapons, game) {
     this.player = player;
     this.weapons = weapons;
     this.game = game;
+    this.inputManager = game.inputManager;
 
     this.isEnabled = false;
-    this.isEditingLayout = false;
-    this.selectedButtonId = null;
+    this.isHUDHidden = false;
+    this.isLeftHanded = localStorage.getItem('astra_left_handed') === 'true';
 
-    // Default Layout Configuration (percent-based for responsiveness)
-    this.defaultLayout = {
-      'btn-touch-fire': { x: 82, y: 68, size: 76, opacity: 0.85 },
-      'btn-touch-aim': { x: 70, y: 72, size: 62, opacity: 0.85 },
-      'btn-touch-jump': { x: 88, y: 48, size: 60, opacity: 0.85 },
-      'btn-touch-slide': { x: 84, y: 32, size: 58, opacity: 0.85 },
-      'btn-touch-reload': { x: 68, y: 54, size: 54, opacity: 0.85 },
-      'btn-touch-grenade': { x: 72, y: 36, size: 54, opacity: 0.85 },
-      'btn-touch-wep1': { x: 38, y: 90, size: 48, opacity: 0.8 },
-      'btn-touch-wep2': { x: 46, y: 90, size: 48, opacity: 0.8 },
-      'btn-touch-wep3': { x: 54, y: 90, size: 48, opacity: 0.8 },
-      'btn-touch-wep4': { x: 62, y: 90, size: 48, opacity: 0.8 },
-      'btn-touch-voice': { x: 70, y: 20, size: 52, opacity: 0.85 },
-      'btn-touch-inspect': { x: 80, y: 20, size: 52, opacity: 0.85 },
-      'btn-touch-dive': { x: 92, y: 32, size: 56, opacity: 0.85 }
-    };
-
-    this.layout = this.loadLayout();
-
-    // Joystick State
+    // Joystick Tracking
     this.joystick = {
       active: false,
-      touchId: null,
-      startX: 0,
-      startY: 0,
+      pointerId: null,
+      baseX: 0,
+      baseY: 0,
       currentX: 0,
       currentY: 0,
       vectorX: 0,
-      vectorY: 0,
-      maxRadius: 45
+      vectorZ: 0,
+      maxRadius: 50
     };
 
-    // Camera Look State
-    this.lookTouch = {
+    // Look Aim Tracking
+    this.lookPointer = {
       active: false,
-      touchId: null,
+      pointerId: null,
       lastX: 0,
       lastY: 0
     };
 
-    this.isHUDHidden = false;
-    this.buildMobileDOM();
-    this.bindTouchEvents();
-    this.setupOrientationAndFullscreen();
+    // Tactical Drawer state
+    this.isTacticalDrawerOpen = false;
 
-    // Auto-detect mobile device or touch support
+    this.buildMobileDOM();
+    this.bindPointerEvents();
+    this.setupOrientationWatcher();
+
+    // Auto-detect touch device
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       this.enable();
     }
   }
 
-  loadLayout() {
-    try {
-      const saved = localStorage.getItem('astra_mobile_hud_layout');
-      if (saved) {
-        return Object.assign({}, this.defaultLayout, JSON.parse(saved));
-      }
-    } catch (e) {
-      console.warn('Could not load saved HUD layout', e);
-    }
-    return JSON.parse(JSON.stringify(this.defaultLayout));
-  }
-
-  saveLayout() {
-    try {
-      localStorage.setItem('astra_mobile_hud_layout', JSON.stringify(this.layout));
-    } catch (e) {
-      console.warn('Could not save HUD layout', e);
-    }
-  }
-
-  resetDefaultLayout() {
-    this.layout = JSON.parse(JSON.stringify(this.defaultLayout));
-    this.applyLayout();
-    this.saveLayout();
-  }
-
   enable() {
     this.isEnabled = true;
-    if (this.mobileContainer) {
-      this.mobileContainer.style.display = 'block';
+    if (this.container) {
+      this.container.style.display = 'block';
     }
-    this.applyLayout();
+    this.applyHandedness();
   }
 
   disable() {
     this.isEnabled = false;
-    if (this.mobileContainer) {
-      this.mobileContainer.style.display = 'none';
+    if (this.container) {
+      this.container.style.display = 'none';
     }
   }
 
-  toggle() {
-    if (this.isEnabled) this.disable();
-    else this.enable();
+  setLeftHanded(isLeft) {
+    this.isLeftHanded = !!isLeft;
+    localStorage.setItem('astra_left_handed', this.isLeftHanded.toString());
+    this.applyHandedness();
+  }
+
+  applyHandedness() {
+    if (!this.joyContainer || !this.combatCluster) return;
+    if (this.isLeftHanded) {
+      this.joyContainer.style.left = 'auto';
+      this.joyContainer.style.right = 'calc(24px + env(safe-area-inset-right))';
+      this.combatCluster.style.right = 'auto';
+      this.combatCluster.style.left = 'calc(24px + env(safe-area-inset-left))';
+      if (this.tacticalDrawer) {
+        this.tacticalDrawer.style.right = 'auto';
+        this.tacticalDrawer.style.left = 'calc(10px + env(safe-area-inset-left))';
+      }
+    } else {
+      this.joyContainer.style.right = 'auto';
+      this.joyContainer.style.left = 'calc(24px + env(safe-area-inset-left))';
+      this.combatCluster.style.left = 'auto';
+      this.combatCluster.style.right = 'calc(24px + env(safe-area-inset-right))';
+      if (this.tacticalDrawer) {
+        this.tacticalDrawer.style.left = 'auto';
+        this.tacticalDrawer.style.right = 'calc(10px + env(safe-area-inset-right))';
+      }
+    }
   }
 
   buildMobileDOM() {
-    // Master container for mobile controls
+    // 1. Root Mobile Controls Layer
     const container = document.createElement('div');
     container.id = 'mobile-controls-layer';
     container.style.cssText = `
@@ -116,547 +103,504 @@ export class MobileControls {
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 25;
+      z-index: 28;
       display: none;
-    `;
-
-    // Left Touch Joystick Zone
-    const joyZone = document.createElement('div');
-    joyZone.id = 'touch-joystick-zone';
-    joyZone.style.cssText = `
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      width: 160px;
-      height: 160px;
-      pointer-events: auto;
-      border: 2px dashed rgba(22, 42, 104, 0.3);
-      border-radius: 50%;
+      user-select: none;
+      -webkit-user-select: none;
       touch-action: none;
     `;
+    document.body.appendChild(container);
+    this.container = container;
 
-    const joyBase = document.createElement('div');
-    joyBase.id = 'joystick-base';
-    joyBase.style.cssText = `
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      border: 2px solid #162a68;
-      background: rgba(248, 246, 240, 0.4);
-      pointer-events: none;
-    `;
-
-    const joyThumb = document.createElement('div');
-    joyThumb.id = 'joystick-thumb';
-    joyThumb.style.cssText = `
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: #162a68;
-      pointer-events: none;
-      transition: transform 0.04s ease-out;
-    `;
-
-    joyBase.appendChild(joyThumb);
-    joyZone.appendChild(joyBase);
-    container.appendChild(joyZone);
-    this.joyThumb = joyThumb;
-    this.joyZone = joyZone;
-
-    // Right Touch Look Zone
+    // 2. Fullscreen Look Touch Surface (captures aim dragging)
     const lookZone = document.createElement('div');
-    lookZone.id = 'touch-look-zone';
+    lookZone.id = 'mobile-look-surface';
     lookZone.style.cssText = `
       position: absolute;
       top: 0;
-      right: 0;
-      width: 55%;
-      height: 80%;
+      left: 0;
+      width: 100%;
+      height: 100%;
       pointer-events: auto;
       touch-action: none;
+      z-index: 1;
     `;
     container.appendChild(lookZone);
     this.lookZone = lookZone;
 
-    // Buttons definitions
-    const buttonDefs = [
-      { id: 'btn-touch-fire', label: 'FIRE', isPrimary: true },
-      { id: 'btn-touch-aim', label: 'ADS' },
-      { id: 'btn-touch-jump', label: 'JUMP' },
-      { id: 'btn-touch-slide', label: 'SLIDE' },
-      { id: 'btn-touch-reload', label: 'RLD' },
-      { id: 'btn-touch-grenade', label: 'NADE' },
-      { id: 'btn-touch-wep1', label: '1' },
-      { id: 'btn-touch-wep2', label: '2' },
-      { id: 'btn-touch-wep3', label: '3' },
-      { id: 'btn-touch-wep4', label: '4' },
-      { id: 'btn-touch-voice', label: 'RAD' },
-      { id: 'btn-touch-inspect', label: 'INSP' },
-      { id: 'btn-touch-dive', label: 'DIVE' }
-    ];
-
-    this.buttons = {};
-
-    buttonDefs.forEach(b => {
-      const btn = document.createElement('div');
-      btn.id = b.id;
-      btn.className = 'mobile-touch-btn' + (b.isPrimary ? ' primary' : '');
-      btn.textContent = b.label;
-      btn.style.cssText = `
-        position: absolute;
-        pointer-events: auto;
-        touch-action: none;
-        user-select: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Space Mono', monospace;
-        font-weight: 700;
-        border: 2px solid #162a68;
-        border-radius: 50%;
-        background: ${b.isPrimary ? 'rgba(201, 24, 43, 0.85)' : 'rgba(248, 246, 240, 0.85)'};
-        color: ${b.isPrimary ? '#faf8f2' : '#162a68'};
-        box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.3);
-        cursor: pointer;
-      `;
-      container.appendChild(btn);
-      this.buttons[b.id] = btn;
-    });
-
-    // Editor Floating Bar (visible during HUD Customizer mode)
-    const editorBar = document.createElement('div');
-    editorBar.id = 'hud-editor-bar';
-    editorBar.style.cssText = `
+    // 3. Left Movement Joystick Container
+    const joyContainer = document.createElement('div');
+    joyContainer.id = 'mobile-joy-container';
+    joyContainer.style.cssText = `
       position: absolute;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #faf8f2;
-      border: 2.5px solid #162a68;
-      box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.3);
-      padding: 10px 18px;
-      display: none;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      left: calc(24px + env(safe-area-inset-left));
+      width: 140px;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 14px;
-      pointer-events: auto;
-      z-index: 40;
-      font-size: 13px;
-      font-weight: 700;
+      justify-content: flex-end;
+      pointer-events: none;
+      z-index: 10;
     `;
-    editorBar.innerHTML = `
-      <span>DRAG BUTTONS TO REPOSITION</span>
-      <label>SIZE <input type="range" id="hud-edit-size" min="40" max="110" value="60"></label>
-      <label>OPACITY <input type="range" id="hud-edit-opacity" min="0.3" max="1" step="0.05" value="0.85"></label>
-      <button class="sketch-btn" id="hud-edit-reset" style="padding: 4px 10px; font-size: 12px;">RESET</button>
-      <button class="sketch-btn" id="hud-edit-save" style="padding: 4px 12px; font-size: 12px; background: #162a68; color: #fff;">SAVE & CLOSE</button>
-    `;
-    container.appendChild(editorBar);
-    this.editorBar = editorBar;
 
-    // HUD Visibility Toggle Button (Hide / Show controls)
-    const toggleBtn = document.createElement('div');
-    toggleBtn.id = 'btn-touch-hud-toggle';
-    toggleBtn.style.cssText = `
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      width: 72px;
-      height: 36px;
-      border-radius: 6px;
-      background: rgba(248, 246, 240, 0.9);
+    // Quick Grenade Button (docked directly above joystick)
+    const btnGrenade = document.createElement('div');
+    btnGrenade.id = 'btn-quick-grenade';
+    btnGrenade.className = 'blueprint-touch-btn';
+    btnGrenade.innerHTML = `<span style="font-size:10px; opacity:0.7;">G</span><span id="mobile-nade-num" style="font-size:14px; font-weight:700; margin-left:3px;">2</span>`;
+    btnGrenade.style.cssText = `
+      width: 50px;
+      height: 42px;
+      border-radius: 8px;
       border: 2px solid #162a68;
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      font-weight: 700;
+      background: rgba(248, 246, 240, 0.92);
       color: #162a68;
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      margin-bottom: 12px;
       pointer-events: auto;
-      z-index: 1000;
+      touch-action: none;
       box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.25);
+      cursor: pointer;
     `;
-    toggleBtn.innerHTML = '👁️ HIDE';
-    toggleBtn.addEventListener('touchstart', (e) => {
-      this.toggleHUDVisibility();
-      e.preventDefault();
-      e.stopPropagation();
-    });
-    toggleBtn.addEventListener('click', (e) => {
-      this.toggleHUDVisibility();
-      e.preventDefault();
-    });
-    container.appendChild(toggleBtn);
-    this.hudToggleBtn = toggleBtn;
+    joyContainer.appendChild(btnGrenade);
+    this.btnGrenade = btnGrenade;
 
-    document.body.appendChild(container);
-    this.mobileContainer = container;
+    // Outer Joystick Ring (130px)
+    const joyRing = document.createElement('div');
+    joyRing.id = 'mobile-joystick-ring';
+    joyRing.style.cssText = `
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      border: 2.5px solid #162a68;
+      background: rgba(248, 246, 240, 0.45);
+      backdrop-filter: blur(2px);
+      position: relative;
+      pointer-events: auto;
+      touch-action: none;
+      box-shadow: inset 0 0 12px rgba(22, 42, 104, 0.1);
+    `;
 
-    // Wire editor controls
-    document.getElementById('hud-edit-size').addEventListener('input', (e) => {
-      if (this.selectedButtonId && this.layout[this.selectedButtonId]) {
-        this.layout[this.selectedButtonId].size = parseInt(e.target.value);
-        this.applyLayout();
-      }
-    });
+    // Inner Thumb Stick (60px)
+    const joyThumb = document.createElement('div');
+    joyThumb.id = 'mobile-joystick-thumb';
+    joyThumb.style.cssText = `
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #162a68;
+      border: 2px solid #faf8f2;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 2px 6px rgba(22, 42, 104, 0.4);
+      transition: transform 0.04s ease-out;
+    `;
 
-    document.getElementById('hud-edit-opacity').addEventListener('input', (e) => {
-      if (this.selectedButtonId && this.layout[this.selectedButtonId]) {
-        this.layout[this.selectedButtonId].opacity = parseFloat(e.target.value);
-        this.applyLayout();
-      }
-    });
+    // Cross directional markings on joystick base
+    const crossHoriz = document.createElement('div');
+    crossHoriz.style.cssText = 'position:absolute;top:50%;left:15%;width:70%;height:1px;background:rgba(22,42,104,0.3);pointer-events:none;';
+    const crossVert = document.createElement('div');
+    crossVert.style.cssText = 'position:absolute;left:50%;top:15%;width:1px;height:70%;background:rgba(22,42,104,0.3);pointer-events:none;';
+    joyRing.appendChild(crossHoriz);
+    joyRing.appendChild(crossVert);
 
-    document.getElementById('hud-edit-reset').addEventListener('click', () => {
-      this.resetDefaultLayout();
-    });
+    joyRing.appendChild(joyThumb);
+    joyContainer.appendChild(joyRing);
+    container.appendChild(joyContainer);
+    this.joyContainer = joyContainer;
+    this.joyRing = joyRing;
+    this.joyThumb = joyThumb;
 
-    document.getElementById('hud-edit-save').addEventListener('click', () => {
-      this.saveLayout();
-      this.exitCustomizerMode();
-    });
-  }
+    // 4. Bottom-Right Diamond Combat Cluster
+    // Sized so that 100px Fire is surrounded by 76px action buttons with 12px margins
+    const combatCluster = document.createElement('div');
+    combatCluster.id = 'mobile-combat-cluster';
+    combatCluster.style.cssText = `
+      position: absolute;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      right: calc(24px + env(safe-area-inset-right));
+      width: 270px;
+      height: 270px;
+      pointer-events: none;
+      z-index: 15;
+    `;
 
-  toggleHUDVisibility() {
-    this.isHUDHidden = !this.isHUDHidden;
-    for (const [id, btn] of Object.entries(this.buttons)) {
-      btn.style.opacity = this.isHUDHidden ? '0.06' : `${this.layout[id].opacity}`;
-      btn.style.pointerEvents = this.isHUDHidden ? 'none' : 'auto';
-    }
-    if (this.joyZone) {
-      this.joyZone.style.opacity = this.isHUDHidden ? '0.1' : '1.0';
-    }
-    if (this.hudToggleBtn) {
-      this.hudToggleBtn.innerHTML = this.isHUDHidden ? '👁️ SHOW' : '👁️ HIDE';
-      this.hudToggleBtn.style.opacity = '0.9';
-    }
-  }
+    // Diamond Layout Buttons:
+    // Fire (Center, 100px)
+    const btnFire = this.createButton('btn-touch-fire', 'FIRE', 100, 85, 85, true);
+    // ADS (Top, 76px)
+    const btnAds = this.createButton('btn-touch-aim', 'ADS', 76, 97, 0, false);
+    // Jump (Right, 76px)
+    const btnJump = this.createButton('btn-touch-jump', 'JUMP', 76, 194, 97, false);
+    // Crouch / Slide (Bottom, 76px)
+    const btnCrouch = this.createButton('btn-touch-slide', 'CROUCH', 76, 97, 194, false);
+    // Reload (Left, 76px)
+    const btnReload = this.createButton('btn-touch-reload', 'RELOAD', 76, 0, 97, false);
 
-  setupOrientationAndFullscreen() {
-    const rotateOverlay = document.getElementById('mobile-rotate-overlay');
-    const btnFullscreen = document.getElementById('btn-request-mobile-fullscreen');
+    combatCluster.appendChild(btnFire);
+    combatCluster.appendChild(btnAds);
+    combatCluster.appendChild(btnJump);
+    combatCluster.appendChild(btnCrouch);
+    combatCluster.appendChild(btnReload);
+    container.appendChild(combatCluster);
+    this.combatCluster = combatCluster;
 
-    const checkOrientation = () => {
-      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      const isPortrait = window.innerHeight > window.innerWidth;
-
-      if (rotateOverlay) {
-        if (isTouch && isPortrait) {
-          rotateOverlay.style.display = 'flex';
-        } else {
-          rotateOverlay.style.display = 'none';
-        }
-      }
+    this.buttons = {
+      fire: btnFire,
+      ads: btnAds,
+      jump: btnJump,
+      crouch: btnCrouch,
+      reload: btnReload,
+      grenade: btnGrenade
     };
 
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
-    checkOrientation();
+    // 5. Collapsible Tactical Drawer (Right Edge)
+    const tacticalDrawer = document.createElement('div');
+    tacticalDrawer.id = 'mobile-tactical-drawer';
+    tacticalDrawer.style.cssText = `
+      position: absolute;
+      top: calc(75px + env(safe-area-inset-top));
+      right: calc(12px + env(safe-area-inset-right));
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      pointer-events: auto;
+      z-index: 20;
+    `;
 
-    if (btnFullscreen) {
-      btnFullscreen.addEventListener('click', () => {
-        if (this.player && this.player.requestFullscreen) {
-          this.player.requestFullscreen();
-        }
-        try {
-          if (screen.orientation && screen.orientation.lock) {
-            screen.orientation.lock('landscape').catch(() => {});
-          }
-        } catch (e) {}
-        setTimeout(checkOrientation, 300);
+    const toggleTab = document.createElement('button');
+    toggleTab.id = 'btn-tactical-toggle';
+    toggleTab.className = 'sketch-btn';
+    toggleTab.innerHTML = `☰ TAC`;
+    toggleTab.style.cssText = `
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(248, 246, 240, 0.9);
+      border: 2px solid #162a68;
+      color: #162a68;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 2px 2px 0px rgba(22,42,104,0.3);
+    `;
+
+    const drawerBody = document.createElement('div');
+    drawerBody.id = 'tactical-drawer-body';
+    drawerBody.style.cssText = `
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(248, 246, 240, 0.95);
+      border: 2px solid #162a68;
+      padding: 8px;
+      border-radius: 8px;
+      box-shadow: 3px 3px 0px rgba(22,42,104,0.3);
+      backdrop-filter: blur(4px);
+    `;
+
+    const subButtons = [
+      { id: 'btn-tactical-map', label: '🗺 MAP', action: () => this.toggleMap() },
+      { id: 'btn-tactical-radio', label: '📻 RADIO', action: () => this.toggleRadio() },
+      { id: 'btn-tactical-insp', label: '🔍 INSP', action: () => this.player.inspectWeapon() },
+      { id: 'btn-tactical-dive', label: '🕊 DIVE', action: () => this.player.tryDive() },
+      { id: 'btn-tactical-hud', label: '👁 HUD', action: () => this.toggleHUDHide() }
+    ];
+
+    subButtons.forEach(sb => {
+      const b = document.createElement('button');
+      b.id = sb.id;
+      b.className = 'sketch-btn';
+      b.textContent = sb.label;
+      b.style.cssText = `
+        padding: 5px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        text-align: left;
+        background: #faf8f2;
+        border: 1.5px solid #162a68;
+        color: #162a68;
+        cursor: pointer;
+      `;
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sb.action();
       });
-    }
+      drawerBody.appendChild(b);
+    });
+
+    toggleTab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.isTacticalDrawerOpen = !this.isTacticalDrawerOpen;
+      drawerBody.style.display = this.isTacticalDrawerOpen ? 'flex' : 'none';
+      toggleTab.innerHTML = this.isTacticalDrawerOpen ? '✕ CLOSE' : '☰ TAC';
+    });
+
+    tacticalDrawer.appendChild(toggleTab);
+    tacticalDrawer.appendChild(drawerBody);
+    container.appendChild(tacticalDrawer);
+    this.tacticalDrawer = tacticalDrawer;
+    this.drawerBody = drawerBody;
+    this.toggleTab = toggleTab;
   }
 
-  applyLayout() {
-    for (const [id, cfg] of Object.entries(this.layout)) {
-      const btn = this.buttons[id];
-      if (btn) {
-        btn.style.left = `${cfg.x}%`;
-        btn.style.top = `${cfg.y}%`;
-        btn.style.width = `${cfg.size}px`;
-        btn.style.height = `${cfg.size}px`;
-        btn.style.opacity = `${cfg.opacity}`;
-        btn.style.fontSize = `${Math.max(10, cfg.size * 0.22)}px`;
-      }
-    }
+  createButton(id, label, size, left, top, isPrimary = false) {
+    const btn = document.createElement('div');
+    btn.id = id;
+    btn.className = 'blueprint-touch-btn' + (isPrimary ? ' primary' : '');
+    btn.textContent = label;
+    btn.style.cssText = `
+      position: absolute;
+      left: ${left}px;
+      top: ${top}px;
+      width: ${size}px;
+      height: ${size}px;
+      border-radius: 50%;
+      border: ${isPrimary ? '3px solid #c9182b' : '2px solid #162a68'};
+      background: ${isPrimary ? 'rgba(201, 24, 43, 0.92)' : 'rgba(248, 246, 240, 0.9)'};
+      color: ${isPrimary ? '#faf8f2' : '#162a68'};
+      font-family: 'Space Mono', monospace;
+      font-size: ${size >= 90 ? '14px' : '11px'};
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      touch-action: none;
+      box-shadow: 2px 2px 0px ${isPrimary ? 'rgba(201,24,43,0.3)' : 'rgba(22,42,104,0.25)'};
+      cursor: pointer;
+      transition: transform 0.08s ease, background 0.08s ease;
+    `;
+    return btn;
   }
 
-  enterCustomizerMode() {
-    this.isEditingLayout = true;
-    this.enable();
-    if (this.editorBar) this.editorBar.style.display = 'flex';
-
-    // Highlight all buttons with dashed editor outlines
-    for (const btn of Object.values(this.buttons)) {
-      btn.style.outline = '2px dashed #c9182b';
-    }
-  }
-
-  exitCustomizerMode() {
-    this.isEditingLayout = false;
-    if (this.editorBar) this.editorBar.style.display = 'none';
-
-    for (const btn of Object.values(this.buttons)) {
-      btn.style.outline = 'none';
-    }
-    this.selectedButtonId = null;
-
-    if (this.onExitCustomizer) {
-      this.onExitCustomizer();
-    }
-  }
-
-  bindTouchEvents() {
-    // 1. Virtual Joystick
-    this.joyZone.addEventListener('touchstart', (e) => {
-      if (this.isEditingLayout) return;
-      const touch = e.changedTouches[0];
+  bindPointerEvents() {
+    // 1. Joystick Pointer Handling
+    this.joyRing.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      this.joyRing.setPointerCapture(e.pointerId);
       this.joystick.active = true;
-      this.joystick.touchId = touch.identifier;
-      const rect = this.joyZone.getBoundingClientRect();
-      this.joystick.startX = rect.left + rect.width / 2;
-      this.joystick.startY = rect.top + rect.height / 2;
-      this.updateJoystick(touch.clientX, touch.clientY);
-      e.preventDefault();
-    }, { passive: false });
+      this.joystick.pointerId = e.pointerId;
 
-    window.addEventListener('touchmove', (e) => {
-      if (!this.joystick.active) return;
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        const touch = e.changedTouches[i];
-        if (touch.identifier === this.joystick.touchId) {
-          this.updateJoystick(touch.clientX, touch.clientY);
-          e.preventDefault();
-          break;
-        }
-      }
-    }, { passive: false });
+      const rect = this.joyRing.getBoundingClientRect();
+      this.joystick.baseX = rect.left + rect.width / 2;
+      this.joystick.baseY = rect.top + rect.height / 2;
+      this.updateJoystickPosition(e.clientX, e.clientY);
+    });
+
+    this.joyRing.addEventListener('pointermove', (e) => {
+      if (!this.joystick.active || e.pointerId !== this.joystick.pointerId) return;
+      this.updateJoystickPosition(e.clientX, e.clientY);
+    });
 
     const endJoy = (e) => {
-      if (!this.joystick.active) return;
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === this.joystick.touchId) {
-          this.joystick.active = false;
-          this.joystick.vectorX = 0;
-          this.joystick.vectorY = 0;
-          this.joyThumb.style.transform = 'translate(-50%, -50%)';
-          this.player.keys.forward = false;
-          this.player.keys.backward = false;
-          this.player.keys.left = false;
-          this.player.keys.right = false;
-          this.player.keys.sprint = false;
-          break;
+      if (e.pointerId === this.joystick.pointerId) {
+        this.joystick.active = false;
+        this.joystick.pointerId = null;
+        this.joystick.vectorX = 0;
+        this.joystick.vectorZ = 0;
+        this.joyThumb.style.transform = `translate(-50%, -50%)`;
+        if (this.inputManager) {
+          this.inputManager.setMoveVector(0, 0);
         }
+        this.player.keys.forward = false;
+        this.player.keys.backward = false;
+        this.player.keys.left = false;
+        this.player.keys.right = false;
       }
     };
-    window.addEventListener('touchend', endJoy);
-    window.addEventListener('touchcancel', endJoy);
 
-    // 2. Camera Look Touch Zone
-    this.lookZone.addEventListener('touchstart', (e) => {
-      if (this.isEditingLayout) return;
-      const touch = e.changedTouches[0];
-      this.lookTouch.active = true;
-      this.lookTouch.touchId = touch.identifier;
-      this.lookTouch.lastX = touch.clientX;
-      this.lookTouch.lastY = touch.clientY;
-      e.preventDefault();
-    }, { passive: false });
+    this.joyRing.addEventListener('pointerup', endJoy);
+    this.joyRing.addEventListener('pointercancel', endJoy);
 
-    window.addEventListener('touchmove', (e) => {
-      if (!this.lookTouch.active) return;
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        const touch = e.changedTouches[i];
-        if (touch.identifier === this.lookTouch.touchId) {
-          const dx = touch.clientX - this.lookTouch.lastX;
-          const dy = touch.clientY - this.lookTouch.lastY;
-          this.lookTouch.lastX = touch.clientX;
-          this.lookTouch.lastY = touch.clientY;
+    // 2. Look Drag Pointer Handling (Aiming)
+    this.lookZone.addEventListener('pointerdown', (e) => {
+      if (this.lookPointer.active) return;
+      this.lookPointer.active = true;
+      this.lookPointer.pointerId = e.pointerId;
+      this.lookPointer.lastX = e.clientX;
+      this.lookPointer.lastY = e.clientY;
+      this.lookZone.setPointerCapture(e.pointerId);
+    });
 
-          const factor = 0.0035 * this.player.mouseSensitivity;
-          this.player.yaw -= dx * factor;
-          this.player.pitch -= dy * factor;
-          this.player.lastLookDeltaX = (this.player.lastLookDeltaX || 0) + dx;
-          this.player.lastLookDeltaY = (this.player.lastLookDeltaY || 0) + dy;
-          const maxPitch = Math.PI / 2 - 0.08;
-          this.player.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.player.pitch));
-          e.preventDefault();
-          break;
-        }
+    this.lookZone.addEventListener('pointermove', (e) => {
+      if (!this.lookPointer.active || e.pointerId !== this.lookPointer.pointerId) return;
+      const dx = e.clientX - this.lookPointer.lastX;
+      const dy = e.clientY - this.lookPointer.lastY;
+      this.lookPointer.lastX = e.clientX;
+      this.lookPointer.lastY = e.clientY;
+
+      const factor = 0.0032 * this.player.mouseSensitivity;
+      if (this.inputManager) {
+        this.inputManager.addLookDelta(dx * factor, dy * factor);
+      } else {
+        this.player.yaw -= dx * factor;
+        this.player.pitch -= dy * factor;
+        this.player.pitch = Math.max(-1.48, Math.min(1.48, this.player.pitch));
       }
-    }, { passive: false });
+    });
 
     const endLook = (e) => {
-      if (!this.lookTouch.active) return;
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === this.lookTouch.touchId) {
-          this.lookTouch.active = false;
-          break;
-        }
+      if (e.pointerId === this.lookPointer.pointerId) {
+        this.lookPointer.active = false;
+        this.lookPointer.pointerId = null;
       }
     };
-    window.addEventListener('touchend', endLook);
-    window.addEventListener('touchcancel', endLook);
 
-    // 3. Action Buttons & Customizer Dragging
-    for (const [id, btn] of Object.entries(this.buttons)) {
-      let isDragging = false;
-      let dragTouchId = null;
+    this.lookZone.addEventListener('pointerup', endLook);
+    this.lookZone.addEventListener('pointercancel', endLook);
 
-      btn.addEventListener('touchstart', (e) => {
-        const touch = e.changedTouches[0];
+    // 3. Combat Buttons Multi-Touch Handling
+    // Fire
+    this.setupButtonTouch(this.buttons.fire, () => {
+      this.player.isShooting = true;
+      if (this.game.attemptShoot) this.game.attemptShoot();
+    }, () => {
+      this.player.isShooting = false;
+    });
 
-        if (this.isEditingLayout) {
-          // Customizer drag mode
-          isDragging = true;
-          dragTouchId = touch.identifier;
-          this.selectedButtonId = id;
-          document.getElementById('hud-edit-size').value = this.layout[id].size;
-          document.getElementById('hud-edit-opacity').value = this.layout[id].opacity;
-          btn.style.outline = '3px solid #162a68';
-          e.preventDefault();
-          return;
-        }
+    // ADS
+    this.setupButtonTouch(this.buttons.ads, () => {
+      this.player.isAiming = !this.player.isAiming;
+      if (this.player.onAimChange) this.player.onAimChange(this.player.isAiming);
+      this.buttons.ads.style.background = this.player.isAiming ? '#162a68' : 'rgba(248, 246, 240, 0.9)';
+      this.buttons.ads.style.color = this.player.isAiming ? '#faf8f2' : '#162a68';
+    });
 
-        // Gameplay actions
-        btn.style.transform = 'scale(0.92)';
-        this.triggerButtonAction(id, true);
-        e.preventDefault();
-      }, { passive: false });
-
-      btn.addEventListener('touchend', (e) => {
-        if (this.isEditingLayout) {
-          isDragging = false;
-          return;
-        }
-        btn.style.transform = 'scale(1.0)';
-        this.triggerButtonAction(id, false);
-        e.preventDefault();
-      }, { passive: false });
-
-      window.addEventListener('touchmove', (e) => {
-        if (!this.isEditingLayout || !isDragging) return;
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          const touch = e.changedTouches[i];
-          if (touch.identifier === dragTouchId) {
-            const pctX = (touch.clientX / window.innerWidth) * 100;
-            const pctY = (touch.clientY / window.innerHeight) * 100;
-            this.layout[id].x = Math.round(Math.max(2, Math.min(95, pctX)));
-            this.layout[id].y = Math.round(Math.max(2, Math.min(95, pctY)));
-            btn.style.left = `${this.layout[id].x}%`;
-            btn.style.top = `${this.layout[id].y}%`;
-            e.preventDefault();
-            break;
-          }
-        }
-      }, { passive: false });
-    }
-  }
-
-  updateJoystick(clientX, clientY) {
-    let dx = clientX - this.joystick.startX;
-    let dy = clientY - this.joystick.startY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-
-    if (dist > this.joystick.maxRadius) {
-      dx = (dx / dist) * this.joystick.maxRadius;
-      dy = (dy / dist) * this.joystick.maxRadius;
-    }
-
-    this.joystick.vectorX = dx / this.joystick.maxRadius;
-    this.joystick.vectorY = dy / this.joystick.maxRadius;
-
-    this.joyThumb.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
-
-    // Map to player keys
-    this.player.keys.forward = this.joystick.vectorY < -0.3;
-    this.player.keys.backward = this.joystick.vectorY > 0.3;
-    this.player.keys.left = this.joystick.vectorX < -0.3;
-    this.player.keys.right = this.joystick.vectorX > 0.3;
-
-    // COD Omnimovement: Push past 80% deflection in ANY direction to trigger omnidirectional sprint
-    const deflection = dist / this.joystick.maxRadius;
-    if (deflection > 0.80) {
-      this.player.keys.sprint = true;
-    } else {
-      this.player.keys.sprint = false;
-    }
-  }
-
-  triggerButtonAction(btnId, isDown) {
-    switch (btnId) {
-      case 'btn-touch-fire':
-        this.player.isShooting = isDown;
-        if (isDown && this.player.onShootStart) this.player.onShootStart();
-        if (!isDown && this.player.onShootEnd) this.player.onShootEnd();
-        break;
-
-      case 'btn-touch-aim':
-        if (isDown) {
-          this.player.isAiming = !this.player.isAiming;
-          if (this.player.onAimChange) this.player.onAimChange(this.player.isAiming);
-        }
-        break;
-
-      case 'btn-touch-jump':
-        this.player.keys.jump = isDown;
-        if (isDown && this.player.isGrounded) {
+    // Jump
+    this.setupButtonTouch(this.buttons.jump, () => {
+      if (this.player.isSliding || this.player.isDiving) {
+        this.player.cancelSlide();
+        this.player.isDiving = false;
+      }
+      if (this.player.isGrounded && !this.player.keys.crouch) {
+        if (!this.player.tryMantle()) {
           this.player.velocity.y = this.player.jumpForce;
           this.player.isGrounded = false;
         }
-        break;
+      }
+    });
 
-      case 'btn-touch-slide':
-        this.player.keys.crouch = isDown;
-        if (isDown) {
-          this.player.trySlide();
-        }
-        break;
+    // Crouch / Slide
+    this.setupButtonTouch(this.buttons.crouch, () => {
+      this.player.keys.crouch = !this.player.keys.crouch;
+      if (this.player.keys.crouch && (this.player.keys.sprint || this.player.isTacSprinting)) {
+        this.player.trySlide();
+      }
+      this.buttons.crouch.style.background = this.player.keys.crouch ? '#162a68' : 'rgba(248, 246, 240, 0.9)';
+      this.buttons.crouch.style.color = this.player.keys.crouch ? '#faf8f2' : '#162a68';
+    });
 
-      case 'btn-touch-dive':
-        if (isDown && this.player) {
-          this.player.tryDive();
-        }
-        break;
+    // Reload
+    this.setupButtonTouch(this.buttons.reload, () => {
+      if (this.player.onReloadRequested) this.player.onReloadRequested();
+    });
 
-      case 'btn-touch-reload':
-        if (isDown && this.player.onReloadRequested) {
-          this.player.onReloadRequested();
-        }
-        break;
+    // Grenade
+    this.setupButtonTouch(this.buttons.grenade, () => {
+      if (this.player.onGrenadeRequested) this.player.onGrenadeRequested();
+    });
+  }
 
-      case 'btn-touch-grenade':
-        if (isDown && this.player.onGrenadeRequested) {
-          this.player.onGrenadeRequested();
-        }
-        break;
+  setupButtonTouch(el, onPress, onRelease = null) {
+    el.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      el.style.transform = 'scale(0.92)';
+      if (onPress) onPress();
+    });
 
-      case 'btn-touch-wep1': if (isDown) this.weapons.switchWeapon(0); break;
-      case 'btn-touch-wep2': if (isDown) this.weapons.switchWeapon(1); break;
-      case 'btn-touch-wep3': if (isDown) this.weapons.switchWeapon(2); break;
-      case 'btn-touch-wep4': if (isDown) this.weapons.switchWeapon(3); break;
+    const release = (e) => {
+      el.style.transform = 'scale(1.0)';
+      if (onRelease) onRelease();
+    };
 
-      case 'btn-touch-voice':
-        if (isDown && this.game && this.game.voiceChat) {
-          this.game.voiceChat.toggleWheel();
-        }
-        break;
+    el.addEventListener('pointerup', release);
+    el.addEventListener('pointercancel', release);
+  }
 
-      case 'btn-touch-inspect':
-        if (isDown && this.player) {
-          this.player.inspectWeapon();
-        }
-        break;
+  updateJoystickPosition(clientX, clientY) {
+    const dx = clientX - this.joystick.baseX;
+    const dy = clientY - this.joystick.baseY;
+    const dist = Math.hypot(dx, dy);
+    const clampedDist = Math.min(dist, this.joystick.maxRadius);
+    const angle = Math.atan2(dy, dx);
+
+    const thumbX = Math.cos(angle) * clampedDist;
+    const thumbY = Math.sin(angle) * clampedDist;
+
+    this.joyThumb.style.transform = `translate(calc(-50% + ${thumbX}px), calc(-50% + ${thumbY}px))`;
+
+    // Normalize to -1.0 .. +1.0
+    const normX = thumbX / this.joystick.maxRadius;
+    const normY = thumbY / this.joystick.maxRadius;
+
+    this.joystick.vectorX = normX;
+    this.joystick.vectorZ = normY;
+
+    if (this.inputManager) {
+      this.inputManager.setMoveVector(normX, normY);
     }
+
+    // Also fallback to WASD key states for backward compatibility
+    this.player.keys.forward = normY < -0.3;
+    this.player.keys.backward = normY > 0.3;
+    this.player.keys.left = normX < -0.3;
+    this.player.keys.right = normX > 0.3;
+    this.player.keys.sprint = dist >= this.joystick.maxRadius * 0.95;
+  }
+
+  updateGrenades(count) {
+    const nadeNum = document.getElementById('mobile-nade-num');
+    if (nadeNum) nadeNum.textContent = count;
+  }
+
+  toggleMap() {
+    if (this.game.minimap) {
+      this.game.minimap.toggleMapMode();
+    }
+  }
+
+  toggleRadio() {
+    if (this.game.voiceChat) {
+      this.game.voiceChat.showRadioWheel();
+    }
+  }
+
+  toggleHUDHide() {
+    this.isHUDHidden = !this.isHUDHidden;
+    const hudContainer = document.getElementById('hud-container');
+    if (hudContainer) {
+      hudContainer.style.opacity = this.isHUDHidden ? '0' : '1';
+      hudContainer.style.pointerEvents = this.isHUDHidden ? 'none' : 'auto';
+    }
+    if (this.combatCluster) {
+      this.combatCluster.style.opacity = this.isHUDHidden ? '0.15' : '1';
+    }
+    if (this.joyContainer) {
+      this.joyContainer.style.opacity = this.isHUDHidden ? '0.15' : '1';
+    }
+  }
+
+  setupOrientationWatcher() {
+    const checkOrientation = () => {
+      const overlay = document.getElementById('mobile-rotate-overlay');
+      if (!overlay) return;
+      if (window.innerWidth < window.innerHeight) {
+        overlay.style.display = 'flex';
+      } else {
+        overlay.style.display = 'none';
+      }
+    };
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    checkOrientation();
   }
 }
