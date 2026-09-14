@@ -55,6 +55,7 @@ export class GameStateManager {
       mapSize: 'small',
       squadSize: 4,
       teamPreference: 'auto',
+      difficulty: 'medium',
       title: 'TDM 4v4 (SQUAD): COURTYARD BLITZ'
     };
     this.mmTimers = [];
@@ -199,8 +200,23 @@ export class GameStateManager {
     if (this.lobbyModeTitle) {
       this.lobbyModeTitle.textContent = this.selectedModeConfig.title;
     }
+    const diffBadge = document.getElementById('lobby-mode-diff-badge');
+    if (diffBadge) {
+      const d = (this.selectedModeConfig.difficulty || 'medium').toUpperCase();
+      diffBadge.textContent = d === 'EASY' ? 'RECRUIT' : (d === 'HARD' ? 'VETERAN' : 'REGULAR');
+      diffBadge.style.background = d === 'EASY' ? '#28a745' : (d === 'HARD' ? '#c9182b' : '#162a68');
+    }
 
-    // Show 3D character dais and frame camera
+    // Hide game map level meshes so arena props (like city bus) never occlude lobby
+    if (this.game.level && this.game.level.group) {
+      this.game.level.group.visible = false;
+    }
+
+    // Hide in-game killstreak status HUD while in lobby
+    const streakHud = document.getElementById('cod-streak-hud');
+    if (streakHud) streakHud.style.display = 'none';
+
+    // Show 3D character dais and frame camera directly at operator
     if (this.game.lobby) {
       this.game.lobby.show();
     }
@@ -208,8 +224,8 @@ export class GameStateManager {
       this.game.bgm.fadeIn(1000);
       this.game.bgm.updateUI();
     }
-    this.game.camera.position.set(0, 1.4, 0);
-    this.game.camera.rotation.set(0, 0, 0);
+    this.game.camera.position.set(0, 1.25, -0.6);
+    this.game.camera.lookAt(0, 1.05, -4);
 
     if (this.screenPubgLobby) {
       this.screenPubgLobby.style.display = 'block';
@@ -472,6 +488,18 @@ export class GameStateManager {
       }
     });
 
+    // Difficulty Selector Pills (Easy, Medium, Hard)
+    ['easy', 'medium', 'hard'].forEach((diff) => {
+      const btn = document.getElementById(`btn-sel-diff-${diff}`);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          this.game.soundEngine.playUIClick();
+          this.selectedModeConfig.difficulty = diff;
+          this.updateModeSelectUI();
+        });
+      }
+    });
+
     // Matchmaking Cancel Button
     const btnCancelMM = document.getElementById('btn-cancel-matchmaking');
     if (btnCancelMM) {
@@ -716,6 +744,109 @@ export class GameStateManager {
       }
     });
 
+    // Lobby Fullscreen & Orientation Lock
+    const btnLobbyFs = document.getElementById('btn-lobby-fullscreen');
+    if (btnLobbyFs) {
+      btnLobbyFs.addEventListener('click', () => {
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        if (!document.fullscreenElement) {
+          if (this.game.mobileControls) this.game.mobileControls.requestLandscapeFullscreen();
+          else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+        }
+      });
+    }
+
+    // Lobby Quick Weapon Arsenal Pills
+    const wepStats = {
+      0: 'PISTOL • 38 DMG',
+      1: 'SHOTGUN • 144 DMG',
+      2: 'RIFLE • 24 DMG',
+      3: 'SNIPER • 130 DMG'
+    };
+    const wepPills = document.querySelectorAll('.lobby-wep-pill');
+    const wepStatEl = document.getElementById('lobby-quick-wep-stat');
+    wepPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const wepIdx = parseInt(pill.dataset.wep);
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        wepPills.forEach(p => {
+          p.style.background = 'transparent';
+          p.style.color = '#162a68';
+        });
+        pill.style.background = '#162a68';
+        pill.style.color = '#fff';
+        if (this.game.lobby) {
+          this.game.lobby.setEquippedWeapon(wepIdx);
+        }
+        if (this.game.weapons) {
+          this.game.weapons.switchWeapon(wepIdx);
+        }
+        if (wepStatEl && wepStats[wepIdx]) {
+          wepStatEl.textContent = wepStats[wepIdx];
+        }
+      });
+    });
+
+    // Lobby Camera View Modes
+    const camBtns = document.querySelectorAll('.lobby-cam-btn');
+    camBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const camMode = btn.dataset.cam;
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        camBtns.forEach(b => {
+          b.style.background = 'transparent';
+          b.style.color = '#162a68';
+        });
+        btn.style.background = '#162a68';
+        btn.style.color = '#fff';
+        if (this.game.lobby) {
+          this.game.lobby.setCameraPreset(camMode);
+        }
+      });
+    });
+
+    // Lobby Emotes & Actions Bar
+    const emoteBtns = document.querySelectorAll('.lobby-emote-btn');
+    emoteBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const emote = btn.dataset.emote;
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        if (this.game.lobby) {
+          this.game.lobby.playEmote(emote);
+        }
+        if (emote === 'taunt' && this.game.voiceChat) {
+          this.game.voiceChat.triggerCallout('enemies');
+        }
+      });
+    });
+
+    // BGM Tracks Selection Popup
+    const btnBgmList = document.getElementById('bgm-btn-list');
+    const bgmMenu = document.getElementById('lobby-bgm-tracks-menu');
+    if (btnBgmList && bgmMenu) {
+      btnBgmList.addEventListener('click', (e) => {
+        e.stopPropagation();
+        bgmMenu.style.display = bgmMenu.style.display === 'none' ? 'block' : 'none';
+      });
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#lobby-bgm-widget') && !e.target.closest('#lobby-bgm-tracks-menu')) {
+          bgmMenu.style.display = 'none';
+        }
+      });
+      const trackItems = bgmMenu.querySelectorAll('.bgm-track-item');
+      trackItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const idx = parseInt(item.dataset.idx);
+          if (this.game.bgm) {
+            this.game.bgm.playTrack(idx);
+          }
+          bgmMenu.style.display = 'none';
+        });
+      });
+    }
+
     // Gyroscope Settings Listeners
     const gyroToggle = document.getElementById('setting-gyro-toggle');
     if (gyroToggle && this.game.inputManager) {
@@ -887,16 +1018,24 @@ export class GameStateManager {
     if (this.modalPostMatch) this.modalPostMatch.style.display = 'none';
     if (this.game.lobby) this.game.lobby.hide();
 
+    // Show game map level and in-game killstreak status HUD
+    if (this.game.level && this.game.level.group) {
+      this.game.level.group.visible = true;
+    }
+    const streakHud = document.getElementById('cod-streak-hud');
+    if (streakHud) streakHud.style.display = 'block';
+
     // Automatic Fullscreen Request
     if (this.game.player) {
       this.game.player.requestFullscreen();
     }
 
-    // Configure game mode and map from selectedModeConfig
+    // Configure game mode, difficulty, and map from selectedModeConfig
     const mode = this.selectedModeConfig.mode === 'wave' ? 'wave' : 'tdm';
     const teamSize = this.selectedModeConfig.teamSize || 4;
     const mapSize = this.selectedModeConfig.mapSize || 'city';
-    this.game.startMode(mode, teamSize, mapSize);
+    const difficulty = this.selectedModeConfig.difficulty || 'medium';
+    this.game.startMode(mode, teamSize, mapSize, difficulty);
 
     this.game.hud.show();
     this.game.domElement.requestPointerLock();
@@ -1194,6 +1333,18 @@ export class GameStateManager {
       }
     });
 
+    // 5. Highlight active Difficulty pill
+    ['easy', 'medium', 'hard'].forEach(diff => {
+      const el = document.getElementById(`btn-sel-diff-${diff}`);
+      if (el) {
+        if (this.selectedModeConfig.difficulty === diff) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      }
+    });
+
     this.applySelectedModeConfig();
   }
 
@@ -1227,6 +1378,13 @@ export class GameStateManager {
 
     if (this.lobbyModeTitle) {
       this.lobbyModeTitle.textContent = this.selectedModeConfig.title;
+    }
+
+    const diffBadge = document.getElementById('lobby-mode-diff-badge');
+    if (diffBadge) {
+      const d = (this.selectedModeConfig.difficulty || 'medium').toUpperCase();
+      diffBadge.textContent = d === 'EASY' ? 'RECRUIT' : (d === 'HARD' ? 'VETERAN' : 'REGULAR');
+      diffBadge.style.background = d === 'EASY' ? '#28a745' : (d === 'HARD' ? '#c9182b' : '#162a68');
     }
   }
 
@@ -1389,7 +1547,8 @@ export class GameStateManager {
               this.game.startMode(
                 this.selectedModeConfig.mode,
                 this.selectedModeConfig.teamSize,
-                this.selectedModeConfig.mapSize
+                this.selectedModeConfig.mapSize,
+                this.selectedModeConfig.difficulty || 'medium'
               );
               this.startGame();
             }, 500);

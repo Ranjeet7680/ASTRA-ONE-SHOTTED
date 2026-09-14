@@ -145,11 +145,24 @@ export class MobileControls {
       z-index: 10;
     `;
 
-    // Quick Grenade Button (docked directly above joystick)
+    // Quick Grenade Button (docked directly above joystick) - Icon Only
     const btnGrenade = document.createElement('div');
     btnGrenade.id = 'btn-quick-grenade';
     btnGrenade.className = 'blueprint-touch-btn';
-    btnGrenade.innerHTML = `<span style="font-size:10px; opacity:0.7;">G</span><span id="mobile-nade-num" style="font-size:14px; font-weight:700; margin-left:3px;">2</span>`;
+    btnGrenade.innerHTML = `
+      <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+        <svg viewBox="0 0 28 28" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 4 L16 4"/>
+          <circle cx="8" cy="6" r="3"/>
+          <path d="M14 4 L14 7"/>
+          <ellipse cx="14" cy="17" rx="7" ry="8" fill="rgba(22,42,104,0.08)"/>
+          <line x1="14" y1="9" x2="14" y2="25"/>
+          <line x1="8" y1="14" x2="20" y2="14"/>
+          <line x1="8" y1="20" x2="20" y2="20"/>
+        </svg>
+        <span id="mobile-nade-num" style="position: absolute; top: -4px; right: -2px; font-size: 11px; font-weight: 700; background: #c9182b; color: #faf8f2; padding: 1px 5px; border-radius: 9px; border: 1.5px solid #162a68; line-height: 1.1;">2</span>
+      </div>
+    `;
     btnGrenade.style.cssText = `
       width: 50px;
       height: 42px;
@@ -232,17 +245,71 @@ export class MobileControls {
       z-index: 15;
     `;
 
-    // Diamond Layout Buttons:
+    // Vector Blueprint SVG Icons (ICON ONLY - Zero Text!)
+    const fireSvg = `
+      <svg viewBox="0 0 36 36" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 5 L22 13 L22 28 L14 28 L14 13 Z" fill="rgba(255,255,255,0.2)"/>
+        <line x1="14" y1="24" x2="22" y2="24"/>
+        <line x1="14" y1="28" x2="22" y2="28" stroke-width="2.8"/>
+        <line x1="18" y1="1" x2="18" y2="3"/>
+        <line x1="11" y1="5" x2="13" y2="7"/>
+        <line x1="25" y1="5" x2="23" y2="7"/>
+        <line x1="8" y1="12" x2="11" y2="13"/>
+        <line x1="28" y1="12" x2="25" y2="13"/>
+        <line x1="11" y1="20" x2="8" y2="24"/>
+        <line x1="25" y1="20" x2="28" y2="24"/>
+      </svg>
+    `;
+
+    const adsSvg = `
+      <svg viewBox="0 0 32 32" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="16" cy="16" r="12" stroke-width="1.8"/>
+        <circle cx="16" cy="16" r="5" stroke-dasharray="2 2" stroke-width="1.4"/>
+        <circle cx="16" cy="16" r="1.6" fill="currentColor"/>
+        <line x1="16" y1="2" x2="16" y2="9"/>
+        <line x1="16" y1="23" x2="16" y2="30"/>
+        <line x1="2" y1="16" x2="9" y2="16"/>
+        <line x1="23" y1="16" x2="30" y2="16"/>
+      </svg>
+    `;
+
+    const jumpSvg = `
+      <svg viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 17 L16 9 L24 17"/>
+        <path d="M10 23 L16 17 L22 23"/>
+        <line x1="9" y1="28" x2="23" y2="28" stroke-width="2"/>
+      </svg>
+    `;
+
+    const crouchSvg = `
+      <svg viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 10 L16 19 L25 10"/>
+        <path d="M9 16 L16 23 L23 16"/>
+        <line x1="7" y1="27" x2="25" y2="27" stroke-width="2" stroke-dasharray="4 2"/>
+      </svg>
+    `;
+
+    const reloadSvg = `
+      <svg viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M26 13 A11 11 0 1 0 25 21"/>
+        <polyline points="22 13 26 13 26 9"/>
+        <rect x="13.5" y="10" width="5" height="12" rx="1" fill="currentColor" opacity="0.25"/>
+        <line x1="13.5" y1="14" x2="18.5" y2="14"/>
+        <line x1="13.5" y1="18" x2="18.5" y2="18"/>
+      </svg>
+    `;
+
+    // Diamond Layout Buttons (Icon Only):
     // Fire (Center, 100px)
-    const btnFire = this.createButton('btn-touch-fire', 'FIRE', 100, 85, 85, true);
+    const btnFire = this.createButton('btn-touch-fire', fireSvg, 100, 85, 85, true);
     // ADS (Top, 76px)
-    const btnAds = this.createButton('btn-touch-aim', 'ADS', 76, 97, 0, false);
+    const btnAds = this.createButton('btn-touch-aim', adsSvg, 76, 97, 0, false);
     // Jump (Right, 76px)
-    const btnJump = this.createButton('btn-touch-jump', 'JUMP', 76, 194, 97, false);
+    const btnJump = this.createButton('btn-touch-jump', jumpSvg, 76, 194, 97, false);
     // Crouch / Slide (Bottom, 76px)
-    const btnCrouch = this.createButton('btn-touch-slide', 'CROUCH', 76, 97, 194, false);
+    const btnCrouch = this.createButton('btn-touch-slide', crouchSvg, 76, 97, 194, false);
     // Reload (Left, 76px)
-    const btnReload = this.createButton('btn-touch-reload', 'RELOAD', 76, 0, 97, false);
+    const btnReload = this.createButton('btn-touch-reload', reloadSvg, 76, 0, 97, false);
 
     combatCluster.appendChild(btnFire);
     combatCluster.appendChild(btnAds);
@@ -355,7 +422,7 @@ export class MobileControls {
     const btn = document.createElement('div');
     btn.id = id;
     btn.className = 'blueprint-touch-btn' + (isPrimary ? ' primary' : '');
-    btn.textContent = label;
+    btn.innerHTML = label;
     btn.style.cssText = `
       position: absolute;
       left: ${left}px;
@@ -589,18 +656,86 @@ export class MobileControls {
     }
   }
 
+  toggle() {
+    if (this.isEnabled) {
+      this.disable();
+    } else {
+      this.enable();
+    }
+  }
+
+  enterCustomizerMode() {
+    this.enable();
+    if (this.onExitCustomizer) {
+      setTimeout(() => {
+        if (this.onExitCustomizer) this.onExitCustomizer();
+      }, 1500);
+    }
+  }
+
+  requestLandscapeFullscreen() {
+    try {
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      } else if (docEl.msRequestFullscreen) {
+        docEl.msRequestFullscreen();
+      }
+
+      if (screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock('landscape').catch(() => {});
+      }
+    } catch (err) {
+      console.warn('Fullscreen/Orientation request deferred:', err.message);
+    }
+  }
+
   setupOrientationWatcher() {
+    const overlay = document.getElementById('mobile-rotate-overlay');
+    let userDismissed = false;
+
     const checkOrientation = () => {
-      const overlay = document.getElementById('mobile-rotate-overlay');
       if (!overlay) return;
-      if (window.innerWidth < window.innerHeight) {
+      if (userDismissed) {
+        overlay.style.display = 'none';
+        return;
+      }
+      // Check if viewport is in portrait mode
+      const isPortrait = window.innerWidth < window.innerHeight;
+      if (isPortrait) {
         overlay.style.display = 'flex';
       } else {
         overlay.style.display = 'none';
       }
     };
+
+    const btnFs = document.getElementById('btn-request-mobile-fullscreen');
+    if (btnFs) {
+      btnFs.addEventListener('click', () => {
+        this.requestLandscapeFullscreen();
+        if (this.game && this.game.soundEngine) this.game.soundEngine.playUIClick();
+        setTimeout(checkOrientation, 300);
+      });
+    }
+
+    const btnDismiss = document.getElementById('btn-dismiss-rotate-overlay');
+    if (btnDismiss) {
+      btnDismiss.addEventListener('click', () => {
+        userDismissed = true;
+        if (overlay) overlay.style.display = 'none';
+        if (this.game && this.game.soundEngine) this.game.soundEngine.playUIClick();
+      });
+    }
+
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
+    document.addEventListener('fullscreenchange', () => {
+      setTimeout(checkOrientation, 200);
+    });
+
     checkOrientation();
   }
 }
+

@@ -85,6 +85,27 @@ export class Enemy {
     }
   }
 
+  setDifficulty(diff = 'medium') {
+    this.difficulty = diff.toLowerCase();
+    let hpMult = 1.0;
+    let cadenceMult = 1.0;
+    this.damageMult = 1.0;
+
+    if (this.difficulty === 'easy') {
+      hpMult = 0.8;
+      cadenceMult = 1.35;
+      this.damageMult = 0.65;
+    } else if (this.difficulty === 'hard') {
+      hpMult = 1.25;
+      cadenceMult = 0.75;
+      this.damageMult = 1.35;
+    }
+
+    this.maxHp = Math.round(this.maxHp * hpMult);
+    this.hp = this.maxHp;
+    this.attackCadence *= cadenceMult;
+  }
+
   // Build original humanoid mannequin silhouette matching reference ink sketches
   buildMesh() {
     this.modelGroup = new THREE.Group();

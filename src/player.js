@@ -68,9 +68,13 @@ export class Player {
     this.stepDistance = 0;
     this.stepThreshold = 2.2;
 
-    // Health & 10s Auto-Regeneration
+    // Health & Auto-Regeneration (Scales with Difficulty: Easy=6s, Medium=10s, Hard=14s)
     this.maxHp = 100;
     this.hp = 100;
+    this.difficulty = 'medium';
+    this.regenDelay = 10.0;
+    this.regenRate = 25.0;
+    this.callsign = 'OPERATOR';
     this.isDead = false;
     this.invulnerableTimer = 0;
     this.timeSinceLastDamage = 999;
@@ -509,6 +513,20 @@ export class Player {
   }
 
 
+  setDifficulty(diff = 'medium') {
+    this.difficulty = diff.toLowerCase();
+    if (this.difficulty === 'easy') {
+      this.regenDelay = 6.0;
+      this.regenRate = 35.0;
+    } else if (this.difficulty === 'hard') {
+      this.regenDelay = 14.0;
+      this.regenRate = 18.0;
+    } else {
+      this.regenDelay = 10.0;
+      this.regenRate = 25.0;
+    }
+  }
+
   update(delta) {
     if (this.isDead) return;
 
@@ -535,10 +553,13 @@ export class Player {
       this.heartbeatTimer = 0;
     }
 
-    // 10-Second Auto-Health Regeneration & Healing Fill Aura
+    // Auto-Health Regeneration & Healing Fill Aura (Scaled by Difficulty)
     this.timeSinceLastDamage += delta;
-    if (this.timeSinceLastDamage >= 10.0 && this.hp < this.maxHp) {
-      this.hp = Math.min(this.maxHp, this.hp + delta * 25);
+    const requiredDelay = this.regenDelay || 10.0;
+    const healRate = this.regenRate || 25.0;
+
+    if (this.timeSinceLastDamage >= requiredDelay && this.hp < this.maxHp) {
+      this.hp = Math.min(this.maxHp, this.hp + delta * healRate);
       if (!this.hasPlayedRegenSound) {
         this.soundEngine.playHealthRegen();
         this.soundEngine.playHealingAura();

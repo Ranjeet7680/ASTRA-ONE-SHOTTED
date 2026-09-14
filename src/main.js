@@ -85,7 +85,7 @@ class Game {
     );
     this.mobileControls = new MobileControls(this.player, this.weapons, this);
     this.auth = new AuthManager();
-    this.lobby = new LobbyScene(this.scene, this.materials, this.customization, this.weapons);
+    this.lobby = new LobbyScene(this.scene, this.materials, this.customization, this.weapons, this.camera);
     this.minimap = new MinimapManager(this);
     this.voiceChat = new VoiceChatSystem(this);
 
@@ -206,8 +206,9 @@ class Game {
     };
   }
 
-  startMode(mode = 'wave', teamSize = 4, mapSize = 'small') {
+  startMode(mode = 'wave', teamSize = 4, mapSize = 'small', difficulty = 'medium') {
     this.currentMode = mode;
+    this.difficulty = difficulty;
     this.level.setMapSize(mapSize);
     if (this.lobby) {
       this.lobby.hide();
@@ -216,15 +217,19 @@ class Game {
       this.bgm.fadeOut(800);
     }
 
+    if (this.player && this.player.setDifficulty) {
+      this.player.setDifficulty(difficulty);
+    }
+
     if (mode === 'wave') {
       this.tdm.reset();
       this.hud.setTDMMode(false);
       this.waves.reset();
-      this.waves.startWave(1);
+      this.waves.startWave(1, difficulty);
     } else {
       this.waves.reset();
       this.hud.setTDMMode(true);
-      this.tdm.startMatch(teamSize);
+      this.tdm.startMatch(teamSize, difficulty);
     }
   }
 

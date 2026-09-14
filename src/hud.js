@@ -31,6 +31,12 @@ export class HUD {
     this.crosshair = document.getElementById('crosshair');
     this.hitmarker = document.getElementById('hitmarker');
     this.killFeed = document.getElementById('kill-feed');
+    this.tacticalKillFeed = document.getElementById('tactical-kill-feed');
+    this.eliminatedBanner = document.getElementById('player-eliminated-banner');
+    this.elimKillerText = document.getElementById('elim-killer-text');
+    this.elimStatusText = document.getElementById('elim-status-text');
+    this.elimCountdownInterval = null;
+
     this.waveBanner = document.getElementById('wave-banner');
     this.waveBannerTitle = document.getElementById('wave-banner-title');
     this.waveBannerSubtitle = document.getElementById('wave-banner-subtitle');
@@ -250,6 +256,11 @@ export class HUD {
     if (this.hudContainer) this.hudContainer.style.display = 'block';
     if (this.damageCanvas) this.damageCanvas.style.display = 'block';
     if (this.inkContainer) this.inkContainer.style.display = 'block';
+    if (this.tacticalKillFeed) this.tacticalKillFeed.style.display = 'flex';
+    const streakHud = document.getElementById('cod-streak-hud');
+    if (streakHud) streakHud.style.display = 'block';
+    const medalContainer = document.getElementById('cod-medal-container');
+    if (medalContainer) medalContainer.style.display = 'flex';
     this.updateGyroBadge();
   }
 
@@ -258,6 +269,12 @@ export class HUD {
     if (this.damageCanvas) this.damageCanvas.style.display = 'none';
     if (this.inkContainer) this.inkContainer.style.display = 'none';
     if (this.healingVignette) this.healingVignette.classList.remove('active');
+    if (this.tacticalKillFeed) this.tacticalKillFeed.style.display = 'none';
+    this.hideEliminatedBanner();
+    const streakHud = document.getElementById('cod-streak-hud');
+    if (streakHud) streakHud.style.display = 'none';
+    const medalContainer = document.getElementById('cod-medal-container');
+    if (medalContainer) medalContainer.style.display = 'none';
   }
 
   // 6-digit formatted score (e.g. SCORE 001250)
@@ -376,6 +393,95 @@ export class HUD {
     setTimeout(() => {
       if (item.parentNode) item.parentNode.removeChild(item);
     }, 1200);
+  }
+
+  getWeaponIconHtml(weaponName) {
+    const w = (weaponName || '').toLowerCase();
+    if (w.includes('sniper')) {
+      return `︻╦╤─`;
+    } else if (w.includes('shotgun')) {
+      return `💥`;
+    } else if (w.includes('pistol')) {
+      return `︻╦-`;
+    } else if (w.includes('grenade')) {
+      return `💣`;
+    } else if (w.includes('melee') || w.includes('knife') || w.includes('slash')) {
+      return `🗡️`;
+    }
+    return `🔫`; // Assault Rifle / Carbine
+  }
+
+  // Real-Time Tactical Kill Record (COD / PUBG style below minimap)
+  addTacticalKillEntry(killerName, victimName, weaponName = 'Rifle', isHeadshot = false, killerTeam = 'BLUE', victimTeam = 'RED') {
+    if (!this.tacticalKillFeed) return;
+
+    const entry = document.createElement('div');
+    entry.className = 'kill-feed-entry';
+
+    const weaponIcon = this.getWeaponIconHtml(weaponName);
+    const killerClass = killerTeam === 'BLUE' ? 'kf-killer-blue' : 'kf-killer-red';
+    const victimClass = victimTeam === 'BLUE' ? 'kf-victim-blue' : 'kf-victim-red';
+
+    entry.innerHTML = `
+      <span class="${killerClass}">${killerName}</span>
+      <span class="kf-weapon-badge">${weaponIcon}</span>
+      ${isHeadshot ? '<span class="kf-headshot-skull" title="HEADSHOT">💀</span>' : ''}
+      <span class="${victimClass}">${victimName}</span>
+      <span class="kf-dead-tag">DEAD 💀</span>
+    `;
+
+    this.tacticalKillFeed.appendChild(entry);
+
+    // Keep max 5 entries at a time
+    while (this.tacticalKillFeed.children.length > 5) {
+      this.tacticalKillFeed.removeChild(this.tacticalKillFeed.firstElementChild);
+    }
+
+    // Auto fade-out after 3.8s
+    setTimeout(() => {
+      entry.classList.add('fade-out');
+      setTimeout(() => {
+        if (entry.parentNode) entry.parentNode.removeChild(entry);
+      }, 400);
+    }, 3800);
+  }
+
+  // Tactical Elimination Death Banner with Live Respawn Countdown
+  showEliminatedBanner(killerName, weaponName = 'RIFLE', seconds = 3) {
+    if (!this.eliminatedBanner) return;
+    if (this.elimCountdownInterval) clearInterval(this.elimCountdownInterval);
+
+    if (this.elimKillerText) {
+      this.elimKillerText.textContent = `ELIMINATED BY ${killerName.toUpperCase()} • ${weaponName.toUpperCase()}`;
+    }
+
+    let remaining = seconds;
+    if (this.elimStatusText) {
+      this.elimStatusText.textContent = `💀 STATUS: DEAD • RESPAWNING IN ${remaining}...`;
+    }
+    this.eliminatedBanner.style.display = 'block';
+
+    this.elimCountdownInterval = setInterval(() => {
+      remaining--;
+      if (remaining > 0) {
+        if (this.elimStatusText) {
+          this.elimStatusText.textContent = `💀 STATUS: DEAD • RESPAWNING IN ${remaining}...`;
+        }
+      } else {
+        clearInterval(this.elimCountdownInterval);
+        this.hideEliminatedBanner();
+      }
+    }, 1000);
+  }
+
+  hideEliminatedBanner() {
+    if (this.elimCountdownInterval) {
+      clearInterval(this.elimCountdownInterval);
+      this.elimCountdownInterval = null;
+    }
+    if (this.eliminatedBanner) {
+      this.eliminatedBanner.style.display = 'none';
+    }
   }
 
   // Temporary Wave Banner - Auto hides after 1.5s (never stays permanently!)

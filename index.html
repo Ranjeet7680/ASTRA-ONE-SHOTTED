@@ -282,6 +282,123 @@
       100% { opacity: 0; transform: translateY(-18px); }
     }
 
+    /* Real-Time Tactical Kill Feed (COD / PUBG style below minimap) */
+    #tactical-kill-feed {
+      position: absolute;
+      top: calc(190px + env(safe-area-inset-top));
+      right: calc(20px + env(safe-area-inset-right));
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      pointer-events: none;
+      z-index: 25;
+      max-width: 320px;
+    }
+
+    .kill-feed-entry {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-tech);
+      font-size: 11px;
+      font-weight: 700;
+      background: rgba(248, 246, 240, 0.94);
+      border: 1.5px solid #162a68;
+      border-radius: 4px;
+      padding: 3px 8px;
+      box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.2);
+      animation: kfSlideIn 0.25s ease-out forwards;
+      white-space: nowrap;
+    }
+
+    .kill-feed-entry.fade-out {
+      animation: kfFadeOut 0.4s ease-out forwards;
+    }
+
+    @keyframes kfSlideIn {
+      from { opacity: 0; transform: translateX(25px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes kfFadeOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(25px); }
+    }
+
+    .kf-killer-blue { color: #2255bb; font-weight: 800; }
+    .kf-killer-red { color: #c9182b; font-weight: 800; }
+    .kf-victim-blue { color: #2255bb; text-decoration: line-through; }
+    .kf-victim-red { color: #c9182b; text-decoration: line-through; }
+    .kf-dead-tag {
+      font-size: 9px;
+      color: #faf8f2;
+      background: #c9182b;
+      padding: 1px 4px;
+      border-radius: 3px;
+      letter-spacing: 0.5px;
+    }
+    .kf-weapon-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 12px;
+      opacity: 0.85;
+    }
+    .kf-headshot-skull {
+      color: #c9182b;
+      font-size: 12px;
+    }
+
+    /* Player Eliminated Banner with Countdown */
+    #player-eliminated-banner {
+      position: absolute;
+      top: 32%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(248, 246, 240, 0.96);
+      border: 2.5px solid #c9182b;
+      padding: 16px 36px;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 6px 6px 0px rgba(201, 24, 43, 0.35);
+      z-index: 50;
+      pointer-events: none;
+      animation: elimPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes elimPop {
+      0% { opacity: 0; transform: translate(-50%, -40%) scale(0.85); }
+      100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    .elim-title {
+      font-family: var(--font-sketch);
+      font-size: 32px;
+      font-weight: 800;
+      color: #c9182b;
+      letter-spacing: 3px;
+    }
+
+    .elim-killer {
+      font-family: var(--font-tech);
+      font-size: 13px;
+      font-weight: 700;
+      color: #162a68;
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    .elim-status {
+      font-family: var(--font-tech);
+      font-size: 12px;
+      font-weight: 700;
+      color: #c9182b;
+      margin-top: 8px;
+      background: rgba(201, 24, 43, 0.1);
+      padding: 4px 10px;
+      border: 1px dashed #c9182b;
+    }
+
     /* Wave Announcement Banner */
     #wave-banner {
       position: absolute;
@@ -1329,15 +1446,23 @@
   <!-- Mobile Landscape Prompt & Fullscreen Lock Overlay -->
   <div id="mobile-rotate-overlay">
     <div class="phone-rotate-icon"></div>
-    <div style="font-family: 'Space Mono', monospace; font-size: 22px; font-weight: 700; color: #162a68; letter-spacing: 2px; margin-bottom: 8px;">
-      ROTATE YOUR DEVICE
+    <div style="font-family: 'Space Mono', monospace; font-size: 22px; font-weight: 700; color: #162a68; letter-spacing: 2px; margin-bottom: 6px;">
+      ROTATE YOUR DEVICE 🔄
     </div>
-    <div style="font-size: 13px; font-weight: 700; color: #c9182b; letter-spacing: 1px; max-width: 340px; margin-bottom: 20px;">
-      PLEASE ROTATE TO LANDSCAPE ORIENTATION FOR TACTICAL BLUEPRINT COMBAT
+    <div style="font-size: 11px; font-weight: 700; color: #162a68; opacity: 0.7; letter-spacing: 2px; margin-bottom: 12px;">
+      ASTRA SPECIAL OPERATIONS // PROTOCOL MANDATORY
     </div>
-    <button class="sketch-btn" id="btn-request-mobile-fullscreen" style="background: #162a68; color: #fff; padding: 12px 24px; font-size: 14px;">
-      ⛶ ENTER FULLSCREEN & LOCK
-    </button>
+    <div style="font-size: 13px; font-weight: 700; color: #c9182b; letter-spacing: 1px; max-width: 360px; margin-bottom: 24px; line-height: 1.5;">
+      PLEASE ROTATE TO LANDSCAPE ORIENTATION & LOCK FULLSCREEN FOR TACTICAL BLUEPRINT COMBAT
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px; width: 280px;">
+      <button class="sketch-btn" id="btn-request-mobile-fullscreen" style="background: #162a68; color: #fff; padding: 14px 20px; font-size: 14px; font-weight: 700; letter-spacing: 1px;">
+        ⛶ ENTER FULLSCREEN & LOCK
+      </button>
+      <button class="sketch-btn" id="btn-dismiss-rotate-overlay" style="background: transparent; border: 1.5px solid #162a68; font-size: 11px; padding: 8px 14px; color: #162a68;">
+        CONTINUE IN CURRENT VIEW ➔
+      </button>
+    </div>
   </div>
 
   <!-- Three.js Canvas Container -->
@@ -1686,8 +1811,8 @@
       </div>
     </div>
 
-    <!-- Top Right: Server Info & BGM Player Widget -->
-    <div style="position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 10px; pointer-events: auto;">
+    <!-- Top Right: Server Info & BGM Player Widget & Fullscreen Controls -->
+    <div style="position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 8px; pointer-events: auto;">
       <!-- BGM Player Widget -->
       <div id="lobby-bgm-widget" style="background: rgba(248, 246, 240, 0.95); border: 2px solid #162a68; padding: 5px 12px; display: flex; align-items: center; gap: 10px; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.2); font-family: 'Space Mono', monospace;">
         <div id="bgm-visualizer" class="bgm-eq-bars">
@@ -1709,14 +1834,87 @@
         </div>
       </div>
 
+      <!-- BGM Tracks Popup Menu -->
+      <div id="lobby-bgm-tracks-menu" style="display: none; position: absolute; top: 48px; right: 260px; background: #fdfcf9; border: 2px solid #162a68; box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.25); padding: 8px; width: 260px; z-index: 60; pointer-events: auto; font-family: 'Space Mono', monospace;">
+        <div style="font-size: 10px; font-weight: 700; color: #c9182b; letter-spacing: 1px; margin-bottom: 6px;">SELECT BGM SOUNDTRACK</div>
+        <div class="bgm-track-item" data-idx="0" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(22,42,104,0.2); font-size: 11px;">
+          <div style="font-weight: 700; color: #162a68;">1. ASTRA (Main Theme)</div>
+          <div style="font-size: 10px; color: #2255bb;">एस्ट्रा (थीम म्यूजिक)</div>
+        </div>
+        <div class="bgm-track-item" data-idx="1" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(22,42,104,0.2); font-size: 11px;">
+          <div style="font-weight: 700; color: #162a68;">2. Antim Mauka</div>
+          <div style="font-size: 10px; color: #2255bb;">अंतिम मौका (Last Chance)</div>
+        </div>
+        <div class="bgm-track-item" data-idx="2" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(22,42,104,0.2); font-size: 11px;">
+          <div style="font-weight: 700; color: #162a68;">3. Ek Hi Waar</div>
+          <div style="font-size: 10px; color: #2255bb;">एक ही वार (One Strike)</div>
+        </div>
+        <div class="bgm-track-item" data-idx="3" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(22,42,104,0.2); font-size: 11px;">
+          <div style="font-weight: 700; color: #162a68;">4. Aakhri Nishana</div>
+          <div style="font-size: 10px; color: #2255bb;">आखिरी निशाना (Final Target)</div>
+        </div>
+        <div class="bgm-track-item" data-idx="4" style="padding: 5px 8px; cursor: pointer; font-size: 11px;">
+          <div style="font-weight: 700; color: #162a68;">5. Aakhri Nishana (Remix)</div>
+          <div style="font-size: 10px; color: #2255bb;">आखिरी निशाना (रीमिक्स)</div>
+        </div>
+      </div>
+
+      <button class="sketch-btn" id="btn-lobby-fullscreen" style="padding: 6px 12px; font-size: 12px; font-weight: 700;" title="Toggle Fullscreen">⛶ FULLSCREEN</button>
       <div style="background: rgba(248, 246, 240, 0.88); border: 1.5px solid #162a68; padding: 6px 12px; font-size: 12px; font-weight: 700; color: #162a68;">
-        <span style="color: #34a853;">●</span> 24ms (REGION: ASIA)
+        <span style="color: #34a853;">●</span> 24ms (ASIA)
       </div>
       <button class="sketch-btn" id="btn-lobby-logout" style="padding: 6px 12px; font-size: 12px;">LOGOUT</button>
     </div>
 
+    <!-- Left Flank: Quick Loadout Weapon Switcher -->
+    <div id="lobby-quick-weapons" style="position: absolute; top: 100px; left: 24px; display: flex; flex-direction: column; gap: 6px; pointer-events: auto; background: rgba(248, 246, 240, 0.92); border: 2px solid #162a68; padding: 6px 12px; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.2); font-family: 'Space Mono', monospace;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+        <span style="font-size: 10px; font-weight: 700; color: #162a68; letter-spacing: 1px;">EQUIPPED LOADOUT</span>
+        <span id="lobby-quick-wep-stat" style="font-size: 9px; color: #c9182b; font-weight: 700;">RIFLE • 24 DMG</span>
+      </div>
+      <div style="display: flex; gap: 5px;">
+        <button class="sketch-btn lobby-wep-pill active" data-wep="2" style="padding: 4px 8px; font-size: 11px; font-weight: 700; background: #162a68; color: #fff;">︻╦╤─ RIFLE</button>
+        <button class="sketch-btn lobby-wep-pill" data-wep="3" style="padding: 4px 8px; font-size: 11px; font-weight: 700;">︻╦═一 SNIPER</button>
+        <button class="sketch-btn lobby-wep-pill" data-wep="1" style="padding: 4px 8px; font-size: 11px; font-weight: 700;">▅▄▃ SHOTGUN</button>
+        <button class="sketch-btn lobby-wep-pill" data-wep="0" style="padding: 4px 8px; font-size: 11px; font-weight: 700;">🔫 PISTOL</button>
+      </div>
+    </div>
+
+    <!-- Left Lower: Camera View Modes -->
+    <div id="lobby-camera-modes" style="position: absolute; bottom: 124px; left: 24px; display: flex; gap: 6px; pointer-events: auto;">
+      <button class="sketch-btn lobby-cam-btn active" data-cam="hero" style="padding: 4px 10px; font-size: 11px; font-weight: 700; background: #162a68; color: #fff;">👤 HERO</button>
+      <button class="sketch-btn lobby-cam-btn" data-cam="closeup" style="padding: 4px 10px; font-size: 11px; font-weight: 700;">🔍 CLOSE-UP</button>
+      <button class="sketch-btn lobby-cam-btn" data-cam="weapon" style="padding: 4px 10px; font-size: 11px; font-weight: 700;">🔫 WEAPON</button>
+    </div>
+
+    <!-- Center Bottom: Emote & Action Bar -->
+    <div id="lobby-emotes-bar" style="position: absolute; bottom: 98px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; pointer-events: auto; background: rgba(248, 246, 240, 0.95); border: 2px solid #162a68; padding: 4px 10px; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.2);">
+      <button class="sketch-btn lobby-emote-btn" data-emote="salute" style="padding: 5px 10px; font-size: 11px; font-weight: 700;" title="Military Salute">🫡 SALUTE</button>
+      <button class="sketch-btn lobby-emote-btn" data-emote="inspect" style="padding: 5px 10px; font-size: 11px; font-weight: 700;" title="Inspect Weapon">🔫 CHECK GUN</button>
+      <button class="sketch-btn lobby-emote-btn" data-emote="ready" style="padding: 5px 10px; font-size: 11px; font-weight: 700;" title="Combat Ready Stance">🥋 READY</button>
+      <button class="sketch-btn lobby-emote-btn" data-emote="spin" style="padding: 5px 10px; font-size: 11px; font-weight: 700;" title="360 Turntable Showcase">🔄 360° SPIN</button>
+      <button class="sketch-btn lobby-emote-btn" data-emote="taunt" style="padding: 5px 10px; font-size: 11px; font-weight: 700; background: #162a68; color: #fff;" title="Voice Line Taunt">🗣️ TAUNT</button>
+    </div>
+
     <!-- Center: Touch / Mouse Drag Orbit Area -->
-    <div id="lobby-char-touch-area" style="position: absolute; top: 15%; left: 25%; width: 50%; height: 70%; pointer-events: auto; cursor: grab;"></div>
+    <div id="lobby-char-touch-area" style="position: absolute; top: 15%; left: 25%; width: 50%; height: 68%; pointer-events: auto; cursor: grab;" title="Drag to Orbit • Double-Click to Inspect"></div>
+
+    <!-- Right Flank Bottom: Daily Operations Directives Card -->
+    <div id="lobby-daily-ops" style="position: absolute; bottom: 28px; right: 24px; background: rgba(248, 246, 240, 0.92); border: 2px solid #162a68; padding: 8px 14px; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.2); pointer-events: auto; font-family: 'Space Mono', monospace; min-width: 200px;">
+      <div style="font-size: 9px; font-weight: 700; color: #c9182b; letter-spacing: 1px;">DAILY DIRECTIVES</div>
+      <div style="font-size: 10px; margin-top: 4px; display: flex; justify-content: space-between; font-weight: 700; color: #162a68;">
+        <span>🎯 5 KILLS IN TDM</span>
+        <span style="color: #2b7a3e;">3/5</span>
+      </div>
+      <div style="font-size: 10px; margin-top: 3px; display: flex; justify-content: space-between; font-weight: 700; color: #162a68;">
+        <span>💀 2 HEADSHOTS</span>
+        <span style="color: #c9182b;">1/2</span>
+      </div>
+      <div style="font-size: 10px; margin-top: 3px; display: flex; justify-content: space-between; font-weight: 700; color: #162a68;">
+        <span>🛡️ SURVIVE 3 WAVES</span>
+        <span style="color: #2b7a3e;">2/3</span>
+      </div>
+    </div>
 
     <!-- Right Sidebar: PUBG Style Menu Buttons -->
     <div style="position: absolute; top: 120px; right: 24px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto;">
@@ -1739,11 +1937,14 @@
 
     <!-- Bottom Left: PUBG Style Prominent [START] Button & Mode Card -->
     <div style="position: absolute; bottom: 28px; left: 24px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto;">
-      <!-- Mode / Map Selector Card -->
+      <!-- Mode / Map Selector Card with Difficulty Badge -->
       <div id="btn-lobby-mode-select" style="background: rgba(248, 246, 240, 0.92); border: 2px solid #162a68; padding: 8px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.2);">
         <div>
-          <div style="font-size: 11px; opacity: 0.7; font-weight: 700;">MODE / MAP</div>
-          <div id="lobby-mode-title" style="font-size: 15px; font-weight: 700; color: #162a68;">TDM 4v4: COURTYARD BLITZ</div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 11px; opacity: 0.7; font-weight: 700;">MODE / MAP</span>
+            <span id="lobby-mode-diff-badge" style="background: #162a68; color: #faf8f2; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: 0.8px;">REGULAR</span>
+          </div>
+          <div id="lobby-mode-title" style="font-size: 15px; font-weight: 700; color: #162a68; margin-top: 2px;">TDM 4v4: COURTYARD BLITZ</div>
         </div>
         <span style="font-size: 14px; font-weight: 700;">CHANGE ▾</span>
       </div>
@@ -1838,8 +2039,18 @@
       </svg>
     </div>
 
-    <!-- Kill Notifications -->
+    <!-- Kill Notifications (Center Score Popup) -->
     <div id="kill-feed"></div>
+
+    <!-- Tactical Real-Time Kill Feed (COD / PUBG Style below Minimap) -->
+    <div id="tactical-kill-feed"></div>
+
+    <!-- Death / Player Eliminated Banner with Countdown -->
+    <div id="player-eliminated-banner" style="display: none;">
+      <div class="elim-title">💀 ELIMINATED</div>
+      <div class="elim-killer" id="elim-killer-text">KILLED BY ENEMY • ASSAULT RIFLE</div>
+      <div class="elim-status" id="elim-status-text">STATUS: DEAD • RESPAWNING IN 3...</div>
+    </div>
 
     <!-- Wave Notification Banner (Temporary 1.5s display) -->
     <div id="wave-banner">
@@ -2057,6 +2268,27 @@
           <button class="mode-select-pill" id="btn-sel-map-sea" data-map="sea_port">
             <div><strong>🚢 SEA PORT</strong></div>
             <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Cargo Ship & Crane Maze</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. Difficulty Selection Section (Easy, Medium, Hard) -->
+      <div style="margin-bottom: 22px; text-align: left;">
+        <div style="font-size: 11px; font-weight: 700; color: #162a68; margin-bottom: 6px; letter-spacing: 1px;">
+          5. SELECT COMBAT DIFFICULTY:
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <button class="mode-select-pill" id="btn-sel-diff-easy" data-diff="easy" style="border-top: 3px solid #28a745;">
+            <div><strong>🟢 EASY [RECRUIT]</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Casual AI • 6s Auto-Heal • 0.6x Dmg</div>
+          </button>
+          <button class="mode-select-pill active" id="btn-sel-diff-medium" data-diff="medium" style="border-top: 3px solid #162a68;">
+            <div><strong>🟡 MEDIUM [REGULAR]</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Balanced AI • 10s Auto-Heal • Standard</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-diff-hard" data-diff="hard" style="border-top: 3px solid #c9182b;">
+            <div><strong>🔴 HARD [VETERAN]</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Lethal AI • 14s Auto-Heal • 1.35x Dmg</div>
           </button>
         </div>
       </div>

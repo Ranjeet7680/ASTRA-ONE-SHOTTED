@@ -29,8 +29,9 @@ export class TDMManager {
     this.isPlayerRespawning = false;
   }
 
-  startMatch(teamSize = 4) {
+  startMatch(teamSize = 4, difficulty = 'medium') {
     this.teamSize = teamSize;
+    this.difficulty = difficulty;
     this.targetScore = teamSize === 4 ? 30 : (teamSize === 8 ? 50 : 75);
     this.matchTime = this.matchDuration;
     this.blueScore = 0;
@@ -47,6 +48,7 @@ export class TDMManager {
       const name = blueBotNames[i % blueBotNames.length] + (i >= blueBotNames.length ? ` ${i}` : '');
       const spawnPos = this.level.blueSpawnPoints[i % this.level.blueSpawnPoints.length];
       const bot = new Bot(i, name, 'BLUE', spawnPos, this.materials, this.soundEngine, this.effects, this.level);
+      if (bot.setDifficulty) bot.setDifficulty(this.difficulty);
       this.wireBotEvents(bot);
       this.bots.push(bot);
       this.scene.add(bot.group);
@@ -58,6 +60,7 @@ export class TDMManager {
       const name = redBotNames[i % redBotNames.length] + (i >= redBotNames.length ? ` ${i}` : '');
       const spawnPos = this.level.redSpawnPoints[i % this.level.redSpawnPoints.length];
       const bot = new Bot(100 + i, name, 'RED', spawnPos, this.materials, this.soundEngine, this.effects, this.level);
+      if (bot.setDifficulty) bot.setDifficulty(this.difficulty);
       this.wireBotEvents(bot);
       this.bots.push(bot);
       this.scene.add(bot.group);
@@ -76,6 +79,24 @@ export class TDMManager {
 
   wireBotEvents(bot) {
     bot.onBotKilled = (victim, attacker, isHeadshot) => {
+      let killerName = 'INSURGENT';
+      let killerTeam = victim.team === 'RED' ? 'BLUE' : 'RED';
+      let weaponName = 'Assault Rifle';
+
+      if (attacker === this.player) {
+        killerName = (this.player.callsign || 'OPERATOR').toUpperCase();
+        killerTeam = 'BLUE';
+        weaponName = this.weapons ? this.weapons.getActiveWeapon().name : 'Rifle';
+      } else if (attacker && attacker.name) {
+        killerName = attacker.name;
+        killerTeam = attacker.team || killerTeam;
+      }
+
+      // Add real-time tactical kill feed entry
+      if (this.hud && this.hud.addTacticalKillEntry) {
+        this.hud.addTacticalKillEntry(killerName, victim.name, weaponName, isHeadshot, killerTeam, victim.team);
+      }
+
       if (victim.team === 'RED') {
         this.blueScore++;
         if (attacker === this.player) {
@@ -91,9 +112,23 @@ export class TDMManager {
     };
   }
 
-  handlePlayerKilled() {
+  handlePlayerKilled(killer = null) {
     this.redScore++;
     this.hud.updateTDMScore(this.blueScore, this.redScore, this.targetScore);
+
+    const killerName = (killer && killer.name) ? killer.name : 'INSURGENT';
+    const playerName = (this.player.callsign || 'OPERATOR').toUpperCase();
+
+    // Add kill feed entry for player death
+    if (this.hud && this.hud.addTacticalKillEntry) {
+      this.hud.addTacticalKillEntry(killerName, playerName, 'Assault Rifle', false, 'RED', 'BLUE');
+    }
+
+    // Show tactical elimination death banner with countdown
+    if (this.hud && this.hud.showEliminatedBanner) {
+      this.hud.showEliminatedBanner(killerName, 'Assault Rifle', 3.0);
+    }
+
     this.checkMatchEnd();
 
     if (!this.isMatchOver) {

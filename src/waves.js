@@ -52,8 +52,9 @@ export class WaveManager {
     return queue;
   }
 
-  startWave(waveNumber) {
+  startWave(waveNumber, difficulty = 'medium') {
     this.currentWave = waveNumber;
+    this.difficulty = difficulty;
     this.spawnQueue = this.getWavePlan(this.currentWave);
     this.enemiesRemainingToSpawn = this.spawnQueue.length;
     this.enemiesAliveCount = this.enemiesRemainingToSpawn;
@@ -80,6 +81,9 @@ export class WaveManager {
     }
 
     const enemy = new Enemy(type, spawnPos, this.materials, this.soundEngine, this.effects, this.level);
+    if (enemy.setDifficulty) {
+      enemy.setDifficulty(this.difficulty || 'medium');
+    }
     
     // Wire melee damage to player
     enemy.onPlayerMeleeHit = (dmg) => {
@@ -96,6 +100,14 @@ export class WaveManager {
 
     this.enemiesAliveCount = Math.max(0, this.enemiesAliveCount - 1);
     this.hud.updateEnemiesLeft(this.enemiesAliveCount);
+
+    // Push real-time tactical kill feed entry
+    const killerName = (this.player.callsign || 'OPERATOR').toUpperCase();
+    const victimName = (enemy.type || 'HOSTILE').toUpperCase();
+    const weaponName = this.weapons ? this.weapons.getActiveWeapon().name : 'Rifle';
+    if (this.hud && this.hud.addTacticalKillEntry) {
+      this.hud.addTacticalKillEntry(killerName, victimName, weaponName, isHeadshot, 'BLUE', 'RED');
+    }
 
     // Check if Wave Cleared
     if (this.enemiesAliveCount === 0 && this.spawnQueue.length === 0 && this.state === 'ACTIVE') {

@@ -28,6 +28,9 @@ export class Bot {
     this.attackRange = 22.0;
     this.attackCooldown = randomRange(0.4, 1.2);
     this.fireCadence = 0.25;
+    this.bulletDamage = 16;
+    this.spreadMult = 1.0;
+    this.difficulty = 'medium';
     this.flinchTimer = 0;
 
     // Stats
@@ -246,19 +249,40 @@ export class Bot {
     this.group.position.copy(this.position);
   }
 
+  setDifficulty(diff = 'medium') {
+    this.difficulty = diff.toLowerCase();
+    if (this.difficulty === 'easy') {
+      this.bulletDamage = 10;
+      this.fireCadence = 0.38;
+      this.spreadMult = 1.8;
+      this.speed = 4.2;
+    } else if (this.difficulty === 'hard') {
+      this.bulletDamage = 22;
+      this.fireCadence = 0.16;
+      this.spreadMult = 0.6;
+      this.speed = 5.2;
+    } else {
+      this.bulletDamage = 16;
+      this.fireCadence = 0.25;
+      this.spreadMult = 1.0;
+      this.speed = 4.8;
+    }
+  }
+
   shoot(target, botBullets) {
     this.soundEngine.playRifleShot();
 
     const spawn = this.getWorldBodyCenter().add(new THREE.Vector3(0, 0.3, 0));
     const aimTarget = target.position.clone().add(new THREE.Vector3(0, 1.2, 0));
     const dir = aimTarget.sub(spawn).normalize();
-    // Spread
-    dir.x += randomRange(-0.04, 0.04);
-    dir.y += randomRange(-0.03, 0.03);
-    dir.z += randomRange(-0.04, 0.04);
+    // Spread scaled by difficulty
+    const sp = 0.04 * (this.spreadMult || 1.0);
+    dir.x += randomRange(-sp, sp);
+    dir.y += randomRange(-sp * 0.75, sp * 0.75);
+    dir.z += randomRange(-sp, sp);
     dir.normalize();
 
-    botBullets.push(new BotBullet(spawn, dir, 28, 16, this.team, this.materials, this));
+    botBullets.push(new BotBullet(spawn, dir, 28, this.bulletDamage || 16, this.team, this.materials, this));
   }
 
   cleanup(scene) {
