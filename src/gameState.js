@@ -760,10 +760,10 @@ export class GameStateManager {
 
     // Lobby Quick Weapon Arsenal Pills
     const wepStats = {
-      0: 'PISTOL • 38 DMG',
-      1: 'SHOTGUN • 144 DMG',
-      2: 'RIFLE • 24 DMG',
-      3: 'SNIPER • 130 DMG'
+      0: 'PISTOL • 52 DMG',
+      1: 'SHOTGUN • 224 DMG',
+      2: 'RIFLE • 42 DMG',
+      3: 'SNIPER • 160 DMG'
     };
     const wepPills = document.querySelectorAll('.lobby-wep-pill');
     const wepStatEl = document.getElementById('lobby-quick-wep-stat');
@@ -881,6 +881,30 @@ export class GameStateManager {
       });
     }
 
+    const gyroModeSelect = document.getElementById('setting-gyro-mode');
+    if (gyroModeSelect && this.game.inputManager) {
+      gyroModeSelect.value = this.game.inputManager.gyroMode;
+      gyroModeSelect.addEventListener('change', (e) => {
+        this.game.inputManager.setGyroMode(e.target.value);
+      });
+    }
+
+    const optRedDot = document.getElementById('setting-gyro-opt-reddot');
+    if (optRedDot && this.game.inputManager) {
+      optRedDot.value = this.game.inputManager.gyroOpticSens.reddot;
+      optRedDot.addEventListener('input', (e) => {
+        this.game.inputManager.setGyroOpticSens('reddot', parseFloat(e.target.value));
+      });
+    }
+
+    const optSniper = document.getElementById('setting-gyro-opt-sniper');
+    if (optSniper && this.game.inputManager) {
+      optSniper.value = this.game.inputManager.gyroOpticSens.x4;
+      optSniper.addEventListener('input', (e) => {
+        this.game.inputManager.setGyroOpticSens('x4', parseFloat(e.target.value));
+      });
+    }
+
     const btnCalibrateGyro = document.getElementById('btn-calibrate-gyro');
     if (btnCalibrateGyro && this.game.inputManager) {
       btnCalibrateGyro.addEventListener('click', () => {
@@ -911,6 +935,48 @@ export class GameStateManager {
         this.game.mobileControls.setLeftHanded(e.target.checked);
       });
     }
+
+    // Auto-Aim & Aim-Assist Settings Listeners
+    if (this.game.aimAssist) {
+      const aaStrength = document.getElementById('setting-aim-assist-strength');
+      if (aaStrength) {
+        aaStrength.value = this.game.aimAssist.strength;
+        aaStrength.addEventListener('change', (e) => {
+          this.game.aimAssist.setStrength(e.target.value);
+        });
+      }
+
+      const aaSnap = document.getElementById('setting-aim-assist-snap');
+      if (aaSnap) {
+        aaSnap.checked = this.game.aimAssist.adsSnap;
+        aaSnap.addEventListener('change', (e) => {
+          this.game.aimAssist.setAdsSnap(e.target.checked);
+        });
+      }
+
+      const aaAutoFire = document.getElementById('setting-auto-fire');
+      if (aaAutoFire) {
+        aaAutoFire.checked = this.game.aimAssist.autoFire;
+        aaAutoFire.addEventListener('change', (e) => {
+          this.game.aimAssist.setAutoFire(e.target.checked);
+        });
+      }
+
+      const aaCone = document.getElementById('setting-aim-cone');
+      if (aaCone) {
+        aaCone.value = this.game.aimAssist.coneAngleDeg;
+        aaCone.addEventListener('input', (e) => {
+          this.game.aimAssist.setConeAngle(parseFloat(e.target.value));
+        });
+      }
+    }
+
+    // Universal Mobile Tactile Feedback on Buttons & Interactive Controls
+    document.querySelectorAll('button, .pubg-icon-btn, .sketch-btn, .pubg-squad-slot, .lobby-wep-pill').forEach(btn => {
+      btn.addEventListener('pointerdown', () => {
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+      }, { passive: true });
+    });
 
     setInterval(() => {
       const debugText = document.getElementById('gyro-debug-text');

@@ -39,7 +39,7 @@ export class WeaponSystem {
     this.bobTimer = 0;
     this.drawProgress = 1.0;
 
-    // Weapon Definitions
+    // Weapon Definitions - Elevated for crisp, satisfying mobile FPS kills
     this.weapons = [
       {
         id: 0,
@@ -50,15 +50,15 @@ export class WeaponSystem {
         currentAmmo: 12,
         reserveAmmo: 60,
         maxReserve: 120,
-        damage: 38,
-        headshotMult: 2.8,
-        fireRate: 0.18, // delay between shots
+        damage: 52, // 2-shot body kill, 1-shot headshot kill
+        headshotMult: 2.5,
+        fireRate: 0.16, // delay between shots
         pellets: 1,
-        spread: 0.008,
-        recoilKick: 0.08,
-        recoilPitch: 0.14,
-        recoilTrauma: 0.18,
-        reloadTime: 1.2,
+        spread: 0.007,
+        recoilKick: 0.07,
+        recoilPitch: 0.12,
+        recoilTrauma: 0.16,
+        reloadTime: 1.1,
         mesh: this.createPistolMesh(),
         muzzleOffset: new THREE.Vector3(0, 0.05, -0.4)
       },
@@ -71,15 +71,15 @@ export class WeaponSystem {
         currentAmmo: 6,
         reserveAmmo: 36,
         maxReserve: 72,
-        damage: 18, // per pellet * 8 = 144 max
+        damage: 28, // per pellet * 8 = 224 max damage
         headshotMult: 2.0,
-        fireRate: 0.75,
+        fireRate: 0.65,
         pellets: 8,
-        spread: 0.055,
-        recoilKick: 0.16,
-        recoilPitch: 0.28,
-        recoilTrauma: 0.45,
-        reloadTime: 1.8,
+        spread: 0.048,
+        recoilKick: 0.15,
+        recoilPitch: 0.24,
+        recoilTrauma: 0.40,
+        reloadTime: 1.6,
         mesh: this.createShotgunMesh(),
         muzzleOffset: new THREE.Vector3(0, 0.04, -0.65)
       },
@@ -92,15 +92,15 @@ export class WeaponSystem {
         currentAmmo: 30,
         reserveAmmo: 150,
         maxReserve: 300,
-        damage: 24,
+        damage: 42, // 3-shot body kill, 1-shot headshot + 1 body shot kill
         headshotMult: 2.5,
-        fireRate: 0.095,
+        fireRate: 0.090,
         pellets: 1,
-        spread: 0.015,
-        recoilKick: 0.06,
-        recoilPitch: 0.09,
-        recoilTrauma: 0.14,
-        reloadTime: 1.5,
+        spread: 0.012,
+        recoilKick: 0.05,
+        recoilPitch: 0.08,
+        recoilTrauma: 0.12,
+        reloadTime: 1.35,
         mesh: this.createRifleMesh(),
         muzzleOffset: new THREE.Vector3(0, 0.06, -0.68)
       },
@@ -113,19 +113,49 @@ export class WeaponSystem {
         currentAmmo: 5,
         reserveAmmo: 25,
         maxReserve: 50,
-        damage: 130,
-        headshotMult: 3.2, // 416 headshot -> instant kill
-        fireRate: 1.25,
+        damage: 160, // 1-shot kill to chest, instant kill on headshot
+        headshotMult: 3.2,
+        fireRate: 1.15,
         pellets: 1,
-        spread: 0.001,
-        recoilKick: 0.22,
-        recoilPitch: 0.35,
-        recoilTrauma: 0.6,
-        reloadTime: 2.2,
+        spread: 0.0008,
+        recoilKick: 0.20,
+        recoilPitch: 0.30,
+        recoilTrauma: 0.55,
+        reloadTime: 2.0,
         mesh: this.createSniperMesh(),
         muzzleOffset: new THREE.Vector3(0, 0.06, -0.85)
+      },
+      {
+        id: 4,
+        name: 'KNIFE',
+        type: 'melee',
+        desc: 'Tactical blueprint combat blade. Silent lethal close-quarters slash.',
+        magSize: 1,
+        currentAmmo: 1,
+        reserveAmmo: 1,
+        maxReserve: 1,
+        damage: 150, // Instant 1-hit kill
+        headshotMult: 2.0,
+        fireRate: 0.32,
+        pellets: 1,
+        spread: 0.0,
+        recoilKick: 0.03,
+        recoilPitch: 0.06,
+        recoilTrauma: 0.10,
+        reloadTime: 0.1,
+        mesh: this.createKnifeMesh(),
+        muzzleOffset: new THREE.Vector3(0, 0.02, -0.4)
       }
     ];
+
+    // 10-Second Ammo Auto-Fill in matches
+    this.ammoFillTimer = 0;
+    this.ammoFillInterval = 10.0;
+    this.onAmmoFilled = null;
+
+    // Fire Mode (AUTO, BURST, SINGLE)
+    this.fireMode = 'AUTO';
+    this.burstCount = 0;
 
     this.currentWeaponIndex = 0;
     this.lastFireTime = 0;
@@ -313,7 +343,42 @@ export class WeaponSystem {
     return { group };
   }
 
-  // Switch weapon slot (0 to 3)
+  // 5. Procedural 3D Blueprint Combat Knife Mesh
+  createKnifeMesh() {
+    const group = new THREE.Group();
+
+    // Grip Handle
+    const handleGeom = new THREE.BoxGeometry(0.035, 0.045, 0.16);
+    const handle = this.materials.createOutlinedMesh(handleGeom, this.materials.weaponHatchMaterial);
+    handle.group.position.set(0, -0.02, 0.04);
+    group.add(handle.group);
+
+    // Crossguard
+    const guardGeom = new THREE.BoxGeometry(0.045, 0.08, 0.02);
+    const guard = this.materials.createOutlinedMesh(guardGeom, this.materials.weaponPaperMaterial);
+    guard.group.position.set(0, -0.01, -0.05);
+    group.add(guard.group);
+
+    // Sharpened Tactical Blade
+    const bladeGeom = new THREE.BoxGeometry(0.015, 0.055, 0.22);
+    const blade = this.materials.createOutlinedMesh(bladeGeom, this.materials.weaponPaperMaterial);
+    blade.group.position.set(0, 0.01, -0.16);
+    group.add(blade.group);
+
+    return { group };
+  }
+
+  toggleFireMode() {
+    const modes = ['AUTO', 'BURST', 'SINGLE'];
+    const idx = modes.indexOf(this.fireMode);
+    this.fireMode = modes[(idx + 1) % modes.length];
+    if (this.soundEngine && this.soundEngine.playUIClick) {
+      this.soundEngine.playUIClick();
+    }
+    return this.fireMode;
+  }
+
+  // Switch weapon slot (0 to 4)
   switchWeapon(index) {
     if (index < 0 || index >= this.weapons.length || index === this.currentWeaponIndex) return;
     if (this.isReloading) {
@@ -367,6 +432,19 @@ export class WeaponSystem {
 
   shoot(now) {
     const wep = this.activeWeapon;
+
+    // Melee Knife Attack
+    if (wep.id === 4) {
+      this.lastFireTime = now;
+      if (this.soundEngine && this.soundEngine.playSlide) {
+        this.soundEngine.playSlide();
+      }
+      this.recoilPos.z -= 0.18;
+      this.recoilRot.y += 0.35;
+      this.recoilRot.x -= 0.15;
+      this.effects.addTrauma(0.12);
+      return wep;
+    }
 
     if (wep.currentAmmo <= 0) {
       this.soundEngine.playDryFire();
@@ -436,6 +514,22 @@ export class WeaponSystem {
 
   update(delta, playerState = {}) {
     const wep = this.activeWeapon;
+
+    // 10-Second Ammo Auto-Fill in Matches
+    this.ammoFillTimer += delta;
+    if (this.ammoFillTimer >= this.ammoFillInterval) {
+      this.ammoFillTimer = 0;
+      this.weapons.forEach(w => {
+        if (w.id !== 4) { // Not melee knife
+          const needed = w.magSize - w.currentAmmo;
+          if (needed > 0) {
+            w.currentAmmo += Math.min(needed, Math.ceil(w.magSize / 2));
+          }
+          w.reserveAmmo = Math.min(w.maxReserve, w.reserveAmmo + Math.ceil(w.magSize * 0.75));
+        }
+      });
+      if (this.onAmmoFilled) this.onAmmoFilled();
+    }
 
     // 1. Muzzle Flash timer
     if (this.muzzleFlashTimer > 0) {

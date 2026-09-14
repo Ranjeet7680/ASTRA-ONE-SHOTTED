@@ -223,6 +223,12 @@ export class Bot {
       this.rotationY = lerp(this.rotationY, targetAngle, delta * 7);
       this.group.rotation.y = this.rotationY;
 
+      // Asynchronously request AI tactical recommendation with 25ms safeguard
+      if (!this._lastAITick || Date.now() - this._lastAITick > 350) {
+        this._lastAITick = Date.now();
+        this.queryAIPlatform(toTarget, closestDist <= this.attackRange, this.hp, 25);
+      }
+
       if (this.state === 'CHASE' || (this.state === 'ATTACK' && closestDist > 8.0)) {
         isMoving = true;
         const moveStep = dir.clone().multiplyScalar(this.speed * delta);
@@ -247,6 +253,35 @@ export class Bot {
     }
 
     this.group.position.copy(this.position);
+  }
+
+  async queryAIPlatform(relPos, visible, hp, ammo) {
+    if (this._aiPending) return;
+    this._aiPending = true;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 25);
+      const res = await fetch('/ai/bot/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          health: hp,
+          ammo: ammo,
+          enemy_visible: visible,
+          enemy_rel_pos: [relPos.x, relPos.y, relPos.z],
+          difficulty: (this.difficulty || 'normal').toUpperCase()
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        this.lastAIData = await res.json();
+      }
+    } catch {
+      // Deterministic local behavior tree takes over instantly
+    } finally {
+      this._aiPending = false;
+    }
   }
 
   setDifficulty(diff = 'medium') {
@@ -275,9 +310,16 @@ export class Bot {
     const spawn = this.getWorldBodyCenter().add(new THREE.Vector3(0, 0.3, 0));
     const aimTarget = target.position.clone().add(new THREE.Vector3(0, 1.2, 0));
     const dir = aimTarget.sub(spawn).normalize();
-    // Spread scaled by difficulty
-    const sp = 0.04 * (this.spreadMult || 1.0);
-    dir.x += randomRange(-sp, sp);
+
+    // Spread scaled by difficulty or humanized AI modifier
+    let sp = 0.04 * (this.spreadMult || 1.0);
+    if (this.lastAIData && this.lastAIData.source === 'NEURAL_NET') {
+      // Humanized jitter angles converted into directional offset
+      const jitterOffset = (this.lastAIData.aim_yaw || 0.0) * 0.005;
+      dir.x += jitterOffset;
+    } else {
+      dir.x += randomRange(-sp, sp);
+    }
     dir.y += randomRange(-sp * 0.75, sp * 0.75);
     dir.z += randomRange(-sp, sp);
     dir.normalize();

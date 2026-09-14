@@ -53,7 +53,14 @@ export class Player {
     this.standingHeight = 1.72;
     this.crouchHeight = 0.95;
     this.slideHeight = 0.75;
+    this.proneHeight = 0.42;
+    this.isProning = false;
     this.currentEyeHeight = this.standingHeight;
+
+    // Tactical Peek / Lean (-1: left, 0: center, 1: right)
+    this.peekState = 0;
+    this.currentPeekRoll = 0;
+    this.currentPeekOffset = 0;
 
     // Camera rotation (Euler yaw/pitch)
     this.pitch = 0;
@@ -312,6 +319,25 @@ export class Player {
   cancelSlide() {
     this.isSliding = false;
     this.slideTimer = 0;
+  }
+
+  tryProne() {
+    this.isProning = !this.isProning;
+    if (this.isProning) {
+      this.keys.crouch = false;
+      this.cancelSlide();
+      this.isDiving = false;
+    }
+    if (this.soundEngine && this.soundEngine.playSlide) {
+      this.soundEngine.playSlide();
+    }
+    return this.isProning;
+  }
+
+  setPeek(dir) {
+    // -1 = left, 0 = neutral, 1 = right
+    this.peekState = (this.peekState === dir) ? 0 : dir;
+    return this.peekState;
   }
 
   // Call of Duty Dolphin Dive (Black Ops 6 Omnidirectional Dive to Prone)
@@ -626,7 +652,9 @@ export class Player {
 
     // Speed calculation - Omnidirectional Sprinting (COD Omnimovement)
     let currentSpeed = this.moveSpeed;
-    if (this.isTacSprinting && isMoving) {
+    if (this.isProning) {
+      currentSpeed *= 0.32; // Prone crawl speed
+    } else if (this.isTacSprinting && isMoving) {
       currentSpeed *= this.tacSprintMultiplier;
     } else if (this.keys.sprint && !this.keys.crouch && isMoving) {
       currentSpeed *= this.sprintMultiplier;
@@ -637,6 +665,13 @@ export class Player {
     // Omnimovement: Sliding & Dolphin Diving Mechanics
     let targetRoll = 0;
     this.omniPitchOffset = 0;
+
+    // Tactical Peek Leaning
+    const targetPeekRoll = this.peekState * 0.16;
+    const targetPeekOffset = this.peekState * 0.32;
+    this.currentPeekRoll = lerp(this.currentPeekRoll, targetPeekRoll, delta * 14);
+    this.currentPeekOffset = lerp(this.currentPeekOffset, targetPeekOffset, delta * 14);
+    targetRoll += this.currentPeekRoll;
 
     if (this.isDiving) {
       this.diveTimer -= delta;
@@ -698,7 +733,9 @@ export class Player {
 
     // 4. Smooth Crouch & Slide Height Interpolation
     let targetHeight = this.standingHeight;
-    if (this.isDiving) {
+    if (this.isProning) {
+      targetHeight = this.proneHeight; // Low prone eye height (0.42m)
+    } else if (this.isDiving) {
       targetHeight = 0.58; // low prone dive height
     } else if (this.isSliding) {
       targetHeight = this.slideHeight;
@@ -713,7 +750,7 @@ export class Player {
     let bobOffsetY = 0;
     let bobOffsetX = 0;
 
-    if (this.isGrounded && horizontalSpeed > 0.8 && !this.isSliding && !this.isDiving) {
+    if (this.isGrounded && horizontalSpeed > 0.8 && !this.isSliding && !this.isDiving && !this.isProning) {
       const bobFreq = (this.isTacSprinting ? 14 : (this.keys.sprint ? 12 : 8));
       this.bobTimer += delta * bobFreq;
       bobOffsetY = Math.sin(this.bobTimer) * this.bobAmount;
@@ -733,12 +770,15 @@ export class Player {
     this.flinchRoll = lerp(this.flinchRoll || 0, 0, delta * 12);
     this.landingOffset = lerp(this.landingOffset || 0, 0, delta * 12);
 
-    // 6. Camera Position & Rotation with Screen Shake, Landing, Omnimovement Tilts & Flinch
+    // 6. Camera Position & Rotation with Screen Shake, Landing, Omnimovement Tilts, Peek & Flinch
     const shake = this.effects.shakeOffset;
+    const peekRightX = Math.cos(this.yaw) * this.currentPeekOffset;
+    const peekRightZ = -Math.sin(this.yaw) * this.currentPeekOffset;
+
     this.camera.position.set(
-      this.position.x + bobOffsetX + shake.x,
+      this.position.x + bobOffsetX + shake.x + peekRightX,
       this.position.y + this.currentEyeHeight + bobOffsetY + shake.y + this.landingOffset,
-      this.position.z
+      this.position.z + peekRightZ
     );
 
     const euler = new THREE.Euler(

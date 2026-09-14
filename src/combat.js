@@ -74,9 +74,10 @@ export class CombatSystem {
         // Don't shoot friendly Blue bots
         if (target.team === 'BLUE') continue;
 
-        // A. Head check (sphere intersection)
+        // A. Head check (generous mobile hit sphere)
         const headCenter = target.getWorldHeadCenter();
-        const headSphere = new THREE.Sphere(headCenter, target.headHitRadius || 0.32);
+        const headRadius = Math.max(target.headHitRadius || 0.32, 0.44);
+        const headSphere = new THREE.Sphere(headCenter, headRadius);
         const headHit = new THREE.Vector3();
         if (ray.intersectSphere(headSphere, headHit)) {
           const dist = this.camera.position.distanceTo(headHit);
@@ -88,9 +89,10 @@ export class CombatSystem {
           }
         }
 
-        // B. Body check (sphere intersection around torso)
+        // B. Body check (generous mobile torso sphere)
         const bodyCenter = target.getWorldBodyCenter();
-        const bodySphere = new THREE.Sphere(bodyCenter, target.bodyHitRadius || 0.58);
+        const bodyRadius = Math.max(target.bodyHitRadius || 0.58, 0.74);
+        const bodySphere = new THREE.Sphere(bodyCenter, bodyRadius);
         const bodyHit = new THREE.Vector3();
         if (ray.intersectSphere(bodySphere, bodyHit)) {
           const dist = this.camera.position.distanceTo(bodyHit);

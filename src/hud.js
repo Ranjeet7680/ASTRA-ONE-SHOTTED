@@ -1,3 +1,5 @@
+import { lerp } from './utilities.js';
+
 // Professional Blueprint HUD Manager for ASTRA: One Shotted
 // Manages 6-digit score display, Gyroscope status badge, Collapsible Weapon Bar,
 // Directional damage indicators, Crosshair state transitions, and Temporary wave banners.
@@ -45,8 +47,35 @@ export class HUD {
       document.getElementById('slot-1'),
       document.getElementById('slot-2'),
       document.getElementById('slot-3'),
-      document.getElementById('slot-4')
+      document.getElementById('slot-4'),
+      document.getElementById('slot-5')
     ];
+
+    // Live Telemetry Displays
+    this.timerDisplay = document.getElementById('match-timer-display');
+    this.fpsDisplay = document.getElementById('fps-display');
+    this.pingDisplay = document.getElementById('ping-display');
+    this.fireModeBtn = document.getElementById('hud-fire-mode-btn');
+    this.compassDisplay = document.getElementById('hud-compass-text');
+    this.ammoFillBadge = document.getElementById('hud-ammo-fill-badge');
+    this.lowHealthWarning = document.getElementById('hud-low-health-warning');
+    this.lootPickupCard = document.getElementById('hud-loot-pickup-card');
+
+    // Dynamic Crosshair lines
+    this.crosshairLines = {
+      top: this.crosshair ? this.crosshair.querySelector('.crosshair-line.top') : null,
+      bottom: this.crosshair ? this.crosshair.querySelector('.crosshair-line.bottom') : null,
+      left: this.crosshair ? this.crosshair.querySelector('.crosshair-line.left') : null,
+      right: this.crosshair ? this.crosshair.querySelector('.crosshair-line.right') : null
+    };
+    this.crosshairSpread = 0;
+
+    // Performance & Match Timers
+    this.matchDuration = 0;
+    this.fpsTimer = 0;
+    this.frameCount = 0;
+    this.fps = 60;
+    this.recentKills = []; // timestamps for multikill detection
 
     // TDM HUD elements
     this.tdmScoreBar = document.getElementById('tdm-score-bar');
@@ -315,6 +344,9 @@ export class HUD {
         this.hpBar.classList.remove('danger');
       }
     }
+    if (this.lowHealthWarning) {
+      this.lowHealthWarning.style.display = (hp > 0 && hp <= 25) ? 'flex' : 'none';
+    }
   }
 
   generateTallyMarks(count) {
@@ -382,17 +414,65 @@ export class HUD {
     }, 130);
   }
 
-  showKillPopup(enemyType, isHeadshot, scoreGain) {
+  showKillPopup(enemyType, isHeadshot, scoreGain = 100) {
     if (!this.killFeed) return;
+
+    const now = performance.now();
+    this.recentKills.push(now);
+    // Keep kills within 4.5 seconds for multi-kill combo
+    this.recentKills = this.recentKills.filter(t => now - t <= 4500);
+    const combo = this.recentKills.length;
 
     const item = document.createElement('div');
     item.className = 'kill-item' + (isHeadshot ? ' headshot' : '');
-    item.textContent = isHeadshot ? `HEADSHOT! +${scoreGain}` : `KILL +${scoreGain}`;
+    if (isHeadshot) {
+      item.innerHTML = `
+        <div style="font-size: 11px; letter-spacing: 2.5px; font-weight: 800; color: #c9182b;">HEADSHOT</div>
+        <div style="font-size: 20px; font-weight: 800; color: #c9182b;">+${scoreGain || 250}</div>
+      `;
+    } else {
+      item.innerHTML = `
+        <div style="font-size: 10px; letter-spacing: 1.5px; font-weight: 700; opacity: 0.85;">ELIMINATION</div>
+        <div style="font-size: 17px; font-weight: 800; color: #162a68;">+${scoreGain || 100}</div>
+      `;
+    }
 
     this.killFeed.appendChild(item);
     setTimeout(() => {
       if (item.parentNode) item.parentNode.removeChild(item);
     }, 1200);
+
+    // Multi-Kill Combo Announcement
+    if (combo >= 2) {
+      const mk = document.createElement('div');
+      mk.className = 'kill-item headshot';
+      mk.style.cssText = `
+        background: #162a68;
+        color: #faf8f2;
+        border: 2px solid #c9182b;
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 2px;
+      `;
+      let text = 'DOUBLE KILL';
+      if (combo === 3) text = 'TRIPLE KILL';
+      else if (combo === 4) text = 'QUAD KILL';
+      else if (combo >= 5) text = 'MULTI KILL 🔥';
+      mk.textContent = text;
+      this.killFeed.appendChild(mk);
+      setTimeout(() => {
+        if (mk.parentNode) mk.parentNode.removeChild(mk);
+      }, 1400);
+    }
+  }
+
+  showAmmoFilledPulse() {
+    if (this.ammoFillBadge) {
+      this.ammoFillBadge.classList.add('pulse');
+      setTimeout(() => {
+        this.ammoFillBadge.classList.remove('pulse');
+      }, 1800);
+    }
   }
 
   getWeaponIconHtml(weaponName) {
@@ -505,8 +585,78 @@ export class HUD {
     if (this.healingVignette) this.healingVignette.classList.remove('active');
   }
 
-  // Directional damage arcs update
+  // Contextual Ground Loot Pickup Panel in HUD
+  updateLootCard(items) {
+    if (!this.lootPickupCard) return;
+    if (!items || items.length === 0) {
+      this.lootPickupCard.style.display = 'none';
+      return;
+    }
+
+    const first = items[0];
+    const nameEl = this.lootPickupCard.querySelector('.loot-card-name');
+    const subEl = this.lootPickupCard.querySelector('.loot-card-sub');
+    if (nameEl) nameEl.textContent = first.name;
+    if (subEl) subEl.textContent = first.sub;
+    this.lootPickupCard.style.display = 'flex';
+  }
+
+  // Directional damage arcs & Live Telemetry update
   update(delta) {
+    // 1. Match Duration Timer (MM:SS)
+    this.matchDuration += delta;
+    if (this.timerDisplay) {
+      const mins = Math.floor(this.matchDuration / 60);
+      const secs = Math.floor(this.matchDuration % 60);
+      this.timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    // 2. Live FPS Calculation
+    this.frameCount++;
+    this.fpsTimer += delta;
+    if (this.fpsTimer >= 0.5) {
+      this.fps = Math.round(this.frameCount / this.fpsTimer);
+      this.frameCount = 0;
+      this.fpsTimer = 0;
+      if (this.fpsDisplay) {
+        this.fpsDisplay.textContent = `${this.fps} FPS`;
+      }
+    }
+
+    // 3. Live Compass Heading
+    if (this.compassDisplay && this.game && this.game.player) {
+      let deg = Math.round((-this.game.player.yaw * 180 / Math.PI) % 360);
+      if (deg < 0) deg += 360;
+
+      const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      const dirIndex = Math.round(deg / 45) % 8;
+      this.compassDisplay.textContent = `${String(deg).padStart(3, '0')}° ${directions[dirIndex]}`;
+    }
+
+    // 4. Dynamic Crosshair Expansion & Recoil
+    if (this.crosshair && this.game && this.game.player) {
+      const p = this.game.player;
+      const isMoving = p.keys.forward || p.keys.backward || p.keys.left || p.keys.right;
+      const isSprinting = p.keys.sprint || p.isTacSprinting;
+      const isShooting = p.isShooting;
+      const isAiming = p.isAiming;
+
+      let targetSpread = 0;
+      if (isShooting) targetSpread += 14;
+      if (isSprinting) targetSpread += 10;
+      else if (isMoving) targetSpread += 5;
+      if (isAiming) targetSpread -= 3;
+
+      this.crosshairSpread = lerp(this.crosshairSpread, targetSpread, delta * 14);
+      const sp = Math.max(0, this.crosshairSpread);
+
+      if (this.crosshairLines.top) this.crosshairLines.top.style.transform = `translateX(-50%) translateY(-${sp}px)`;
+      if (this.crosshairLines.bottom) this.crosshairLines.bottom.style.transform = `translateX(-50%) translateY(${sp}px)`;
+      if (this.crosshairLines.left) this.crosshairLines.left.style.transform = `translateY(-50%) translateX(-${sp}px)`;
+      if (this.crosshairLines.right) this.crosshairLines.right.style.transform = `translateY(-50%) translateX(${sp}px)`;
+    }
+
+    // 5. Directional Damage Indicators Canvas
     if (!this.damageCtx || !this.damageCanvas) return;
 
     const ctx = this.damageCtx;
@@ -552,6 +702,44 @@ export class HUD {
       ctx.fill();
 
       ctx.restore();
+    }
+  }
+
+  setAimAssistLock(isLocked, confidence = 1.0) {
+    if (!this.crosshair) return;
+    if (isLocked) {
+      this.crosshair.classList.add('aim-locked');
+      if (!this.lockIndicator) {
+        this.lockIndicator = document.createElement('div');
+        this.lockIndicator.id = 'hud-aim-lock-brackets';
+        this.lockIndicator.style.cssText = `
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 48px;
+          height: 48px;
+          border: 2px dashed #00ff88;
+          border-radius: 50%;
+          pointer-events: none;
+          opacity: 0.85;
+          box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+          transition: all 0.15s ease;
+        `;
+        if (this.crosshair.parentNode) {
+          this.crosshair.parentNode.appendChild(this.lockIndicator);
+        }
+      }
+      if (this.lockIndicator) {
+        this.lockIndicator.style.display = 'block';
+        this.lockIndicator.style.borderColor = confidence > 0.6 ? '#00e5ff' : '#00ff88';
+        this.lockIndicator.style.transform = `translate(-50%, -50%) scale(${1.0 - (1.0 - confidence) * 0.25})`;
+      }
+    } else {
+      this.crosshair.classList.remove('aim-locked');
+      if (this.lockIndicator) {
+        this.lockIndicator.style.display = 'none';
+      }
     }
   }
 }

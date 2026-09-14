@@ -1,0 +1,85 @@
+{
+  "pipeline_version": "1.0.0",
+  "last_updated": "2026-09-14T13:37:57.948504",
+  "models": {
+    "skill_rating": {
+      "model_id": "skill_rating",
+      "active_version": "v1.0.0",
+      "algorithm": "XGBoost Regressor with StandardScaler",
+      "file_name": "skill_rating_v1.joblib",
+      "r2_score": 0.9992,
+      "mae": 32.36,
+      "features": [
+        "accuracy",
+        "headshot_rate",
+        "recoil_control",
+        "reaction_time_ms",
+        "flick_consistency",
+        "kills",
+        "deaths",
+        "kd_ratio",
+        "damage",
+        "score"
+      ],
+      "status": "ROLLED_BACK",
+      "last_trained": "2026-09-14T13:37:59.221378",
+      "rollback_versions": [
+        "v1.0.0"
+      ]
+    },
+    "weapon_balance": {
+      "model_id": "weapon_balance",
+      "active_version": "v1.0.0",
+      "algorithm": "RandomForestClassifier",
+      "file_name": "weapon_balance_v1.joblib",
+      "accuracy": 0.9022,
+      "f1_score": 0.8574,
+      "classes": {
+        "0": "UNDERPOWERED",
+        "1": "OPTIMAL",
+        "2": "OVERPOWERED"
+      },
+      "status": "ACTIVE",
+      "last_trained": "2026-09-14T13:37:59.833283",
+      "rollback_versions": [
+        "v1.0.0"
+      ]
+    },
+    "churn_risk": {
+      "model_id": "churn_risk",
+      "active_version": "v1.0.0",
+      "algorithm": "RandomForestClassifier",
+      "file_name": "churn_risk_v1.joblib",
+      "accuracy": 0.9829,
+      "f1_score": 0.9582,
+      "status": "ACTIVE",
+      "last_trained": "2026-09-14T13:38:00.448540",
+      "rollback_versions": [
+        "v1.0.0"
+      ]
+    },
+    "anti_cheat_anomaly": {
+      "model_id": "anti_cheat_anomaly",
+      "active_version": "v1.0.0",
+      "algorithm": "IsolationForest (Unsupervised)",
+      "file_name": "anti_cheat_anomaly_v1.joblib",
+      "anomaly_precision": 0.3883,
+      "status": "ACTIVE",
+      "last_trained": "2026-09-14T13:38:01.142288",
+      "rollback_versions": [
+        "v1.0.0"
+      ]
+    },
+    "recommendation_engine": {
+      "model_id": "recommendation_engine",
+      "active_version": "v1.0.0",
+      "algorithm": "Playstyle Archetype & Multi-Attribute Affinity Matrix",
+      "file_name": "recommendation_engine_v1.joblib",
+      "status": "ACTIVE",
+      "last_trained": "2026-09-14T13:38:01.143790",
+      "rollback_versions": [
+        "v1.0.0"
+      ]
+    }
+  }
+}

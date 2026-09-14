@@ -20,6 +20,9 @@ import { VoiceChatSystem } from './voiceChat.js';
 import { KillstreakManager } from './killstreaks.js';
 import { InputManager } from './inputManager.js';
 import { BgmManager } from './bgmManager.js';
+import { LootSystem } from './lootSystem.js';
+import { HUDCustomizer } from './hudCustomizer.js';
+import { AimAssistSystem } from './aimAssist.js';
 
 class Game {
   constructor() {
@@ -88,6 +91,9 @@ class Game {
     this.lobby = new LobbyScene(this.scene, this.materials, this.customization, this.weapons, this.camera);
     this.minimap = new MinimapManager(this);
     this.voiceChat = new VoiceChatSystem(this);
+    this.lootSystem = new LootSystem(this.scene, this.materials, this.soundEngine, this.effects, this.level);
+    this.hudCustomizer = new HUDCustomizer(this.mobileControls, this.hud, this);
+    this.aimAssist = new AimAssistSystem(this);
 
     this.currentMode = 'wave'; // 'wave' or 'tdm'
 
@@ -198,12 +204,79 @@ class Game {
       );
     };
 
-    // Combat -> Wave Manager kill count
+    // Combat -> Wave Manager kill count & Tactical Ground Loot Drops
     this.combat.onEnemyKilled = (enemy, isHeadshot) => {
       if (this.currentMode === 'wave') {
         this.waves.handleEnemyKilled(enemy, isHeadshot);
       }
+      if (this.lootSystem && enemy) {
+        const pos = (enemy.mesh && enemy.mesh.position) ? enemy.mesh.position : enemy.position;
+        if (pos) {
+          this.lootSystem.handleEnemyDrop(pos);
+        }
+      }
     };
+
+    // Tactical Ground Loot System Listeners
+    if (this.lootSystem) {
+      this.lootSystem.onNearbyItemsChanged = (items) => {
+        if (this.mobileControls) this.mobileControls.updateNearbyLoot(items);
+        if (this.hud) this.hud.updateLootCard(items);
+      };
+    }
+
+    // 10-Second Ammo Auto-Fill Pulse Feedback
+    if (this.weapons) {
+      this.weapons.onAmmoFilled = () => {
+        if (this.hud) this.hud.showAmmoFilledPulse();
+      };
+    }
+
+    // HUD Ground Loot Pickup Buttons
+    const btnLootPick = document.getElementById('btn-hud-loot-pick');
+    if (btnLootPick) {
+      btnLootPick.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.lootSystem && this.lootSystem.nearbyItems.length > 0) {
+          this.lootSystem.pickupItem(this.lootSystem.nearbyItems[0], this.player, this.weapons, this.hud);
+        }
+      });
+    }
+
+    const btnLootAll = document.getElementById('btn-hud-loot-all');
+    if (btnLootAll) {
+      btnLootAll.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.lootSystem) {
+          this.lootSystem.pickupAll(this.player, this.weapons, this.hud);
+        }
+      });
+    }
+
+    // Fire Mode Toggle Button in HUD
+    const btnFireMode = document.getElementById('hud-fire-mode-btn');
+    if (btnFireMode) {
+      btnFireMode.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.weapons) {
+          const nextMode = this.weapons.toggleFireMode();
+          btnFireMode.textContent = `${nextMode} ▾`;
+        }
+      });
+    }
+
+    // HUD Customizer Close Callback (Restore previous screen if not in match)
+    if (this.hudCustomizer) {
+      this.hudCustomizer.onClose = () => {
+        if (this.stateManager.currentState === 'MENU' && this.stateManager.screenMainMenu) {
+          this.stateManager.screenMainMenu.style.display = 'flex';
+        } else if (this.stateManager.currentState === 'LOBBY' && this.stateManager.screenPubgLobby) {
+          this.stateManager.screenPubgLobby.style.display = 'flex';
+        } else if (this.stateManager.currentState === 'PAUSED' && this.stateManager.screenPause) {
+          this.stateManager.screenPause.style.display = 'flex';
+        }
+      };
+    }
   }
 
   startMode(mode = 'wave', teamSize = 4, mapSize = 'small', difficulty = 'medium') {
@@ -225,10 +298,16 @@ class Game {
       this.tdm.reset();
       this.hud.setTDMMode(false);
       this.waves.reset();
+      if (this.lootSystem) {
+        this.lootSystem.reset();
+      }
       this.waves.startWave(1, difficulty);
     } else {
       this.waves.reset();
       this.hud.setTDMMode(true);
+      if (this.lootSystem) {
+        this.lootSystem.reset();
+      }
       this.tdm.startMatch(teamSize, difficulty);
     }
   }
@@ -250,6 +329,9 @@ class Game {
     this.grenades.reset();
     if (this.killstreaks) {
       this.killstreaks.reset();
+    }
+    if (this.lootSystem) {
+      this.lootSystem.reset();
     }
     this.weapons.weapons.forEach(w => {
       w.currentAmmo = w.magSize;
@@ -288,6 +370,9 @@ class Game {
       this.player.update(delta);
       this.weapons.update(delta, this.player.getPlayerStateForWeapon());
       this.effects.update(delta);
+      if (this.lootSystem) {
+        this.lootSystem.update(delta, this.player.position);
+      }
       if (this.level && this.level.update) {
         this.level.update(delta);
       }
@@ -299,6 +384,26 @@ class Game {
 
       // Update Grenades physics and explosion raycast
       const allTargets = this.currentMode === 'wave' ? this.waves.enemies : this.tdm.bots;
+
+      // Auto-Aim & Aim-Assist System
+      if (this.aimAssist) {
+        const aimRes = this.aimAssist.update(
+          delta,
+          this.player,
+          this.camera,
+          allTargets,
+          this.level ? this.level.colliders : []
+        );
+
+        if (aimRes && aimRes.shouldAutoFire) {
+          this.attemptShoot();
+        }
+
+        if (this.hud && this.hud.setAimAssistLock) {
+          this.hud.setAimAssistLock(aimRes.isLocked, aimRes.confidence);
+        }
+      }
+
       this.grenades.update(delta, (epicenter, radius, maxDamage, source) => {
         this.combat.handleGrenadeExplosion(epicenter, radius, maxDamage, source, allTargets, this.player);
       });

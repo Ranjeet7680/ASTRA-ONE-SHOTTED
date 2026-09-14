@@ -78,55 +78,56 @@ export class LobbyScene {
     this.lightsGroup = new THREE.Group();
     this.group.add(this.lightsGroup);
 
-    // 1. Blueprint Operator Key Spotlight
-    this.keySpotlight = new THREE.SpotLight(0xfffdf5, 2.2, 16, Math.PI / 4.5, 0.35, 1.2);
-    this.keySpotlight.position.set(0, 4.8, 1.8);
+    // 1. Warm Hero Key Spotlight on Operator
+    this.keySpotlight = new THREE.SpotLight(0xffecd2, 3.2, 20, Math.PI / 4.2, 0.4, 1.2);
+    this.keySpotlight.position.set(0.5, 5.2, 2.2);
     this.keySpotlight.target.position.set(0, 1.1, 0);
     this.lightsGroup.add(this.keySpotlight);
     this.lightsGroup.add(this.keySpotlight.target);
 
-    // 2. Deep Blueprint Rim Light from behind
-    this.rimLight = new THREE.DirectionalLight(0x2855b5, 1.4);
-    this.rimLight.position.set(0, 3.0, -3.5);
+    // 2. Powerful Electric Cyan/Blue Rim Light from Behind (PUBG Silhouette Glow)
+    this.rimLight = new THREE.DirectionalLight(0x00d4ff, 2.6);
+    this.rimLight.position.set(-1.2, 3.8, -4.5);
     this.lightsGroup.add(this.rimLight);
 
-    // 3. Ambient warm drafting fill
-    this.ambientLight = new THREE.AmbientLight(0xf5f3ee, 0.95);
+    // 3. Airdrop Flare Accent Light (Amber / Fire Glow from crate)
+    this.flareLight = new THREE.PointLight(0xff6b00, 2.0, 8.0);
+    this.flareLight.position.set(3.2, 1.4, 0.2);
+    this.lightsGroup.add(this.flareLight);
+
+    // 4. Cool Tactical Slate Ambient Fill
+    this.ambientLight = new THREE.AmbientLight(0x1a2638, 1.1);
     this.lightsGroup.add(this.ambientLight);
   }
 
   buildPedestal() {
     this.pedestalGroup.clear();
 
-    // 0. Expansive Military Blueprint Hangar Floor (36m x 36m)
-    const hangarFloorGeom = new THREE.PlaneGeometry(36, 36);
+    // 0. Dark Military Outpost Ground (36m x 36m)
+    const hangarFloorGeom = new THREE.PlaneGeometry(42, 42);
     hangarFloorGeom.rotateX(-Math.PI / 2);
-    const hangarFloorMat = new THREE.MeshBasicMaterial({ color: 0xf6f4ee, side: THREE.DoubleSide });
+    const hangarFloorMat = new THREE.MeshLambertMaterial({ color: 0x0e1522 });
     const hangarFloor = new THREE.Mesh(hangarFloorGeom, hangarFloorMat);
     hangarFloor.position.set(0, -0.235, 0);
     this.pedestalGroup.add(hangarFloor);
 
-    // Blueprint grid line mesh over hangar floor
-    const gridHelper = new THREE.GridHelper(36, 36, 0x162a68, 0x3d5a99);
+    // Dark Tactical Grid Overlay
+    const gridHelper = new THREE.GridHelper(42, 42, 0x1e2e46, 0x131f32);
     gridHelper.position.set(0, -0.233, 0);
-    if (gridHelper.material) {
-      gridHelper.material.opacity = 0.35;
-      gridHelper.material.transparent = true;
-    }
     this.pedestalGroup.add(gridHelper);
 
-    // Runway / Staging Perimeter Circle
+    // Outer Staging Runway Perimeter Ring
     const outerRingGeom = new THREE.RingGeometry(6.8, 6.9, 48);
     outerRingGeom.rotateX(-Math.PI / 2);
-    const outerRingMat = new THREE.MeshBasicMaterial({ color: 0x162a68, side: THREE.DoubleSide });
+    const outerRingMat = new THREE.MeshBasicMaterial({ color: 0x2563eb, side: THREE.DoubleSide });
     const outerRing = new THREE.Mesh(outerRingGeom, outerRingMat);
     outerRing.position.set(0, -0.23, 0);
     this.pedestalGroup.add(outerRing);
 
-    // Staging runway approach lights (cyan/blue nodes)
-    const runwayLightGeom = new THREE.CircleGeometry(0.07, 8);
+    // Runway Approach Beacons (Cyan/Blue pulsating nodes)
+    const runwayLightGeom = new THREE.CircleGeometry(0.08, 8);
     runwayLightGeom.rotateX(-Math.PI / 2);
-    const runwayLightMat = new THREE.MeshBasicMaterial({ color: 0x2266dd, side: THREE.DoubleSide });
+    const runwayLightMat = new THREE.MeshBasicMaterial({ color: 0x00f0ff, side: THREE.DoubleSide });
     for (let i = 0; i < 16; i++) {
       const angle = (i * Math.PI * 2) / 16;
       const x = Math.cos(angle) * 6.85;
@@ -136,40 +137,38 @@ export class LobbyScene {
       this.pedestalGroup.add(node);
     }
 
-    // 1. Central Elevated Hexagonal Blueprint Dais
-    const daisGeom = new THREE.CylinderGeometry(2.3, 2.7, 0.45, 6);
-    const dais = this.materials.createOutlinedMesh(
-      daisGeom,
-      this.materials.accentBlockMaterial,
-      this.materials.blueInkLineMaterial
-    );
+    // 1. Central Elevated Tactical Octagon Dais
+    const daisGeom = new THREE.CylinderGeometry(2.3, 2.7, 0.45, 8);
+    const daisMat = new THREE.MeshLambertMaterial({ color: 0x172336 });
+    const daisLineMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 2 });
+    const dais = this.materials.createOutlinedMesh(daisGeom, daisMat, daisLineMat);
     dais.group.position.set(0, -0.22, 0);
     this.pedestalGroup.add(dais.group);
 
-    // 2. Multi-tier concentric holographic projector rings on dais floor
+    // Concentric Neon Hologram Rings
     const ring1Geom = new THREE.RingGeometry(1.45, 1.52, 40);
     ring1Geom.rotateX(-Math.PI / 2);
-    const ring1Mat = new THREE.MeshBasicMaterial({ color: 0x162a68, side: THREE.DoubleSide });
+    const ring1Mat = new THREE.MeshBasicMaterial({ color: 0x00e5ff, side: THREE.DoubleSide });
     this.floorRing1 = new THREE.Mesh(ring1Geom, ring1Mat);
     this.floorRing1.position.set(0, 0.015, 0);
     this.pedestalGroup.add(this.floorRing1);
 
     const ring2Geom = new THREE.RingGeometry(1.9, 1.95, 40);
     ring2Geom.rotateX(-Math.PI / 2);
-    const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x3d5a99, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+    const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x3b82f6, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
     this.floorRing2 = new THREE.Mesh(ring2Geom, ring2Mat);
     this.floorRing2.position.set(0, 0.016, 0);
     this.pedestalGroup.add(this.floorRing2);
 
-    // Tactical outer graduation tick ring
+    // Tactical Graduation Ticks (Amber Hazard Accents)
     const ring3Geom = new THREE.RingGeometry(2.18, 2.22, 48);
     ring3Geom.rotateX(-Math.PI / 2);
-    const ring3Mat = new THREE.MeshBasicMaterial({ color: 0xc9182b, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+    const ring3Mat = new THREE.MeshBasicMaterial({ color: 0xf59e0b, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
     this.floorRing3 = new THREE.Mesh(ring3Geom, ring3Mat);
     this.floorRing3.position.set(0, 0.017, 0);
     this.pedestalGroup.add(this.floorRing3);
 
-    // 3. Central Tactical Compass Star & Target Reticle
+    // Central Tactical Target Reticle
     const starShape = new THREE.Shape();
     const points = 8;
     for (let i = 0; i < points * 2; i++) {
@@ -183,21 +182,21 @@ export class LobbyScene {
     starShape.closePath();
     const starGeom = new THREE.ShapeGeometry(starShape);
     starGeom.rotateX(-Math.PI / 2);
-    const starMat = new THREE.MeshBasicMaterial({ color: 0x1e387b, side: THREE.DoubleSide, transparent: true, opacity: 0.45 });
+    const starMat = new THREE.MeshBasicMaterial({ color: 0x0284c7, side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
     this.compassStar = new THREE.Mesh(starGeom, starMat);
     this.compassStar.position.set(0, 0.02, 0);
     this.pedestalGroup.add(this.compassStar);
 
-    // 4. Sweeping Radar Beam Line
+    // Sweeping Radar Beam Line
     const radarLineGeom = new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0, 0.022, 0),
       new THREE.Vector3(0, 0.022, 1.88)
     ]);
-    const radarLineMat = new THREE.LineBasicMaterial({ color: 0xc9182b, linewidth: 2 });
+    const radarLineMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 2 });
     this.radarBeam = new THREE.Line(radarLineGeom, radarLineMat);
     this.pedestalGroup.add(this.radarBeam);
 
-    // 5. Side Squad Podiums (Left, Right, Rear)
+    // Side Squad Podiums
     const squadPositions = [
       { x: -1.75, z: 0.4, scale: 0.8 },
       { x: 1.75, z: 0.4, scale: 0.8 },
@@ -208,8 +207,8 @@ export class LobbyScene {
       const squadDaisGeom = new THREE.CylinderGeometry(0.75 * pos.scale, 0.9 * pos.scale, 0.22, 6);
       const squadDais = this.materials.createOutlinedMesh(
         squadDaisGeom,
-        this.materials.hatchSurfaceMaterial,
-        this.materials.blueInkLineMaterial
+        daisMat,
+        daisLineMat
       );
       squadDais.group.position.set(pos.x, -0.13, pos.z);
       this.pedestalGroup.add(squadDais.group);
@@ -221,111 +220,162 @@ export class LobbyScene {
       this.pedestalGroup.add(sRing);
     });
 
-    // 6. Tactical Pelican Ammo Trunk & Supply Crates
+    // Tactical PUBG Airdrop Crate & Military Outpost Props
     this.buildTacticalProps();
   }
 
   buildTacticalProps() {
-    // Military Pelican Crate on left flank
-    const crateMat = new THREE.MeshLambertMaterial({ color: 0xf2eee2 });
-    const crateLineMat = new THREE.LineBasicMaterial({ color: 0x162a68, linewidth: 2 });
+    // 1. Iconic PUBG Airdrop Crate on Right Flank
+    const airdropGroup = new THREE.Group();
+    airdropGroup.position.set(3.2, 0, 0.2);
+    airdropGroup.rotation.y = -0.28;
 
-    const crateGeom = new THREE.BoxGeometry(0.7, 0.38, 0.48);
-    const crate = this.materials.createOutlinedMesh(crateGeom, crateMat, crateLineMat);
-    crate.group.position.set(-2.8, -0.04, 0.2);
-    crate.group.rotation.y = 0.22;
-    this.pedestalGroup.add(crate.group);
+    // Blue container lower chassis
+    const crateBodyGeom = new THREE.BoxGeometry(1.0, 0.75, 1.0);
+    const crateBodyMat = new THREE.MeshLambertMaterial({ color: 0x1d4ed8 }); // Electric cobalt blue
+    const crateLineMat = new THREE.LineBasicMaterial({ color: 0x0f172a, linewidth: 2 });
+    const crateBody = this.materials.createOutlinedMesh(crateBodyGeom, crateBodyMat, crateLineMat);
+    crateBody.group.position.set(0, 0.375, 0);
+    airdropGroup.add(crateBody.group);
 
-    // Stacked Ammo Case on right flank
-    const ammoGeom = new THREE.BoxGeometry(0.5, 0.3, 0.34);
-    const ammoCase1 = this.materials.createOutlinedMesh(ammoGeom, crateMat, crateLineMat);
-    ammoCase1.group.position.set(2.8, -0.08, 0.1);
-    ammoCase1.group.rotation.y = -0.35;
-    this.pedestalGroup.add(ammoCase1.group);
+    // Red canvas top cover
+    const tarpGeom = new THREE.BoxGeometry(1.08, 0.24, 1.08);
+    const tarpMat = new THREE.MeshLambertMaterial({ color: 0xdc2626 }); // Crimson red canvas
+    const tarp = this.materials.createOutlinedMesh(tarpGeom, tarpMat, crateLineMat);
+    tarp.group.position.set(0, 0.85, 0);
+    airdropGroup.add(tarp.group);
 
-    const ammoCase2 = this.materials.createOutlinedMesh(ammoGeom, crateMat, crateLineMat);
-    ammoCase2.group.position.set(2.75, 0.22, 0.12);
-    ammoCase2.group.rotation.y = -0.28;
-    this.pedestalGroup.add(ammoCase2.group);
+    // Crate straps and reinforcement corner metal
+    const strapGeom = new THREE.BoxGeometry(0.08, 0.77, 1.02);
+    const strapMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
+    const strap = new THREE.Mesh(strapGeom, strapMat);
+    strap.position.set(0, 0.38, 0);
+    airdropGroup.add(strap);
+
+    this.pedestalGroup.add(airdropGroup);
+
+    // 2. Tactical Military 4x4 Transport Vehicle (Jeep Silhouette) on Left Flank
+    const jeepGroup = new THREE.Group();
+    jeepGroup.position.set(-3.8, 0, -0.6);
+    jeepGroup.rotation.y = 0.35;
+
+    // Main olive/camo chassis
+    const bodyGeom = new THREE.BoxGeometry(2.4, 0.8, 1.3);
+    const jeepMat = new THREE.MeshLambertMaterial({ color: 0x243328 }); // Military olive
+    const jeepLineMat = new THREE.LineBasicMaterial({ color: 0x111c14, linewidth: 2 });
+    const jeepBody = this.materials.createOutlinedMesh(bodyGeom, jeepMat, jeepLineMat);
+    jeepBody.group.position.set(0, 0.65, 0);
+    jeepGroup.add(jeepBody.group);
+
+    // Cabin roof
+    const cabinGeom = new THREE.BoxGeometry(1.3, 0.65, 1.2);
+    const cabin = this.materials.createOutlinedMesh(cabinGeom, jeepMat, jeepLineMat);
+    cabin.group.position.set(-0.25, 1.35, 0);
+    jeepGroup.add(cabin.group);
+
+    // 4 Wheels
+    const wheelGeom = new THREE.CylinderGeometry(0.32, 0.32, 0.22, 16);
+    wheelGeom.rotateZ(Math.PI / 2);
+    const wheelMat = new THREE.MeshLambertMaterial({ color: 0x111827 });
+    const wheelPositions = [
+      { x: 0.75, z: 0.7 },
+      { x: -0.75, z: 0.7 },
+      { x: 0.75, z: -0.7 },
+      { x: -0.75, z: -0.7 }
+    ];
+    wheelPositions.forEach(wp => {
+      const wheel = new THREE.Mesh(wheelGeom, wheelMat);
+      wheel.position.set(wp.x, 0.32, wp.z);
+      jeepGroup.add(wheel);
+    });
+
+    this.pedestalGroup.add(jeepGroup);
+
+    // 3. Military Communication Tower in Distant Background
+    const towerGroup = new THREE.Group();
+    towerGroup.position.set(1.5, 0, -11.0);
+
+    const towerPillarGeom = new THREE.CylinderGeometry(0.12, 0.28, 7.5, 6);
+    const towerMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
+    const tower = new THREE.Mesh(towerPillarGeom, towerMat);
+    tower.position.set(0, 3.75, 0);
+    towerGroup.add(tower);
+
+    // Beacon beacon light on top
+    const beaconGeom = new THREE.SphereGeometry(0.14, 8, 8);
+    const beaconMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+    const beacon = new THREE.Mesh(beaconGeom, beaconMat);
+    beacon.position.set(0, 7.6, 0);
+    towerGroup.add(beacon);
+
+    this.pedestalGroup.add(towerGroup);
   }
 
   buildEnvironment() {
     this.envGroup.clear();
 
-    // 1. Drifting Blueprint Clouds in Background
-    this.cloudGroup = new THREE.Group();
-    this.envGroup.add(this.cloudGroup);
-    this.clouds = [];
+    // 1. Distant Mountain Ridge Silhouettes (Military Horizon)
+    const mountainMat = new THREE.MeshBasicMaterial({ color: 0x070b12 });
+    const mountainGeom1 = new THREE.ConeGeometry(8.5, 4.2, 4);
+    mountainGeom1.rotateY(Math.PI / 4);
+    const mtn1 = new THREE.Mesh(mountainGeom1, mountainMat);
+    mtn1.position.set(-8.0, 1.2, -18.0);
+    this.envGroup.add(mtn1);
 
-    const cloudMaterial = new THREE.LineBasicMaterial({ color: 0x224488, linewidth: 2 });
-    for (let c = 0; c < 5; c++) {
-      const singleCloud = new THREE.Group();
-      const numPuffs = 3 + Math.floor(Math.random() * 3);
-      for (let p = 0; p < numPuffs; p++) {
-        const rad = 0.5 + Math.random() * 0.45;
-        const geom = new THREE.CircleGeometry(rad, 16);
-        const edges = new THREE.EdgesGeometry(geom);
-        const line = new THREE.LineSegments(edges, cloudMaterial);
-        line.position.set((p - numPuffs / 2) * 0.55, Math.sin(p * 1.2) * 0.15, 0);
-        singleCloud.add(line);
-      }
-      singleCloud.position.set(
-        (c - 2) * 5.0 + (Math.random() - 0.5) * 1.5,
-        4.4 + (Math.random() - 0.5) * 1.2,
-        -9.5 + Math.random() * 2
-      );
-      singleCloud.userData = { speed: 0.18 + Math.random() * 0.2 };
-      this.cloudGroup.add(singleCloud);
-      this.clouds.push(singleCloud);
+    const mountainGeom2 = new THREE.ConeGeometry(11.0, 5.8, 4);
+    mountainGeom2.rotateY(Math.PI / 4);
+    const mtn2 = new THREE.Mesh(mountainGeom2, mountainMat);
+    mtn2.position.set(6.5, 2.0, -20.0);
+    this.envGroup.add(mtn2);
+
+    // 2. Rising Airdrop Flare / Smoke Particles
+    const smokeCount = 35;
+    const smokeGeom = new THREE.BufferGeometry();
+    const smokePositions = new Float32Array(smokeCount * 3);
+    this.smokeSpeeds = [];
+
+    for (let i = 0; i < smokeCount; i++) {
+      smokePositions[i * 3] = 3.2 + (Math.random() - 0.5) * 0.4;
+      smokePositions[i * 3 + 1] = 0.9 + Math.random() * 2.5;
+      smokePositions[i * 3 + 2] = 0.2 + (Math.random() - 0.5) * 0.4;
+      this.smokeSpeeds.push({
+        vy: 0.35 + Math.random() * 0.4,
+        vx: (Math.random() - 0.5) * 0.08,
+        vz: (Math.random() - 0.5) * 0.08
+      });
     }
+    smokeGeom.setAttribute('position', new THREE.BufferAttribute(smokePositions, 3));
+    const smokeMat = new THREE.PointsMaterial({
+      color: 0xff6600,
+      size: 0.18,
+      transparent: true,
+      opacity: 0.75
+    });
+    this.smokePoints = new THREE.Points(smokeGeom, smokeMat);
+    this.envGroup.add(this.smokePoints);
 
-    // 2. Blueprint Sun with rotating rays
-    this.sunGroup = new THREE.Group();
-    this.sunGroup.position.set(0, 5.8, -12);
-    this.envGroup.add(this.sunGroup);
-
-    const sunCoreGeom = new THREE.CircleGeometry(0.75, 24);
-    const sunCoreEdges = new THREE.EdgesGeometry(sunCoreGeom);
-    const sunCore = new THREE.LineSegments(sunCoreEdges, cloudMaterial);
-    this.sunGroup.add(sunCore);
-
-    this.sunRaysGroup = new THREE.Group();
-    for (let i = 0; i < 24; i++) {
-      const angle = (i * Math.PI * 2) / 24;
-      const r1 = 0.88;
-      const r2 = i % 2 === 0 ? 1.5 : 1.2;
-      const pts = [
-        new THREE.Vector3(Math.cos(angle) * r1, Math.sin(angle) * r1, 0),
-        new THREE.Vector3(Math.cos(angle) * r2, Math.sin(angle) * r2, 0)
-      ];
-      const rayGeom = new THREE.BufferGeometry().setFromPoints(pts);
-      const rayLine = new THREE.Line(rayGeom, cloudMaterial);
-      this.sunRaysGroup.add(rayLine);
-    }
-    this.sunGroup.add(this.sunRaysGroup);
-
-    // 3. Floating Blueprint Drafting Particles
-    const particleCount = 50;
+    // 3. Floating Tactical Dust Motes in Spotlight
+    const particleCount = 45;
     const pGeom = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     this.particleSpeeds = [];
 
     for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 1] = Math.random() * 5.0;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 8;
+      positions[i * 3] = (Math.random() - 0.5) * 8;
+      positions[i * 3 + 1] = Math.random() * 4.5;
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 6;
       this.particleSpeeds.push({
-        vy: 0.14 + Math.random() * 0.3,
-        vx: (Math.random() - 0.5) * 0.08,
+        vy: 0.12 + Math.random() * 0.25,
+        vx: (Math.random() - 0.5) * 0.05,
         origY: positions[i * 3 + 1]
       });
     }
     pGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const pMat = new THREE.PointsMaterial({
-      color: 0x1b3577,
-      size: 0.055,
+      color: 0x00e5ff,
+      size: 0.06,
       transparent: true,
-      opacity: 0.7
+      opacity: 0.65
     });
     this.particlePoints = new THREE.Points(pGeom, pMat);
     this.envGroup.add(this.particlePoints);
@@ -647,6 +697,10 @@ export class LobbyScene {
 
   show() {
     this.group.visible = true;
+    if (this.scene) {
+      this.prevSceneBackground = this.scene.background;
+      this.scene.background = new THREE.Color(0x0a101b);
+    }
     this.orbitAngle = 0;
     this.targetOrbitAngle = 0;
     this.orbitVelocity = 0;
@@ -663,6 +717,9 @@ export class LobbyScene {
 
   hide() {
     this.group.visible = false;
+    if (this.scene && this.prevSceneBackground) {
+      this.scene.background = this.prevSceneBackground;
+    }
     if (this.weapons) {
       if (this.weapons.weaponHolder) this.weapons.weaponHolder.visible = true;
       if (this.weapons.weaponContainer) this.weapons.weaponContainer.visible = true;
@@ -858,6 +915,24 @@ export class LobbyScene {
         }
       }
       posAttr.needsUpdate = true;
+    }
+
+    // 12. Airdrop Flare Smoke Upward Drift
+    if (this.smokePoints && this.smokeSpeeds) {
+      const sAttr = this.smokePoints.geometry.attributes.position;
+      const sArr = sAttr.array;
+      for (let i = 0; i < this.smokeSpeeds.length; i++) {
+        const spd = this.smokeSpeeds[i];
+        sArr[i * 3 + 1] += spd.vy * delta;
+        sArr[i * 3] += spd.vx * delta;
+        sArr[i * 3 + 2] += spd.vz * delta;
+        if (sArr[i * 3 + 1] > 3.8) {
+          sArr[i * 3 + 1] = 0.9;
+          sArr[i * 3] = 3.2 + (Math.random() - 0.5) * 0.35;
+          sArr[i * 3 + 2] = 0.2 + (Math.random() - 0.5) * 0.35;
+        }
+      }
+      sAttr.needsUpdate = true;
     }
   }
 }

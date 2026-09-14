@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASTRA: ONE SHOTTED // Command Ops & Analytics</title>
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-app">
+    <!-- Top Tactical Navbar -->
+    <header class="top-nav">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" fill="none" stroke-width="2">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 17 12 22 22 17" />
+            <polyline points="2 12 12 17 22 12" />
+          </svg>
+        </div>
+        <div>
+          <span class="brand-title">ASTRA // COMMAND OPS</span>
+          <span class="brand-subtitle">TELEMETRY & MACHINE LEARNING PLATFORM</span>
+        </div>
+      </div>
+
+      <div class="top-meta">
+        <div class="status-pill status-healthy">
+          <span class="pulse-dot"></span>
+          <span>CLUSTER: ACTIVE</span>
+        </div>
+        <div class="time-display" id="systemClock">00:00:00 UTC</div>
+        <button class="btn-refresh" id="btnRefresh">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          SYNC
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="overview">OVERVIEW & METRICS</button>
+      <button class="tab-btn" data-tab="weapons">WEAPON BALANCE (52)</button>
+      <button class="tab-btn" data-tab="models">ML MODEL REGISTRY</button>
+      <button class="tab-btn" data-tab="aiplatform">AI PLATFORM & RL BOTS</button>
+      <button class="tab-btn" data-tab="anticheat">ANTI-CHEAT DESK <span class="badge" id="incidentBadge">0</span></button>
+      <button class="tab-btn" data-tab="players">PLAYER TELEMETRY</button>
+      <button class="tab-btn" data-tab="aimlab">AIM TELEMETRY LAB</button>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main class="dashboard-content">
+      <!-- 1. OVERVIEW TAB -->
+      <section id="tab-overview" class="tab-pane active">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">DAILY ACTIVE PLAYERS (DAU)</div>
+            <div class="kpi-value" id="kpiDau">--</div>
+            <div class="kpi-sub">Monthly Active: <span id="kpiMau">--</span></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">TOTAL COMPETITIVE MATCHES</div>
+            <div class="kpi-value" id="kpiMatches">--</div>
+            <div class="kpi-sub">In-Progress: <span id="kpiActiveMatches" class="text-accent">--</span></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">OPEN ANTI-CHEAT INCIDENTS</div>
+            <div class="kpi-value text-danger" id="kpiIncidents">--</div>
+            <div class="kpi-sub">Zero False-Ban Guarantee</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">ACTIVE ML INFERENCE MODELS</div>
+            <div class="kpi-value text-success" id="kpiModels">5 / 5</div>
+            <div class="kpi-sub">Registry Status: Synchronized</div>
+          </div>
+        </div>
+
+        <div class="two-col-grid mt-4">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>SYSTEM HEALTH & LATENCY MATRIX</h3>
+              <span class="badge badge-green">NORMAL</span>
+            </div>
+            <div class="panel-body">
+              <div class="stat-row">
+                <span>FastAPI Backend Uptime</span>
+                <span class="val text-accent">99.98%</span>
+              </div>
+              <div class="stat-row">
+                <span>Average Client Ping (Asia-South)</span>
+                <span class="val">24 ms</span>
+              </div>
+              <div class="stat-row">
+                <span>Database SQLite Cache</span>
+                <span class="val">astra_game.db (Persistent)</span>
+              </div>
+              <div class="stat-row">
+                <span>WebSocket Tick Rate</span>
+                <span class="val">20 Hz Authoritative</span>
+              </div>
+              <div class="stat-row">
+                <span>Weapons Armed in Catalog</span>
+                <span class="val" id="catalogWeaponsCount">52 Weapons</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>SERVER TELEMETRY FEED</h3>
+              <span class="live-indicator"><span class="pulse-dot"></span> STREAMING</span>
+            </div>
+            <div class="panel-body">
+              <div class="log-terminal" id="liveLogFeed">
+                <div class="log-line">[SYSTEM] Fast API Gateway initialized on port 8000.</div>
+                <div class="log-line">[ML] Loaded XGBoost Player Skill Rating model v1.0.0.</div>
+                <div class="log-line">[ML] Loaded Random Forest Weapon Balance model v1.0.0.</div>
+                <div class="log-line">[DB] 52 blueprints and initial rosters seeded.</div>
+                <div class="log-line text-accent">[READY] Ready for mobile FPS player traffic.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. WEAPONS BALANCE TAB -->
+      <section id="tab-weapons" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>52 WEAPON META BALANCE ENGINE</h3>
+              <p class="panel-desc">Powered by Random Forest classifier analyzing Pick Rate, Win Rate, and TTK delta.</p>
+            </div>
+            <div class="filter-group">
+              <input type="text" id="weaponSearch" placeholder="Search weapon name..." class="input-dark">
+              <select id="weaponCatFilter" class="select-dark">
+                <option value="ALL">All Categories</option>
+                <option value="ASSAULT_RIFLE">Assault Rifles</option>
+                <option value="SMG">SMGs</option>
+                <option value="SHOTGUN">Shotguns</option>
+                <option value="LMG">LMGs</option>
+                <option value="SNIPER">Snipers</option>
+                <option value="PISTOL">Pistols</option>
+                <option value="MELEE">Melee</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table class="tactical-table" id="weaponsTable">
+                <thead>
+                  <tr>
+                    <th>WEAPON</th>
+                    <th>CATEGORY</th>
+                    <th>TIER</th>
+                    <th>WIN RATE</th>
+                    <th>PICK RATE</th>
+                    <th>K/D</th>
+                    <th>STATUS</th>
+                    <th>RECOMMENDED TUNING</th>
+                  </tr>
+                </thead>
+                <tbody id="weaponsTbody">
+                  <tr><td colspan="8" class="text-center">Loading weapon meta metrics...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. ML MODELS REGISTRY TAB -->
+      <section id="tab-models" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>ENTERPRISE MODEL REGISTRY & ROLLBACK</h3>
+              <p class="panel-desc">Live production models, accuracy metrics, and zero-downtime version rollback.</p>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="models-grid" id="modelsContainer">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. ANTI-CHEAT DESK TAB -->
+      <section id="tab-anticheat" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>SUSPICIOUS TELEMETRY INCIDENT DESK</h3>
+              <p class="panel-desc">Isolation Forest & Rule Anomaly Queue. Telemetry flagged for admin review (No automated blind bans).</p>
+            </div>
+            <div class="filter-group">
+              <select id="incidentStatusFilter" class="select-dark">
+                <option value="ALL">All Incidents</option>
+                <option value="OPEN" selected>Open Only</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="DISMISSED">Dismissed</option>
+                <option value="SHADOWBANNED">Shadowbanned</option>
+              </select>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table class="tactical-table">
+                <thead>
+                  <tr>
+                    <th>INCIDENT ID</th>
+                    <th>PLAYER</th>
+                    <th>VIOLATION TYPE</th>
+                    <th>SEVERITY</th>
+                    <th>DETAILS</th>
+                    <th>STATUS</th>
+                    <th>ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody id="incidentsTbody">
+                  <tr><td colspan="7" class="text-center">Loading incidents...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. PLAYER TELEMETRY TAB -->
+      <section id="tab-players" class="tab-pane">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>REGISTERED PLAYER PROFILES & COMBAT RATINGS</h3>
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table class="tactical-table">
+                <thead>
+                  <tr>
+                    <th>PLAYER ID</th>
+                    <th>USERNAME</th>
+                    <th>RANK</th>
+                    <th>RANK SCORE</th>
+                    <th>LEVEL</th>
+                    <th>KILLS</th>
+                    <th>DEATHS</th>
+                    <th>MATCHES</th>
+                    <th>STATUS</th>
+                  </tr>
+                </thead>
+                <tbody id="playersTbody">
+                  <tr><td colspan="9" class="text-center">Loading players...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. AIM TELEMETRY LAB TAB -->
+      <section id="tab-aimlab" class="tab-pane">
+        <div class="two-col-grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>SIMULATE COMBAT TELEMETRY</h3>
+              <p class="panel-desc">Test real-time ML inference for Aim Analytics and Anomaly Detection.</p>
+            </div>
+            <div class="panel-body">
+              <div class="form-group">
+                <label>Accuracy: <span id="labAccVal">42%</span></label>
+                <input type="range" id="labAcc" min="0.05" max="1.0" step="0.01" value="0.42" class="slider-dark">
+              </div>
+              <div class="form-group">
+                <label>Recoil Control Score: <span id="labRecoilVal">68</span></label>
+                <input type="range" id="labRecoil" min="10" max="100" step="1" value="68" class="slider-dark">
+              </div>
+              <div class="form-group">
+                <label>Reaction Time: <span id="labReactVal">210 ms</span></label>
+                <input type="range" id="labReact" min="40" max="500" step="5" value="210" class="slider-dark">
+              </div>
+              <div class="form-group">
+                <label>Flick Consistency: <span id="labFlickVal">0.75</span></label>
+                <input type="range" id="labFlick" min="0.1" max="1.0" step="0.01" value="0.75" class="slider-dark">
+              </div>
+              <div class="form-group">
+                <label>Crosshair Placement Score: <span id="labCrossVal">72</span></label>
+                <input type="range" id="labCross" min="10" max="100" step="1" value="72" class="slider-dark">
+              </div>
+              <button class="btn-primary mt-3" id="btnTestInference">EXECUTE ML INFERENCE</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>ML INFERENCE RESULT</h3>
+            </div>
+            <div class="panel-body" id="aimLabResult">
+              <div class="placeholder-text">Adjust sliders and click "Execute ML Inference" to evaluate combat telemetry.</div>
+      <!-- 7. AI PLATFORM & RL BOTS TAB -->
+      <section id="tab-aiplatform" class="tab-pane">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">AI INFERENCE LATENCY</div>
+            <div class="kpi-value text-success" id="aiLatencyKpi">< 5 ms</div>
+            <div class="kpi-sub">Target: &lt; 20.0ms | Safeguard: 25ms</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">RL CURRICULUM LEVEL</div>
+            <div class="kpi-value text-accent" id="aiCurriculumKpi">Level 5 / 8</div>
+            <div class="kpi-sub" id="aiCurriculumStage">Cover Utilization</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">SQUAD CTDE COORDINATION</div>
+            <div class="kpi-value" id="aiSquadKpi">4 Roles</div>
+            <div class="kpi-sub">Suppress / Flank / Breach / Overwatch</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">DETERMINISTIC FALLBACKS</div>
+            <div class="kpi-value text-green" id="aiFallbacksKpi">0 Triggered</div>
+            <div class="kpi-sub">Zero-Stutter Guarantee Active</div>
+          </div>
+        </div>
+
+        <div class="two-col-grid mt-4">
+          <!-- Active Neural Models -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>PYTORCH NEURAL ARCHITECTURES</h3>
+              <span class="badge badge-green">ALL ONLINE</span>
+            </div>
+            <div class="panel-body">
+              <div class="stat-row">
+                <span class="stat-label">Player Behavior Net:</span>
+                <span class="stat-val text-success">14 Telemetry metrics &rarr; 128-dim Embedding</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Sequence Transformer:</span>
+                <span class="stat-val text-accent">2-layer, 4-head, 20-step Causal Attention</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Humanized Bot Aim & Move Net:</span>
+                <span class="stat-val text-white">Bounded latency 140ms–350ms, Recoil Climb</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Deep Collaborative Recommender:</span>
+                <span class="stat-val text-white">Top 5 Weapon Affinities &amp; Full 6-Slot Loadouts</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Telemetry Anomaly Autoencoder:</span>
+                <span class="stat-val text-accent">16-dim Bottleneck, Non-Banning Review Desk</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive AI Bot Tester -->
+          <div class="panel">
+            <div class="panel-header">
+              <h3>LIVE BOT INFERENCE TESTER</h3>
+              <span class="badge badge-blue">SUB-20MS</span>
+            </div>
+            <div class="panel-body">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group">
+                  <label>Difficulty Tier:</label>
+                  <select id="botDiffSelect" class="form-control" style="background:#0e1726; color:#00f0ff; border:1px solid #1e293b; padding:8px; border-radius:4px; width:100%;">
+                    <option value="EASY">EASY (350ms, Jitter 4.5°)</option>
+                    <option value="NORMAL" selected>NORMAL (250ms, Jitter 2.5°)</option>
+                    <option value="HARD">HARD (180ms, Jitter 1.2°)</option>
+                    <option value="ELITE">ELITE (140ms Pro Human Limit)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Bot HP:</label>
+                  <input type="number" id="botHpInput" value="100" min="1" max="100" class="form-control" style="background:#0e1726; color:#fff; border:1px solid #1e293b; padding:8px; border-radius:4px; width:100%;">
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                  <input type="checkbox" id="botEnemyVisible" checked> Enemy in Sightline
+                </label>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                  <input type="checkbox" id="botForceFallback"> Force Fallback Guard
+                </label>
+              </div>
+              <div style="display:flex; gap:10px; margin-top:14px;">
+                <button class="btn-primary" id="btnRunBotInference" style="flex:1;">INFER BOT ACTION</button>
+                <button class="btn-secondary" id="btnRunLoadoutRec" style="flex:1;">RECOMMEND LOADOUT</button>
+              </div>
+              <div class="mt-3" id="aiInferenceResult" style="background:#060d17; border:1px solid #1e2d42; border-radius:4px; padding:12px; font-family:'JetBrains Mono',monospace; font-size:12px; color:#00f0ff; min-height:80px; white-space:pre-wrap;">Ready to run inference test.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 8-Level RL Curriculum Table -->
+        <div class="panel mt-4">
+          <div class="panel-header">
+            <h3>8-LEVEL PROGRESSIVE REINFORCEMENT LEARNING CURRICULUM</h3>
+            <span class="badge badge-accent">MONOTONIC MASTERY</span>
+          </div>
+          <div class="panel-body">
+            <div class="table-responsive">
+              <table class="table-dark">
+                <thead>
+                  <tr>
+                    <th>LEVEL</th>
+                    <th>STAGE NAME</th>
+                    <th>CURRICULUM OBJECTIVES</th>
+                    <th>BENCHMARK THRESHOLD</th>
+                    <th>REQUIRED MATCHES</th>
+                    <th>STATUS</th>
+                  </tr>
+                </thead>
+                <tbody id="curriculumTbody">
+                  <tr><td>1</td><td>Basic Movement</td><td>Locomotion, sprinting, sprint lock, obstacle boundaries</td><td>85% Pass</td><td>10 Matches</td><td><span class="badge badge-green">COMPLETED</span></td></tr>
+                  <tr><td>2</td><td>Waypoint Navigation</td><td>Traversing tactical waypoints across complex geometry</td><td>80% Pass</td><td>15 Matches</td><td><span class="badge badge-green">COMPLETED</span></td></tr>
+                  <tr><td>3</td><td>Target Detection &amp; LOS</td><td>FOV sightline detection, silhouette acquisition</td><td>75% Pass</td><td>15 Matches</td><td><span class="badge badge-green">COMPLETED</span></td></tr>
+                  <tr><td>4</td><td>Aiming &amp; Recoil Control</td><td>Lead target tracking, burst cadence, climb mitigation</td><td>75% Pass</td><td>20 Matches</td><td><span class="badge badge-green">COMPLETED</span></td></tr>
+                  <tr><td>5</td><td>Cover Utilization</td><td>Low/high cover nodes, corner peeking, defensive retreat</td><td>75% Pass</td><td>20 Matches</td><td><span class="badge badge-blue">ACTIVE TRAINING</span></td></tr>
+                  <tr><td>6</td><td>Objective Capture &amp; Defense</td><td>Hardpoint hold, contesting zones, point control</td><td>70% Pass</td><td>25 Matches</td><td><span class="badge badge-dim">PENDING</span></td></tr>
+                  <tr><td>7</td><td>Squad Tactics &amp; Flanking</td><td>CTDE 4-bot squad coordination, pincer maneuvers</td><td>70% Pass</td><td>25 Matches</td><td><span class="badge badge-dim">PENDING</span></td></tr>
+                  <tr><td>8</td><td>Full Competitive 4v4 Match</td><td>Championship simulation, dynamic compositions</td><td>65% Pass</td><td>30 Matches</td><td><span class="badge badge-dim">PENDING</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/admin/admin.js"></script>
+</body>
+</html>
+

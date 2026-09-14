@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: astra-backend-ai
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: standard
+    region: singapore
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: ENVIRONMENT
+        value: production
+    healthCheckPath: /health

@@ -282,6 +282,132 @@
       100% { opacity: 0; transform: translateY(-18px); }
     }
 
+    /* Mobile HUD & Customizer CSS */
+    .mobile-hud-control {
+      transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+    .mobile-hud-control.editor-draggable {
+      outline: 2px dashed rgba(34, 85, 187, 0.75) !important;
+      outline-offset: 3px !important;
+      cursor: grab !important;
+      touch-action: none !important;
+    }
+    .mobile-hud-control.editor-selected {
+      outline: 2.5px solid #c9182b !important;
+      outline-offset: 4px !important;
+      box-shadow: 0 0 12px rgba(201, 24, 43, 0.6) !important;
+    }
+    .mobile-hud-control.editor-overlap {
+      outline: 2.5px solid #e67e22 !important;
+    }
+
+    /* Button Styles */
+    .style-circle { border-radius: 50% !important; }
+    .style-rounded { border-radius: 12px !important; }
+    .style-tactical {
+      border-radius: 6px !important;
+      clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)) !important;
+    }
+    .style-minimal {
+      border: 1.5px solid #162a68 !important;
+      background: rgba(248, 246, 240, 0.5) !important;
+      backdrop-filter: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Contextual Ground Loot Pickup Panel */
+    #hud-loot-pickup-card {
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(248, 246, 240, 0.96);
+      border: 2px solid #162a68;
+      border-radius: 8px;
+      padding: 10px 16px;
+      box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 22;
+      pointer-events: auto;
+      min-width: 170px;
+      text-align: left;
+      font-family: var(--font-tech);
+      animation: popFadeIn 0.2s ease-out;
+    }
+
+    @keyframes popFadeIn {
+      from { opacity: 0; transform: translate(-50%, -45%) scale(0.95); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* 10-Second Ammo Auto-Fill Pulse Badge */
+    #hud-ammo-fill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #162a68;
+      background: rgba(248, 246, 240, 0.9);
+      border: 1.5px solid #162a68;
+      border-radius: 12px;
+      padding: 2px 8px;
+      transition: all 0.25s ease;
+    }
+
+    #hud-ammo-fill-badge.pulse {
+      background: #162a68;
+      color: #faf8f2;
+      border-color: #faf8f2;
+      box-shadow: 0 0 10px rgba(34, 85, 187, 0.8);
+      transform: scale(1.08);
+    }
+
+    /* Low Health Warning Heartbeat */
+    #hud-low-health-warning {
+      position: absolute;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(201, 24, 43, 0.92);
+      color: #faf8f2;
+      border: 2px solid #faf8f2;
+      padding: 6px 18px;
+      font-family: var(--font-tech);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      border-radius: 20px;
+      box-shadow: 0 0 16px rgba(201, 24, 43, 0.6);
+      animation: heartbeatWarning 0.9s infinite ease-in-out;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    @keyframes heartbeatWarning {
+      0% { transform: translateX(-50%) scale(0.96); opacity: 0.85; }
+      50% { transform: translateX(-50%) scale(1.06); opacity: 1; box-shadow: 0 0 24px rgba(201, 24, 43, 0.9); }
+      100% { transform: translateX(-50%) scale(0.96); opacity: 0.85; }
+    }
+
+    /* Compass Bar */
+    #hud-compass-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-tech);
+      font-size: 11px;
+      font-weight: 700;
+      color: #162a68;
+      background: rgba(248, 246, 240, 0.9);
+      border: 1.5px solid #162a68;
+      border-radius: 12px;
+      padding: 2px 12px;
+      box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.2);
+    }
+
     /* Real-Time Tactical Kill Feed (COD / PUBG style below minimap) */
     #tactical-kill-feed {
       position: absolute;
@@ -705,15 +831,136 @@
       100% { height: 14px; }
     }
 
-    /* START Button Pulse in Lobby */
-    #btn-lobby-start {
-      animation: startGlow 2.5s infinite ease-in-out;
+    /* ===================================================
+       AUTHENTIC PUBG MOBILE / BGMI LOBBY STYLES
+       =================================================== */
+    .pubg-lobby-overlay {
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    @keyframes startGlow {
-      0% { box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.3); }
-      50% { box-shadow: 6px 6px 12px rgba(201, 24, 43, 0.35); }
-      100% { box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.3); }
+    .pubg-tactical-panel {
+      background: rgba(14, 20, 30, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 6px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      color: #fff;
+    }
+
+    .pubg-icon-btn {
+      background: rgba(18, 26, 38, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 6px;
+      color: #e2e8f0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      padding: 9px 14px;
+      transition: all 0.16s ease-in-out;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .pubg-icon-btn:hover {
+      background: rgba(245, 166, 35, 0.18);
+      border-color: #f5a623;
+      color: #f5a623;
+      transform: translateX(-2px);
+      box-shadow: 0 0 14px rgba(245, 166, 35, 0.3);
+    }
+
+    .pubg-currency-chip {
+      background: rgba(10, 16, 26, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #f1f5f9;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    /* PUBG Iconic Gold START Button */
+    #btn-lobby-start {
+      background: linear-gradient(135deg, #ffb300 0%, #ff8f00 45%, #e65100 100%);
+      color: #0b0f19;
+      font-family: 'Space Mono', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      border: 2px solid #ffe082;
+      border-radius: 6px;
+      padding: 14px 44px;
+      cursor: pointer;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+      box-shadow: 0 0 25px rgba(255, 143, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      transition: all 0.15s ease;
+      animation: pubgStartPulse 2.2s infinite ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    #btn-lobby-start:hover {
+      transform: scale(1.03);
+      box-shadow: 0 0 35px rgba(255, 179, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      background: linear-gradient(135deg, #ffc107 0%, #ffa000 45%, #f57c00 100%);
+    }
+
+    #btn-lobby-start:active {
+      transform: scale(0.98);
+    }
+
+    @keyframes pubgStartPulse {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(255, 143, 0, 0.45);
+        border-color: #ffe082;
+      }
+      50% {
+        box-shadow: 0 0 35px rgba(255, 179, 0, 0.75), 0 0 10px #ffb300;
+        border-color: #fff8e1;
+      }
+    }
+
+    /* Squad Slot Card */
+    .pubg-squad-slot {
+      width: 62px;
+      height: 68px;
+      background: rgba(14, 20, 30, 0.75);
+      border: 1.5px solid rgba(255, 255, 255, 0.16);
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Mono', monospace;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .pubg-squad-slot:hover {
+      border-color: #f5a623;
+      background: rgba(245, 166, 35, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .pubg-squad-slot.active {
+      border-color: #00e5ff;
+      background: rgba(0, 229, 255, 0.12);
     }
 
     /* Interactive UI Screens / Modals */
@@ -1370,24 +1617,132 @@
       100% { transform: rotate(0deg); }
     }
 
-    /* Mobile Specific Optimizations */
-    @media (max-width: 768px) {
+    /* Mobile & Responsive Device Optimizations (Portrait & Landscape Phones/Tablets) */
+    @media (max-width: 950px), (max-height: 540px) {
+      /* Base touch adjustments */
+      body {
+        height: 100dvh;
+        overflow: hidden;
+      }
+
+      /* Compact Lobby Header */
+      .pubg-lobby-header {
+        top: max(8px, env(safe-area-inset-top)) !important;
+        left: max(10px, env(safe-area-inset-left)) !important;
+        right: max(10px, env(safe-area-inset-right)) !important;
+      }
+      #lobby-profile-card {
+        padding: 4px 8px !important;
+        gap: 8px !important;
+      }
+      #lobby-avatar {
+        width: 36px !important;
+        height: 36px !important;
+      }
+      #lobby-name {
+        font-size: 12px !important;
+      }
+      .pubg-currency-chip {
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+      }
+
+      /* Compact Right Icon Dock */
+      .pubg-nav-dock {
+        top: 60px !important;
+        right: max(8px, env(safe-area-inset-right)) !important;
+        gap: 6px !important;
+      }
+      .pubg-nav-dock .pubg-icon-btn {
+        width: 42px !important;
+        height: 42px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        font-size: 17px !important;
+        border-radius: 8px !important;
+      }
+      .pubg-nav-dock .dock-btn-label {
+        display: none !important;
+      }
+
+      /* Compact Start & Mode Cluster */
+      .pubg-combat-cluster {
+        bottom: max(12px, env(safe-area-inset-bottom)) !important;
+        left: max(12px, env(safe-area-inset-left)) !important;
+        gap: 6px !important;
+      }
+      #btn-lobby-start {
+        font-size: 18px !important;
+        padding: 10px 26px !important;
+        letter-spacing: 2px !important;
+        height: 44px !important;
+      }
+      #btn-lobby-mode-select {
+        padding: 5px 10px !important;
+      }
+      #lobby-mode-title {
+        font-size: 11px !important;
+      }
+
+      /* Squad Dock Scaling */
+      .pubg-squad-container {
+        bottom: max(12px, env(safe-area-inset-bottom)) !important;
+        gap: 6px !important;
+      }
+      .pubg-squad-slot {
+        width: 48px !important;
+        height: 52px !important;
+        font-size: 9px !important;
+      }
+
+      /* Hide crowded recruitment ticker on small mobile screens to prevent overlap */
+      #lobby-daily-ops {
+        display: none !important;
+      }
+
+      /* Compact camera modes & weapon pills */
+      #lobby-camera-modes {
+        top: 56px !important;
+        transform: translateX(-50%) scale(0.85) !important;
+      }
+      #lobby-quick-weapons {
+        top: 64px !important;
+        left: max(8px, env(safe-area-inset-left)) !important;
+        transform: scale(0.85) !important;
+        transform-origin: top left !important;
+      }
+      #lobby-emotes-bar {
+        bottom: 64px !important;
+        right: max(8px, env(safe-area-inset-right)) !important;
+        transform: scale(0.85) !important;
+        transform-origin: bottom right !important;
+      }
+
+      /* Modals Responsive Sizing */
       .sketch-card {
-        padding: 16px 18px;
-        width: 96%;
-        max-height: 94vh;
+        padding: 16px 18px !important;
+        width: 95% !important;
+        max-width: 580px !important;
+        max-height: 86vh !important;
+      }
+      .modal-content {
+        max-height: 84vh !important;
+        padding: 14px 16px !important;
       }
       .sketch-title {
-        font-size: 28px;
+        font-size: 26px !important;
       }
       .sketch-subtitle {
-        font-size: 12px;
-        margin-bottom: 14px;
+        font-size: 11px !important;
+        margin-bottom: 12px !important;
       }
       .sketch-btn {
-        padding: 8px 12px;
-        font-size: 12px;
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+        min-height: 42px !important;
       }
+
+      /* In-Game HUD Elements */
       .hud-top-left {
         left: 88px;
         top: 14px;
@@ -1793,202 +2148,236 @@
     </div>
   </div>
 
-  <!-- 4. PUBG MOBILE-STYLE 3D LOBBY OVERLAY -->
-  <div id="screen-pubg-lobby" class="pubg-lobby-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; pointer-events: none;">
-    <!-- Top Left: Player Profile Card (Clickable to open detailed stats) -->
-    <div id="lobby-profile-card" style="position: absolute; top: 20px; left: 24px; display: flex; align-items: center; gap: 14px; background: rgba(248, 246, 240, 0.9); border: 2px solid #162a68; padding: 10px 16px; box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.2); pointer-events: auto; cursor: pointer; transition: transform 0.12s ease;" title="Click to view Career Stats & ID">
-      <img id="lobby-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=AstraAgent" style="width: 50px; height: 50px; border: 2px solid #162a68; background: #fff;">
-      <div>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span id="lobby-name" style="font-weight: 700; font-size: 16px; color: #162a68;">Operator</span>
-          <span id="lobby-level" style="background: #162a68; color: #fff; font-size: 11px; padding: 1px 6px; font-weight: 700;">LV. 35</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px; font-size: 12px; font-weight: 700;">
-          <span id="lobby-rank" style="color: #c9182b;">DIAMOND II</span>
-          <span style="opacity: 0.8;">🪙 BP <span id="lobby-bp">3,850</span></span>
-        </div>
-        <div style="font-size: 10px; color: #162a68; opacity: 0.65; margin-top: 3px;">CLICK FOR STATS & ID ▾</div>
-      </div>
-    </div>
-
-    <!-- Top Right: Server Info & BGM Player Widget & Fullscreen Controls -->
-    <div style="position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 8px; pointer-events: auto;">
-      <!-- BGM Player Widget -->
-      <div id="lobby-bgm-widget" style="background: rgba(248, 246, 240, 0.95); border: 2px solid #162a68; padding: 5px 12px; display: flex; align-items: center; gap: 10px; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.2); font-family: 'Space Mono', monospace;">
-        <div id="bgm-visualizer" class="bgm-eq-bars">
-          <span></span><span></span><span></span><span></span>
-        </div>
-        <div style="display: flex; flex-direction: column; min-width: 130px; max-width: 180px;">
-          <div style="display: flex; align-items: center; gap: 5px;">
-            <span style="font-size: 9px; font-weight: 700; color: #c9182b; letter-spacing: 1px;">BGM</span>
-            <span id="bgm-track-title" style="font-size: 11px; font-weight: 700; color: #162a68; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">ASTRA (Main Theme)</span>
+  <!-- 4. AUTHENTIC PUBG MOBILE / BGMI 3D LOBBY OVERLAY -->
+  <div id="screen-pubg-lobby" class="pubg-lobby-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; pointer-events: none; overflow: hidden;">
+    
+    <!-- TOP NAVIGATION BAR -->
+    <header class="pubg-lobby-header" style="position: absolute; top: 14px; left: 18px; right: 18px; display: flex; align-items: center; justify-content: space-between; pointer-events: auto; z-index: 40;">
+      <!-- Left: Player Profile & Status -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div id="lobby-profile-card" class="pubg-tactical-panel" style="display: flex; align-items: center; gap: 12px; padding: 6px 14px 6px 8px; cursor: pointer; transition: transform 0.15s ease;" title="Click to view Career Stats & ID">
+          <div style="position: relative;">
+            <img id="lobby-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=AstraAgent" style="width: 44px; height: 44px; border-radius: 50%; border: 2px solid #f5a623; background: #131d2e; display: block;">
+            <span id="lobby-level" style="position: absolute; bottom: -4px; right: -4px; background: #e65100; color: #fff; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 10px; border: 1px solid #ffd54f; font-family: 'Space Mono', monospace;">35</span>
           </div>
-          <span id="bgm-track-hindi" style="font-size: 10px; color: #2255bb; font-weight: 700; opacity: 0.85;">एस्ट्रा (थीम)</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 5px;">
-          <button class="sketch-btn" id="bgm-btn-prev" style="padding: 2px 7px; font-size: 11px;" title="Previous Track">⏮</button>
-          <button class="sketch-btn" id="bgm-btn-play" style="padding: 2px 8px; font-size: 11px; background: #162a68; color: #fff;" title="Play/Pause">▶</button>
-          <button class="sketch-btn" id="bgm-btn-next" style="padding: 2px 7px; font-size: 11px;" title="Next Track">⏭</button>
-          <button class="sketch-btn" id="bgm-btn-mute" style="padding: 2px 6px; font-size: 11px;" title="Mute">🔊</button>
-          <button class="sketch-btn" id="bgm-btn-list" style="padding: 2px 7px; font-size: 10px; font-weight: 700;" title="Select Track">TRACKS ▾</button>
-        </div>
-      </div>
-
-      <!-- BGM Tracks Popup Menu -->
-      <div id="lobby-bgm-tracks-menu" style="display: none; position: absolute; top: 48px; right: 260px; background: #fdfcf9; border: 2px solid #162a68; box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.25); padding: 8px; width: 260px; z-index: 60; pointer-events: auto; font-family: 'Space Mono', monospace;">
-        <div style="font-size: 10px; font-weight: 700; color: #c9182b; letter-spacing: 1px; margin-bottom: 6px;">SELECT BGM SOUNDTRACK</div>
-        <div class="bgm-track-item" data-idx="0" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(22,42,104,0.2); font-size: 11px;">
-          <div style="font-weight: 700; color: #162a68;">1. ASTRA (Main Theme)</div>
-          <div style="font-size: 10px; color: #2255bb;">एस्ट्रा (थीम म्यूजिक)</div>
-        </div>
-        <div class="bgm-track-item" data-idx="1" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(22,42,104,0.2); font-size: 11px;">
-          <div style="font-weight: 700; color: #162a68;">2. Antim Mauka</div>
-          <div style="font-size: 10px; color: #2255bb;">अंतिम मौका (Last Chance)</div>
-        </div>
-        <div class="bgm-track-item" data-idx="2" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(22,42,104,0.2); font-size: 11px;">
-          <div style="font-weight: 700; color: #162a68;">3. Ek Hi Waar</div>
-          <div style="font-size: 10px; color: #2255bb;">एक ही वार (One Strike)</div>
-        </div>
-        <div class="bgm-track-item" data-idx="3" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(22,42,104,0.2); font-size: 11px;">
-          <div style="font-weight: 700; color: #162a68;">4. Aakhri Nishana</div>
-          <div style="font-size: 10px; color: #2255bb;">आखिरी निशाना (Final Target)</div>
-        </div>
-        <div class="bgm-track-item" data-idx="4" style="padding: 5px 8px; cursor: pointer; font-size: 11px;">
-          <div style="font-weight: 700; color: #162a68;">5. Aakhri Nishana (Remix)</div>
-          <div style="font-size: 10px; color: #2255bb;">आखिरी निशाना (रीमिक्स)</div>
-        </div>
-      </div>
-
-      <button class="sketch-btn" id="btn-lobby-fullscreen" style="padding: 6px 12px; font-size: 12px; font-weight: 700;" title="Toggle Fullscreen">⛶ FULLSCREEN</button>
-      <div style="background: rgba(248, 246, 240, 0.88); border: 1.5px solid #162a68; padding: 6px 12px; font-size: 12px; font-weight: 700; color: #162a68;">
-        <span style="color: #34a853;">●</span> 24ms (ASIA)
-      </div>
-      <button class="sketch-btn" id="btn-lobby-logout" style="padding: 6px 12px; font-size: 12px;">LOGOUT</button>
-    </div>
-
-    <!-- Left Flank: Quick Loadout Weapon Switcher -->
-    <div id="lobby-quick-weapons" style="position: absolute; top: 100px; left: 24px; display: flex; flex-direction: column; gap: 6px; pointer-events: auto; background: rgba(248, 246, 240, 0.92); border: 2px solid #162a68; padding: 6px 12px; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.2); font-family: 'Space Mono', monospace;">
-      <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-        <span style="font-size: 10px; font-weight: 700; color: #162a68; letter-spacing: 1px;">EQUIPPED LOADOUT</span>
-        <span id="lobby-quick-wep-stat" style="font-size: 9px; color: #c9182b; font-weight: 700;">RIFLE • 24 DMG</span>
-      </div>
-      <div style="display: flex; gap: 5px;">
-        <button class="sketch-btn lobby-wep-pill active" data-wep="2" style="padding: 4px 8px; font-size: 11px; font-weight: 700; background: #162a68; color: #fff;">︻╦╤─ RIFLE</button>
-        <button class="sketch-btn lobby-wep-pill" data-wep="3" style="padding: 4px 8px; font-size: 11px; font-weight: 700;">︻╦═一 SNIPER</button>
-        <button class="sketch-btn lobby-wep-pill" data-wep="1" style="padding: 4px 8px; font-size: 11px; font-weight: 700;">▅▄▃ SHOTGUN</button>
-        <button class="sketch-btn lobby-wep-pill" data-wep="0" style="padding: 4px 8px; font-size: 11px; font-weight: 700;">🔫 PISTOL</button>
-      </div>
-    </div>
-
-    <!-- Left Lower: Camera View Modes -->
-    <div id="lobby-camera-modes" style="position: absolute; bottom: 124px; left: 24px; display: flex; gap: 6px; pointer-events: auto;">
-      <button class="sketch-btn lobby-cam-btn active" data-cam="hero" style="padding: 4px 10px; font-size: 11px; font-weight: 700; background: #162a68; color: #fff;">👤 HERO</button>
-      <button class="sketch-btn lobby-cam-btn" data-cam="closeup" style="padding: 4px 10px; font-size: 11px; font-weight: 700;">🔍 CLOSE-UP</button>
-      <button class="sketch-btn lobby-cam-btn" data-cam="weapon" style="padding: 4px 10px; font-size: 11px; font-weight: 700;">🔫 WEAPON</button>
-    </div>
-
-    <!-- Center Bottom: Emote & Action Bar -->
-    <div id="lobby-emotes-bar" style="position: absolute; bottom: 98px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; pointer-events: auto; background: rgba(248, 246, 240, 0.95); border: 2px solid #162a68; padding: 4px 10px; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.2);">
-      <button class="sketch-btn lobby-emote-btn" data-emote="salute" style="padding: 5px 10px; font-size: 11px; font-weight: 700;" title="Military Salute">🫡 SALUTE</button>
-      <button class="sketch-btn lobby-emote-btn" data-emote="inspect" style="padding: 5px 10px; font-size: 11px; font-weight: 700;" title="Inspect Weapon">🔫 CHECK GUN</button>
-      <button class="sketch-btn lobby-emote-btn" data-emote="ready" style="padding: 5px 10px; font-size: 11px; font-weight: 700;" title="Combat Ready Stance">🥋 READY</button>
-      <button class="sketch-btn lobby-emote-btn" data-emote="spin" style="padding: 5px 10px; font-size: 11px; font-weight: 700;" title="360 Turntable Showcase">🔄 360° SPIN</button>
-      <button class="sketch-btn lobby-emote-btn" data-emote="taunt" style="padding: 5px 10px; font-size: 11px; font-weight: 700; background: #162a68; color: #fff;" title="Voice Line Taunt">🗣️ TAUNT</button>
-    </div>
-
-    <!-- Center: Touch / Mouse Drag Orbit Area -->
-    <div id="lobby-char-touch-area" style="position: absolute; top: 15%; left: 25%; width: 50%; height: 68%; pointer-events: auto; cursor: grab;" title="Drag to Orbit • Double-Click to Inspect"></div>
-
-    <!-- Right Flank Bottom: Daily Operations Directives Card -->
-    <div id="lobby-daily-ops" style="position: absolute; bottom: 28px; right: 24px; background: rgba(248, 246, 240, 0.92); border: 2px solid #162a68; padding: 8px 14px; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.2); pointer-events: auto; font-family: 'Space Mono', monospace; min-width: 200px;">
-      <div style="font-size: 9px; font-weight: 700; color: #c9182b; letter-spacing: 1px;">DAILY DIRECTIVES</div>
-      <div style="font-size: 10px; margin-top: 4px; display: flex; justify-content: space-between; font-weight: 700; color: #162a68;">
-        <span>🎯 5 KILLS IN TDM</span>
-        <span style="color: #2b7a3e;">3/5</span>
-      </div>
-      <div style="font-size: 10px; margin-top: 3px; display: flex; justify-content: space-between; font-weight: 700; color: #162a68;">
-        <span>💀 2 HEADSHOTS</span>
-        <span style="color: #c9182b;">1/2</span>
-      </div>
-      <div style="font-size: 10px; margin-top: 3px; display: flex; justify-content: space-between; font-weight: 700; color: #162a68;">
-        <span>🛡️ SURVIVE 3 WAVES</span>
-        <span style="color: #2b7a3e;">2/3</span>
-      </div>
-    </div>
-
-    <!-- Right Sidebar: PUBG Style Menu Buttons -->
-    <div style="position: absolute; top: 120px; right: 24px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto;">
-      <button class="sketch-btn" id="btn-lobby-gunsmith" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
-        🔫 GUNSMITH
-      </button>
-      <button class="sketch-btn" id="btn-lobby-operator" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
-        👤 OPERATOR
-      </button>
-      <button class="sketch-btn" id="btn-lobby-hud" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
-        📱 CUSTOMIZE HUD
-      </button>
-      <button class="sketch-btn" id="btn-lobby-intel" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
-        📖 HOW TO PLAY
-      </button>
-      <button class="sketch-btn" id="btn-lobby-settings" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
-        ⚙️ SETTINGS
-      </button>
-    </div>
-
-    <!-- Bottom Left: PUBG Style Prominent [START] Button & Mode Card -->
-    <div style="position: absolute; bottom: 28px; left: 24px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto;">
-      <!-- Mode / Map Selector Card with Difficulty Badge -->
-      <div id="btn-lobby-mode-select" style="background: rgba(248, 246, 240, 0.92); border: 2px solid #162a68; padding: 8px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.2);">
-        <div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 11px; opacity: 0.7; font-weight: 700;">MODE / MAP</span>
-            <span id="lobby-mode-diff-badge" style="background: #162a68; color: #faf8f2; font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 3px; letter-spacing: 0.8px;">REGULAR</span>
+          <div style="display: flex; flex-direction: column;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span id="lobby-name" style="font-weight: 800; font-size: 14px; color: #fff; letter-spacing: 0.5px;">Operator</span>
+              <span id="lobby-rank" style="font-size: 10px; font-weight: 800; color: #f5a623; background: rgba(245, 166, 35, 0.18); border: 1px solid rgba(245, 166, 35, 0.4); padding: 1px 6px; border-radius: 4px; font-family: 'Space Mono', monospace;">DIAMOND II</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px; font-size: 10px; color: #94a3b8; font-family: 'Space Mono', monospace;">
+              <span>● <span style="color: #00ff88;">24ms</span> (ASIA)</span>
+              <span style="opacity: 0.5;">|</span>
+              <span style="color: #cbd5e1;">TAP FOR STATS ▾</span>
+            </div>
           </div>
-          <div id="lobby-mode-title" style="font-size: 15px; font-weight: 700; color: #162a68; margin-top: 2px;">TDM 4v4: COURTYARD BLITZ</div>
         </div>
-        <span style="font-size: 14px; font-weight: 700;">CHANGE ▾</span>
       </div>
 
-      <!-- Big Tactical START Button -->
-      <button class="sketch-btn" id="btn-lobby-start" style="padding: 16px 44px; font-size: 26px; font-weight: 700; background: #162a68; color: #fff; letter-spacing: 4px; box-shadow: 6px 6px 0px rgba(22, 42, 104, 0.3);">
-        START MATCH
+      <!-- Right: Currencies, Pass, BGM Pill & Settings -->
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <!-- Currency Pill: BP -->
+        <div class="pubg-currency-chip" title="Battle Points">
+          <span style="color: #fbbf24;">🪙</span>
+          <span id="lobby-bp">3,850</span>
+        </div>
+        <!-- Currency Pill: Credits -->
+        <div class="pubg-currency-chip" title="Tactical Credits">
+          <span style="color: #00e5ff;">💎</span>
+          <span>420</span>
+        </div>
+        <!-- Season Pass Pill -->
+        <div class="pubg-currency-chip" style="background: linear-gradient(135deg, rgba(230, 81, 0, 0.35), rgba(245, 166, 35, 0.2)); border-color: rgba(245, 166, 35, 0.5); cursor: pointer;" title="Royale Pass Season 1">
+          <span style="color: #ffd54f; font-weight: 900;">RP</span>
+          <span style="color: #ffb300; font-weight: 800;">LV.45</span>
+        </div>
+
+        <!-- Compact BGM Control Pill -->
+        <div id="lobby-bgm-widget" class="pubg-tactical-panel" style="display: flex; align-items: center; gap: 8px; padding: 4px 10px; font-family: 'Space Mono', monospace;">
+          <div id="bgm-visualizer" class="bgm-eq-bars">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div style="display: flex; flex-direction: column; max-width: 110px;">
+            <span id="bgm-track-title" style="font-size: 10px; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">ASTRA (Main)</span>
+            <span id="bgm-track-hindi" style="font-size: 9px; color: #38bdf8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">एस्ट्रा थीम</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 3px;">
+            <button class="pubg-icon-btn" id="bgm-btn-prev" style="padding: 2px 6px; font-size: 10px;" title="Previous">⏮</button>
+            <button class="pubg-icon-btn" id="bgm-btn-play" style="padding: 2px 7px; font-size: 10px; background: #e65100; color: #fff; border-color: #f5a623;" title="Play/Pause">▶</button>
+            <button class="pubg-icon-btn" id="bgm-btn-next" style="padding: 2px 6px; font-size: 10px;" title="Next">⏭</button>
+            <button class="pubg-icon-btn" id="bgm-btn-mute" style="padding: 2px 6px; font-size: 10px;" title="Mute">🔊</button>
+            <button class="pubg-icon-btn" id="bgm-btn-list" style="padding: 2px 6px; font-size: 9px;" title="Soundtracks">🎵</button>
+          </div>
+        </div>
+
+        <!-- BGM Tracks Popup Menu -->
+        <div id="lobby-bgm-tracks-menu" class="pubg-tactical-panel" style="display: none; position: absolute; top: 52px; right: 100px; padding: 8px; width: 250px; z-index: 60; font-family: 'Space Mono', monospace;">
+          <div style="font-size: 10px; font-weight: 700; color: #f5a623; letter-spacing: 1px; margin-bottom: 6px;">SELECT SOUNDTRACK</div>
+          <div class="bgm-track-item" data-idx="0" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 11px;">
+            <div style="font-weight: 700; color: #fff;">1. ASTRA (Main Theme)</div>
+            <div style="font-size: 10px; color: #38bdf8;">एस्ट्रा (थीम म्यूजिक)</div>
+          </div>
+          <div class="bgm-track-item" data-idx="1" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 11px;">
+            <div style="font-weight: 700; color: #fff;">2. Antim Mauka</div>
+            <div style="font-size: 10px; color: #38bdf8;">अंतिम मौका (Last Chance)</div>
+          </div>
+          <div class="bgm-track-item" data-idx="2" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 11px;">
+            <div style="font-weight: 700; color: #fff;">3. Ek Hi Waar</div>
+            <div style="font-size: 10px; color: #38bdf8;">एक ही वार (One Strike)</div>
+          </div>
+          <div class="bgm-track-item" data-idx="3" style="padding: 5px 8px; cursor: pointer; border-bottom: 1px dashed rgba(255,255,255,0.1); font-size: 11px;">
+            <div style="font-weight: 700; color: #fff;">4. Aakhri Nishana</div>
+            <div style="font-size: 10px; color: #38bdf8;">आखिरी निशाना (Final Target)</div>
+          </div>
+          <div class="bgm-track-item" data-idx="4" style="padding: 5px 8px; cursor: pointer; font-size: 11px;">
+            <div style="font-weight: 700; color: #fff;">5. Aakhri Nishana (Remix)</div>
+            <div style="font-size: 10px; color: #38bdf8;">आखिरी निशाना (रीमिक्स)</div>
+          </div>
+        </div>
+
+        <button class="pubg-icon-btn" id="btn-lobby-fullscreen" title="Toggle Fullscreen" style="padding: 6px 10px; font-size: 12px;">⛶</button>
+        <button class="pubg-icon-btn" id="btn-lobby-logout" title="Sign Out" style="padding: 6px 12px; font-size: 11px;">LOGOUT</button>
+      </div>
+    </header>
+
+    <!-- RIGHT SIDEBAR: Tactical Military Icon Dock -->
+    <nav class="pubg-nav-dock" style="position: absolute; top: 78px; right: 18px; display: flex; flex-direction: column; gap: 7px; pointer-events: auto; z-index: 40;">
+      <button class="pubg-icon-btn" id="btn-lobby-gunsmith" style="width: 145px; justify-content: flex-start;">
+        <span style="font-size: 14px;">🔫</span> <span class="dock-btn-label">GUNSMITH</span>
+      </button>
+      <button class="pubg-icon-btn" id="btn-lobby-operator" style="width: 145px; justify-content: flex-start;">
+        <span style="font-size: 14px;">👤</span> <span class="dock-btn-label">INVENTORY</span>
+      </button>
+      <button class="pubg-icon-btn" id="btn-lobby-hud" style="width: 145px; justify-content: flex-start; border-color: rgba(0, 229, 255, 0.4);">
+        <span style="font-size: 14px;">📱</span> <span class="dock-btn-label">HUD LAYOUT</span>
+      </button>
+      <button class="pubg-icon-btn" id="btn-lobby-intel" style="width: 145px; justify-content: flex-start;">
+        <span style="font-size: 14px;">🎯</span> <span class="dock-btn-label">MISSIONS</span>
+      </button>
+      <button class="pubg-icon-btn" id="btn-lobby-settings" style="width: 145px; justify-content: flex-start;">
+        <span style="font-size: 14px;">⚙️</span> <span class="dock-btn-label">SETTINGS</span>
+      </button>
+    </nav>
+
+    <!-- CENTER TOUCH/DRAG AREA FOR 3D CHARACTER ROTATION -->
+    <div id="lobby-char-touch-area" style="position: absolute; top: 12%; left: 15%; width: 70%; height: 70%; pointer-events: auto; cursor: grab; z-index: 10;" title="Drag to Rotate Character"></div>
+
+    <!-- FLOATING CAMERA / INSPECT CHIPS (TOP CENTER) -->
+    <div id="lobby-camera-modes" class="pubg-tactical-panel" style="position: absolute; top: 80px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; padding: 3px 6px; border-radius: 20px; pointer-events: auto; z-index: 40;">
+      <button class="pubg-icon-btn lobby-cam-btn active" data-cam="hero" style="padding: 3px 10px; font-size: 10px; border-radius: 14px; background: rgba(245, 166, 35, 0.25); color: #f5a623; border-color: #f5a623;">👤 HERO</button>
+      <button class="pubg-icon-btn lobby-cam-btn" data-cam="closeup" style="padding: 3px 10px; font-size: 10px; border-radius: 14px;">🔍 CLOSE-UP</button>
+      <button class="pubg-icon-btn lobby-cam-btn" data-cam="weapon" style="padding: 3px 10px; font-size: 10px; border-radius: 14px;">🔫 WEAPON</button>
+    </div>
+
+    <!-- FLOATING EMOTES DRAWER (BOTTOM RIGHT ABOVE CHAT) -->
+    <div id="lobby-emotes-bar" class="pubg-tactical-panel" style="position: absolute; bottom: 84px; right: 18px; display: flex; gap: 5px; padding: 4px 8px; pointer-events: auto; z-index: 40;">
+      <button class="pubg-icon-btn lobby-emote-btn" data-emote="salute" style="padding: 4px 8px; font-size: 10px;" title="Military Salute">🫡 SALUTE</button>
+      <button class="pubg-icon-btn lobby-emote-btn" data-emote="inspect" style="padding: 4px 8px; font-size: 10px;" title="Inspect Weapon">🔫 INSPECT</button>
+      <button class="pubg-icon-btn lobby-emote-btn" data-emote="ready" style="padding: 4px 8px; font-size: 10px;" title="Combat Ready">🥋 READY</button>
+      <button class="pubg-icon-btn lobby-emote-btn" data-emote="spin" style="padding: 4px 8px; font-size: 10px;" title="360 Turntable">🔄 360°</button>
+      <button class="pubg-icon-btn lobby-emote-btn" data-emote="taunt" style="padding: 4px 8px; font-size: 10px; background: rgba(230, 81, 0, 0.35); border-color: #f5a623; color: #ffd54f;" title="Taunt Voice">🗣️ TAUNT</button>
+    </div>
+
+    <!-- QUICK LOADOUT SWITCHER (LEFT COMPACT DOCK) -->
+    <div id="lobby-quick-weapons" class="pubg-tactical-panel" style="position: absolute; top: 120px; left: 18px; display: flex; flex-direction: column; gap: 4px; padding: 6px 10px; pointer-events: auto; z-index: 40; font-family: 'Space Mono', monospace;">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 2px;">
+        <span style="font-size: 9px; font-weight: 800; color: #94a3b8; letter-spacing: 0.8px;">LOADOUT</span>
+        <span id="lobby-quick-wep-stat" style="font-size: 9px; color: #f5a623; font-weight: 800;">RIFLE • 42 DMG</span>
+      </div>
+      <div style="display: flex; gap: 4px;">
+        <button class="pubg-icon-btn lobby-wep-pill active" data-wep="2" style="padding: 4px 8px; font-size: 10px; background: rgba(245, 166, 35, 0.25); color: #f5a623; border-color: #f5a623;">︻╦╤─ AR</button>
+        <button class="pubg-icon-btn lobby-wep-pill" data-wep="3" style="padding: 4px 8px; font-size: 10px;">︻╦═一 SR</button>
+        <button class="pubg-icon-btn lobby-wep-pill" data-wep="1" style="padding: 4px 8px; font-size: 10px;">▅▄ SG</button>
+        <button class="pubg-icon-btn lobby-wep-pill" data-wep="0" style="padding: 4px 8px; font-size: 10px;">🔫 HG</button>
+      </div>
+    </div>
+
+    <!-- BOTTOM-LEFT: PUBG STYLE COMBAT CLUSTER (MODE CARD + GOLD START BUTTON) -->
+    <div id="lobby-bottom-left" class="pubg-combat-cluster" style="position: absolute; bottom: 18px; left: 18px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; z-index: 40;">
+      <!-- Mode & Map Selector Card -->
+      <div id="btn-lobby-mode-select" class="pubg-tactical-panel" style="padding: 8px 14px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 14px; transition: all 0.15s ease;" title="Change Game Mode and Map">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 38px; height: 38px; border-radius: 4px; background: url('https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=100&auto=format&fit=crop&q=60') center/cover; border: 1px solid rgba(255, 255, 255, 0.2); flex-shrink: 0;"></div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span id="lobby-mode-diff-badge" style="background: #e65100; color: #fff; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 3px; font-family: 'Space Mono', monospace;">REGULAR</span>
+              <span style="font-size: 10px; color: #94a3b8; font-weight: 700; font-family: 'Space Mono', monospace;">TPP • SQUAD</span>
+            </div>
+            <div id="lobby-mode-title" style="font-size: 13px; font-weight: 800; color: #fff; margin-top: 2px;">TDM 4v4: COURTYARD BLITZ</div>
+          </div>
+        </div>
+        <span style="font-size: 11px; color: #f5a623; font-weight: 800; font-family: 'Space Mono', monospace;">CHANGE ▾</span>
+      </div>
+
+      <!-- Prominent Golden START MATCH Button -->
+      <button id="btn-lobby-start">
+        <span>START</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
       </button>
     </div>
 
-    <!-- Bottom Center: Squad Slots -->
-    <div style="position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; pointer-events: auto;">
-      <div id="lobby-squad-0" style="width: 60px; height: 60px; border: 2px solid #162a68; background: rgba(248, 246, 240, 0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">
-        <span style="font-size: 13px;">👑</span>
-        <span>YOU</span>
+    <!-- BOTTOM-CENTER: PUBG 4-PLAYER SQUAD DOCK -->
+    <div id="lobby-squad-dock" class="pubg-squad-container" style="position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; pointer-events: auto; z-index: 40;">
+      <div id="lobby-squad-0" class="pubg-squad-slot active" title="Squad Leader (You)">
+        <span style="font-size: 16px;">👑</span>
+        <span style="font-size: 10px; font-weight: 800; color: #00e5ff; margin-top: 2px;">YOU</span>
       </div>
-      <div id="lobby-squad-1" class="lobby-squad-btn" style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;" title="Invite AI Teammate">
-        <span>+</span>
+      <div id="lobby-squad-1" class="pubg-squad-slot lobby-squad-btn" title="Invite AI or Friend to Squad">
+        <span style="font-size: 18px; color: #94a3b8;">+</span>
+        <span style="font-size: 9px; font-weight: 700; color: #94a3b8;">TEAM 2</span>
       </div>
-      <div id="lobby-squad-2" class="lobby-squad-btn" style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;" title="Invite AI Teammate">
-        <span>+</span>
+      <div id="lobby-squad-2" class="pubg-squad-slot lobby-squad-btn" title="Invite AI or Friend to Squad">
+        <span style="font-size: 18px; color: #94a3b8;">+</span>
+        <span style="font-size: 9px; font-weight: 700; color: #94a3b8;">TEAM 3</span>
       </div>
-      <div id="lobby-squad-3" class="lobby-squad-btn" style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;" title="Invite AI Teammate">
-        <span>+</span>
+      <div id="lobby-squad-3" class="pubg-squad-slot lobby-squad-btn" title="Invite AI or Friend to Squad">
+        <span style="font-size: 18px; color: #94a3b8;">+</span>
+        <span style="font-size: 9px; font-weight: 700; color: #94a3b8;">TEAM 4</span>
       </div>
     </div>
+
+    <!-- BOTTOM-RIGHT: RECRUITMENT & CHAT TICKER -->
+    <div id="lobby-daily-ops" class="pubg-tactical-panel" style="position: absolute; bottom: 18px; right: 18px; width: 230px; padding: 8px 12px; pointer-events: auto; z-index: 40; font-family: 'Space Mono', monospace;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; margin-bottom: 5px;">
+        <span style="font-size: 9px; font-weight: 800; color: #f5a623; letter-spacing: 0.8px;">WORLD RECRUITMENT</span>
+        <span style="font-size: 9px; color: #00ff88;">● LIVE</span>
+      </div>
+      <div style="font-size: 10px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        <strong style="color: #38bdf8;">[Hunter_99]:</strong> Need 1 more for TDM Ranked!
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 9px; color: #94a3b8;">
+        <span>🎯 Daily Ops: 3/5 Complete</span>
+        <span style="color: #fbbf24;">CLAIM ▾</span>
+      </div>
+    </div>
+
   </div>
 
   <!-- In-Game HUD -->
   <div id="hud">
 
-    <!-- Top Left: 6-Digit Score & Gyro Status Badge -->
-    <div class="hud-top-left" style="display: flex; align-items: center; gap: 14px; top: calc(20px + env(safe-area-inset-top)); left: calc(24px + env(safe-area-inset-left));">
-      <div>
-        <span style="font-size: 11px; opacity: 0.75; font-weight: 700; letter-spacing: 1px;">SCORE</span>
-        <span class="num" id="score-display" style="margin-left: 6px; font-size: 22px;">000000</span>
+    <!-- Top Left: 6-Digit Score, Gyro Status Badge & Live Compass -->
+    <div class="hud-top-left" style="display: flex; flex-direction: column; gap: 6px; top: calc(16px + env(safe-area-inset-top)); left: calc(20px + env(safe-area-inset-left));">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div>
+          <span style="font-size: 11px; opacity: 0.75; font-weight: 700; letter-spacing: 1px;">SCORE</span>
+          <span class="num" id="score-display" style="margin-left: 6px; font-size: 22px;">000000</span>
+        </div>
+        <div id="hud-gyro-badge" class="hud-gyro-pill" title="Tap to Toggle Gyroscope">
+          <span class="gyro-dot">◉</span> <span id="hud-gyro-text">GYRO OFF</span>
+        </div>
       </div>
-      <div id="hud-gyro-badge" class="hud-gyro-pill" title="Tap to Toggle Gyroscope">
-        <span class="gyro-dot">◉</span> <span id="hud-gyro-text">GYRO OFF</span>
+      <!-- Compass Degree & Cardinal Header -->
+      <div id="hud-compass-bar">
+        <span style="margin-right: 4px;">🧭</span>
+        <span id="hud-compass-text">000° N</span>
       </div>
     </div>
 
-    <!-- Top Center: Clean Match Score & Wave Indicator -->
-    <div id="hud-top-center-bar">
+    <!-- Top Center: Clean Match Score, Wave Indicator & Telemetry -->
+    <div id="hud-top-center-bar" style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
       <!-- TDM Score Bar -->
       <div id="tdm-score-bar" style="display: none; align-items: center; gap: 14px; background: rgba(248, 246, 240, 0.94); padding: 5px 18px; border: 2px solid #162a68; border-radius: 18px; box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.25); font-family: 'Space Mono', monospace; font-weight: 700;">
         <span style="color: #2255bb; font-size: 16px;">BLUE <span id="tdm-blue-score">00</span></span>
@@ -2002,7 +2391,18 @@
         <span style="opacity: 0.4;">•</span>
         <span id="enemies-left-display" style="color: #c9182b;">ENEMIES 05</span>
       </div>
+
+      <!-- Live Match Telemetry (Timer, FPS, Ping, Network) -->
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 10px; font-family: var(--font-tech); font-weight: 700; color: #162a68;">
+        <span id="match-timer-display" style="background: rgba(248,246,240,0.92); padding: 1px 6px; border: 1.5px solid #162a68; border-radius: 4px;">00:00</span>
+        <span id="fps-display" style="background: rgba(248,246,240,0.92); padding: 1px 6px; border: 1.5px solid #162a68; border-radius: 4px; color: #1e7e34;">60 FPS</span>
+        <span id="ping-display" style="background: rgba(248,246,240,0.92); padding: 1px 6px; border: 1.5px solid #162a68; border-radius: 4px;">24ms</span>
+        <span>📶</span>
+      </div>
     </div>
+
+    <!-- Low Health Heartbeat Banner -->
+    <div id="hud-low-health-warning" style="display: none;">⚠️ LOW HEALTH</div>
 
     <!-- Top Right: End-to-End Circular Blueprint Radar Minimap (Clean, no overlapping action buttons) -->
     <div id="minimap-container" style="top: calc(20px + env(safe-area-inset-top)); right: calc(24px + env(safe-area-inset-right));" title="Tap or Press [M] to Open Full Tactical Map">
@@ -2011,7 +2411,7 @@
     </div>
 
     <!-- Top Center: Radio Walkie-Talkie Chatter Banner -->
-    <div id="radio-chatter-banner" style="top: calc(72px + env(safe-area-inset-top));">
+    <div id="radio-chatter-banner" style="top: calc(78px + env(safe-area-inset-top));">
       <div class="radio-led"></div>
       <div style="font-size: 15px;">📻</div>
       <div>
@@ -2045,6 +2445,20 @@
     <!-- Tactical Real-Time Kill Feed (COD / PUBG Style below Minimap) -->
     <div id="tactical-kill-feed"></div>
 
+    <!-- Contextual Ground Loot Pickup Panel in HUD -->
+    <div id="hud-loot-pickup-card" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #162a68; padding-bottom: 2px;">
+        <span style="font-size: 10px; font-weight: 700; color: #c9182b; letter-spacing: 1px;">GROUND SUPPLY</span>
+        <span>📦</span>
+      </div>
+      <div class="loot-card-name" style="font-size: 12px; font-weight: 700; color: #162a68; margin-top: 2px;">5.56 AMMO</div>
+      <div class="loot-card-sub" style="font-size: 10px; opacity: 0.75;">CARBINE 45 ROUNDS</div>
+      <div style="display: flex; gap: 6px; margin-top: 4px;">
+        <button class="sketch-btn" id="btn-hud-loot-pick" style="flex: 1; padding: 2px 6px; font-size: 10px; background: #162a68; color: #fff;">[PICK]</button>
+        <button class="sketch-btn" id="btn-hud-loot-all" style="padding: 2px 6px; font-size: 10px;">[ALL]</button>
+      </div>
+    </div>
+
     <!-- Death / Player Eliminated Banner with Countdown -->
     <div id="player-eliminated-banner" style="display: none;">
       <div class="elim-title">💀 ELIMINATED</div>
@@ -2072,7 +2486,7 @@
       </div>
     </div>
 
-    <!-- Bottom Center: Collapsible Weapon Bar -->
+    <!-- Bottom Center: Collapsible Weapon Bar with 10s Auto-Fill & Fire Mode -->
     <div id="hud-weapon-bar">
       <!-- Default Collapsed Pill -->
       <div id="hud-weapon-pill" title="Tap to Expand Weapon Arsenal">
@@ -2082,12 +2496,21 @@
         <span style="font-size: 9px; margin-left: 2px;">▲</span>
       </div>
 
-      <!-- Expanded 4-Card Bar (auto-collapses after 2.5s) -->
+      <!-- 10-Second Auto-Fill Recharge Indicator & Fire Mode Button -->
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px;">
+        <div id="hud-ammo-fill-badge" title="Ammo refills every 10 seconds during match">
+          <span>⚡ 10s RESUPPLY</span>
+        </div>
+        <button id="hud-fire-mode-btn" class="sketch-btn" style="padding: 1px 8px; font-size: 10px; font-weight: 700;">AUTO ▾</button>
+      </div>
+
+      <!-- Expanded 5-Card Bar (auto-collapses after 2.5s) -->
       <div id="hud-weapon-cards" class="weapon-slots">
         <div class="weapon-slot active" id="slot-1">1: PISTOL</div>
         <div class="weapon-slot" id="slot-2">2: SHOTGUN</div>
         <div class="weapon-slot" id="slot-3">3: RIFLE</div>
         <div class="weapon-slot" id="slot-4">4: SNIPER</div>
+        <div class="weapon-slot" id="slot-5">5: KNIFE</div>
       </div>
     </div>
 
@@ -2796,6 +3219,14 @@
           <input type="checkbox" id="setting-gyro-toggle" style="width: 20px; height: 20px; cursor: pointer;">
         </div>
 
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13px; font-weight: 700;">
+          <span>GYRO ACTIVATION MODE</span>
+          <select id="setting-gyro-mode" style="font-family: 'Space Mono', monospace; font-size: 12px; padding: 3px 6px; border: 1.5px solid #162a68;">
+            <option value="always">Always-On</option>
+            <option value="ads">Scope / ADS Only</option>
+          </select>
+        </div>
+
         <div class="setting-slider-row">
           <span>GYRO SENSITIVITY (HIPFIRE)</span>
           <input type="range" id="setting-gyro-sens" min="0.2" max="3.0" step="0.1" value="1.0">
@@ -2804,6 +3235,16 @@
         <div class="setting-slider-row">
           <span>GYRO ADS SENSITIVITY (SCOPED)</span>
           <input type="range" id="setting-gyro-ads-sens" min="0.1" max="2.0" step="0.05" value="0.6">
+        </div>
+
+        <div class="setting-slider-row">
+          <span>RED DOT / 2X SENSITIVITY</span>
+          <input type="range" id="setting-gyro-opt-reddot" min="0.1" max="2.0" step="0.05" value="1.0">
+        </div>
+
+        <div class="setting-slider-row">
+          <span>4X / SNIPER SENSITIVITY</span>
+          <input type="range" id="setting-gyro-opt-sniper" min="0.1" max="2.0" step="0.05" value="0.6">
         </div>
 
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; font-size: 13px; font-weight: 700;">
@@ -2816,7 +3257,7 @@
             🎯 CALIBRATE GYRO
           </button>
           <button class="sketch-btn" id="btn-request-gyro-perm" style="flex: 1; padding: 6px 10px; font-size: 12px;">
-            📱 IOS SENSOR PERMISSION
+            📱 SENSOR PERMISSION
           </button>
         </div>
 
@@ -2828,15 +3269,49 @@
 
         <!-- Mobile HUD Layout & Accessibility -->
         <div style="font-size: 11px; font-weight: 700; color: #c9182b; letter-spacing: 1px; margin: 16px 0 8px 0; border-top: 1.5px dashed rgba(22,42,104,0.25); padding-top: 12px;">
-          3. ACCESSIBILITY & MOBILE CONTROLS
+          3. HUD LAYOUT & ACCESSIBILITY
         </div>
+
+        <button class="sketch-btn" id="btn-settings-hud-custom" style="width: 100%; font-size: 14px; font-weight: 700; background: #162a68; color: #faf8f2; padding: 10px; margin-bottom: 12px; letter-spacing: 1px;">
+          🎮 CUSTOMIZE HUD LAYOUT
+        </button>
 
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; font-size: 13px; font-weight: 700;">
           <span>LEFT-HANDED HUD MODE (SWAP SIDES)</span>
           <input type="checkbox" id="setting-left-handed-toggle" style="width: 20px; height: 20px; cursor: pointer;">
         </div>
 
-        <button class="sketch-btn" id="btn-toggle-touch-controls" style="width: 100%; font-size: 13px;">FORCE SHOW/HIDE TOUCH CONTROLS</button>
+        <button class="sketch-btn" id="btn-toggle-touch-controls" style="width: 100%; font-size: 13px; margin-bottom: 12px;">FORCE SHOW/HIDE TOUCH CONTROLS</button>
+
+        <!-- Mobile Auto-Aim & Aim-Assist Section -->
+        <div style="font-size: 11px; font-weight: 700; color: #c9182b; letter-spacing: 1px; margin: 16px 0 8px 0; border-top: 1.5px dashed rgba(22,42,104,0.25); padding-top: 12px;">
+          4. MOBILE AUTO-AIM & AIM ASSIST
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13px; font-weight: 700;">
+          <span>AIM ASSIST STRENGTH</span>
+          <select id="setting-aim-assist-strength" style="font-family: 'Space Mono', monospace; font-size: 12px; padding: 4px 8px; border: 1.5px solid #162a68; border-radius: 4px; background: #faf8f2; color: #162a68;">
+            <option value="STRONG" selected>STRONG (Recommended)</option>
+            <option value="MEDIUM">MEDIUM (Balanced)</option>
+            <option value="LIGHT">LIGHT (Minimal)</option>
+            <option value="OFF">OFF (Manual Only)</option>
+          </select>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13px; font-weight: 700;">
+          <span>ADS SNAP-TO-TARGET</span>
+          <input type="checkbox" id="setting-aim-assist-snap" checked style="width: 20px; height: 20px; cursor: pointer;">
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13px; font-weight: 700;">
+          <span>AUTO-FIRE (SIMPLE MOBILE MODE)</span>
+          <input type="checkbox" id="setting-auto-fire" style="width: 20px; height: 20px; cursor: pointer;">
+        </div>
+
+        <div class="setting-slider-row">
+          <span>AIM ASSIST CONE RADIUS</span>
+          <input type="range" id="setting-aim-cone" min="10" max="35" step="1" value="24">
+        </div>
       </div>
 
       <button class="sketch-btn" id="btn-close-settings" style="margin-top: 16px; background: #162a68; color: #fff; width: 100%;">SAVE & CLOSE</button>

@@ -24,9 +24,20 @@ export class InputManager {
     this.gyroSupported = typeof window !== 'undefined' && 'DeviceOrientationEvent' in window;
     this.gyroPermissionGranted = false;
     this.gyroEnabled = localStorage.getItem('astra_gyro_enabled') === 'true';
+    this.gyroMode = localStorage.getItem('astra_gyro_mode') || 'always'; // 'always' or 'ads'
     this.gyroSensitivity = parseFloat(localStorage.getItem('astra_gyro_sens') || '1.0');
     this.gyroAdsSensitivity = parseFloat(localStorage.getItem('astra_gyro_ads_sens') || '0.6');
     this.gyroInvertY = localStorage.getItem('astra_gyro_invert_y') === 'true';
+
+    // Per-optic sensitivities
+    this.gyroOpticSens = {
+      reddot: parseFloat(localStorage.getItem('astra_gyro_opt_reddot') || '1.0'),
+      x2: parseFloat(localStorage.getItem('astra_gyro_opt_2x') || '0.9'),
+      x3: parseFloat(localStorage.getItem('astra_gyro_opt_3x') || '0.8'),
+      x4: parseFloat(localStorage.getItem('astra_gyro_opt_4x') || '0.6'),
+      x6: parseFloat(localStorage.getItem('astra_gyro_opt_6x') || '0.45'),
+      x8: parseFloat(localStorage.getItem('astra_gyro_opt_8x') || '0.3')
+    };
 
     // Sensor Readings & Reference Calibration
     this.rawOrientation = { alpha: 0, beta: 0, gamma: 0 };
@@ -113,6 +124,7 @@ export class InputManager {
     }
 
     if (!this.gyroEnabled) return;
+    if (this.gyroMode === 'ads' && !this.isAiming) return;
 
     // Device orientation deltas
     // In landscape mode:
@@ -137,8 +149,18 @@ export class InputManager {
     this.smoothedDelta.yaw += (dGamma - this.smoothedDelta.yaw) * this.smoothFactor;
     this.smoothedDelta.pitch += (dBeta - this.smoothedDelta.pitch) * this.smoothFactor;
 
-    // Current multiplier
-    const currentSens = this.isAiming ? this.gyroAdsSensitivity : this.gyroSensitivity;
+    // Current multiplier based on hipfire vs ADS optic
+    let opticFactor = 1.0;
+    if (this.isAiming && this.game && this.game.weapons) {
+      const activeWep = this.game.weapons.activeWeapon;
+      if (activeWep) {
+        if (activeWep.name === 'SNIPER') opticFactor = this.gyroOpticSens.x4;
+        else if (activeWep.name === 'RIFLE') opticFactor = this.gyroOpticSens.reddot;
+        else opticFactor = this.gyroOpticSens.reddot;
+      }
+    }
+
+    const currentSens = this.isAiming ? (this.gyroAdsSensitivity * opticFactor) : this.gyroSensitivity;
     const invY = this.gyroInvertY ? -1 : 1;
 
     // Apply into lookDelta (scale factor ~ 0.0035 for natural camera feel)
@@ -178,6 +200,18 @@ export class InputManager {
     localStorage.setItem('astra_gyro_enabled', this.gyroEnabled.toString());
     if (this.gyroEnabled && !this.hasInitialReading) {
       this.initGyroscope();
+    }
+  }
+
+  setGyroMode(mode) {
+    this.gyroMode = mode === 'ads' ? 'ads' : 'always';
+    localStorage.setItem('astra_gyro_mode', this.gyroMode);
+  }
+
+  setGyroOpticSens(optic, val) {
+    if (this.gyroOpticSens[optic] !== undefined) {
+      this.gyroOpticSens[optic] = Math.max(0.1, Math.min(3.0, val));
+      localStorage.setItem(`astra_gyro_opt_${optic}`, this.gyroOpticSens[optic].toString());
     }
   }
 

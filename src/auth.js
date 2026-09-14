@@ -1,7 +1,13 @@
 // Authentication & Comprehensive Player Profile Manager
+import { apiClient } from './apiClient.js';
+
 export class AuthManager {
   constructor() {
     this.currentUser = this.loadUser();
+    if (this.currentUser) {
+      // Sync session with backend in background
+      apiClient.loginGuest(this.currentUser.name || 'Operator').catch(() => {});
+    }
   }
 
   generatePlayerId() {
@@ -113,6 +119,10 @@ export class AuthManager {
       highestStreak: 6
     };
     this.saveUser(user);
+
+    // Asynchronously authenticate with backend server
+    apiClient.loginGuest(name).catch(e => console.warn('Guest login backend sync offline:', e.message));
+
     return user;
   }
 
@@ -163,6 +173,12 @@ export class AuthManager {
 
     this.saveUser(u);
 
+    // Asynchronously submit match telemetry to authoritative backend
+    apiClient.submitEvents('match_client_local', [{
+      event_type: isWin ? 'MATCH_VICTORY' : 'MATCH_DEFEAT',
+      metadata: { kills, deaths, headshots, damage, isWin }
+    }]).catch(() => {});
+
     return {
       xpGained,
       bpGained,
@@ -203,6 +219,7 @@ export class AuthManager {
   logout() {
     this.currentUser = null;
     localStorage.removeItem('astra_user_profile');
+    apiClient.logout();
   }
 
   isLoggedIn() {

@@ -1,7 +1,8 @@
-// Professional AAA Mobile FPS Touch Controls for ASTRA: One Shotted
-// Clean Blueprint Aesthetic with Non-Overlapping Diamond Combat Cluster,
-// Left Movement Joystick + Quick Grenade Badge, Collapsible Tactical Drawer,
-// and Multi-Touch Pointer Events.
+// Professional Competitive Mobile FPS Touch Controls for ASTRA: One Shotted
+// Inspired by PUBG Mobile / BGMI and Call of Duty Mobile with original ASTRA Blueprint Aesthetic.
+// Supports Virtual Movement Joystick with Sprint Lock Slider, Dual Fire (Right + Left Claw),
+// ADS, Crouch, Prone, Jump, Reload with Circular Progress, Peek Left/Right, Melee Knife,
+// Left & Right Contextual Ground Loot Pickups, and Full HUD Customizer Integration.
 
 export class MobileControls {
   constructor(player, weapons, game) {
@@ -12,7 +13,12 @@ export class MobileControls {
 
     this.isEnabled = false;
     this.isHUDHidden = false;
-    this.isLeftHanded = localStorage.getItem('astra_left_handed') === 'true';
+    this.isCustomizerEditing = false;
+    this.highlightedControlId = null;
+
+    // Sprint state
+    this.isSprintLocked = false;
+    this.isSprintHeld = false;
 
     // Joystick Tracking
     this.joystick = {
@@ -24,7 +30,8 @@ export class MobileControls {
       currentY: 0,
       vectorX: 0,
       vectorZ: 0,
-      maxRadius: 50
+      maxRadius: 55,
+      sprintLockDistance: 85 // Distance to drag upward to lock sprint
     };
 
     // Look Aim Tracking
@@ -35,11 +42,29 @@ export class MobileControls {
       lastY: 0
     };
 
+    // Drag-and-drop editing state
+    this.dragState = {
+      active: false,
+      controlId: null,
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      initialNormX: 0,
+      initialNormY: 0
+    };
+
+    // Nearby Loot Items (fed from LootSystem)
+    this.nearbyLoot = [];
+    this.isLootListExpanded = false;
+
     // Tactical Drawer state
     this.isTacticalDrawerOpen = false;
 
+    // Dictionary of all customizable control DOM elements
+    this.controls = {};
+
     this.buildMobileDOM();
-    this.bindPointerEvents();
+    this.bindTouchControls();
     this.setupOrientationWatcher();
 
     // Auto-detect touch device
@@ -53,7 +78,6 @@ export class MobileControls {
     if (this.container) {
       this.container.style.display = 'block';
     }
-    this.applyHandedness();
   }
 
   disable() {
@@ -63,31 +87,31 @@ export class MobileControls {
     }
   }
 
-  setLeftHanded(isLeft) {
-    this.isLeftHanded = !!isLeft;
-    localStorage.setItem('astra_left_handed', this.isLeftHanded.toString());
-    this.applyHandedness();
+  setCustomizerEditing(isEditing) {
+    this.isCustomizerEditing = isEditing;
+    if (this.lookZone) {
+      this.lookZone.style.pointerEvents = isEditing ? 'none' : 'auto';
+    }
+
+    // Toggle editor visual bounding boxes
+    for (const [id, el] of Object.entries(this.controls)) {
+      if (!el) continue;
+      if (isEditing) {
+        el.classList.add('editor-draggable');
+      } else {
+        el.classList.remove('editor-draggable', 'editor-selected', 'editor-overlap');
+      }
+    }
   }
 
-  applyHandedness() {
-    if (!this.joyContainer || !this.combatCluster) return;
-    if (this.isLeftHanded) {
-      this.joyContainer.style.left = 'auto';
-      this.joyContainer.style.right = 'calc(24px + env(safe-area-inset-right))';
-      this.combatCluster.style.right = 'auto';
-      this.combatCluster.style.left = 'calc(24px + env(safe-area-inset-left))';
-      if (this.tacticalDrawer) {
-        this.tacticalDrawer.style.right = 'auto';
-        this.tacticalDrawer.style.left = 'calc(10px + env(safe-area-inset-left))';
-      }
-    } else {
-      this.joyContainer.style.right = 'auto';
-      this.joyContainer.style.left = 'calc(24px + env(safe-area-inset-left))';
-      this.combatCluster.style.left = 'auto';
-      this.combatCluster.style.right = 'calc(24px + env(safe-area-inset-right))';
-      if (this.tacticalDrawer) {
-        this.tacticalDrawer.style.left = 'auto';
-        this.tacticalDrawer.style.right = 'calc(10px + env(safe-area-inset-right))';
+  highlightControl(id) {
+    this.highlightedControlId = id;
+    for (const [ctrlId, el] of Object.entries(this.controls)) {
+      if (!el) continue;
+      if (ctrlId === id) {
+        el.classList.add('editor-selected');
+      } else {
+        el.classList.remove('editor-selected');
       }
     }
   }
@@ -112,7 +136,7 @@ export class MobileControls {
     document.body.appendChild(container);
     this.container = container;
 
-    // 2. Fullscreen Look Touch Surface (captures aim dragging)
+    // 2. Fullscreen Look Touch Surface (Right side & center)
     const lookZone = document.createElement('div');
     lookZone.id = 'mobile-look-surface';
     lookZone.style.cssText = `
@@ -128,61 +152,37 @@ export class MobileControls {
     container.appendChild(lookZone);
     this.lookZone = lookZone;
 
-    // 3. Left Movement Joystick Container
+    // 3. Movement Joystick Container with Upward Sprint Lock
     const joyContainer = document.createElement('div');
     joyContainer.id = 'mobile-joy-container';
+    joyContainer.className = 'mobile-hud-control';
     joyContainer.style.cssText = `
       position: absolute;
-      bottom: calc(24px + env(safe-area-inset-bottom));
-      left: calc(24px + env(safe-area-inset-left));
-      width: 140px;
-      height: 200px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end;
-      pointer-events: none;
+      width: 130px;
+      height: 130px;
+      pointer-events: auto;
+      touch-action: none;
       z-index: 10;
     `;
 
-    // Quick Grenade Button (docked directly above joystick) - Icon Only
-    const btnGrenade = document.createElement('div');
-    btnGrenade.id = 'btn-quick-grenade';
-    btnGrenade.className = 'blueprint-touch-btn';
-    btnGrenade.innerHTML = `
-      <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
-        <svg viewBox="0 0 28 28" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 4 L16 4"/>
-          <circle cx="8" cy="6" r="3"/>
-          <path d="M14 4 L14 7"/>
-          <ellipse cx="14" cy="17" rx="7" ry="8" fill="rgba(22,42,104,0.08)"/>
-          <line x1="14" y1="9" x2="14" y2="25"/>
-          <line x1="8" y1="14" x2="20" y2="14"/>
-          <line x1="8" y1="20" x2="20" y2="20"/>
-        </svg>
-        <span id="mobile-nade-num" style="position: absolute; top: -4px; right: -2px; font-size: 11px; font-weight: 700; background: #c9182b; color: #faf8f2; padding: 1px 5px; border-radius: 9px; border: 1.5px solid #162a68; line-height: 1.1;">2</span>
-      </div>
+    // Sprint Lock Guide Line (Dotted line extending upward to sprint lock)
+    const sprintLockLine = document.createElement('div');
+    sprintLockLine.id = 'mobile-sprint-lock-line';
+    sprintLockLine.style.cssText = `
+      position: absolute;
+      bottom: 65px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 60px;
+      border-left: 2px dashed rgba(22, 42, 104, 0.45);
+      pointer-events: none;
+      transition: opacity 0.15s ease;
     `;
-    btnGrenade.style.cssText = `
-      width: 50px;
-      height: 42px;
-      border-radius: 8px;
-      border: 2px solid #162a68;
-      background: rgba(248, 246, 240, 0.92);
-      color: #162a68;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 12px;
-      pointer-events: auto;
-      touch-action: none;
-      box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.25);
-      cursor: pointer;
-    `;
-    joyContainer.appendChild(btnGrenade);
-    this.btnGrenade = btnGrenade;
+    joyContainer.appendChild(sprintLockLine);
+    this.sprintLockLine = sprintLockLine;
 
-    // Outer Joystick Ring (130px)
+    // Joystick Ring Base
     const joyRing = document.createElement('div');
     joyRing.id = 'mobile-joystick-ring';
     joyRing.style.cssText = `
@@ -195,15 +195,23 @@ export class MobileControls {
       position: relative;
       pointer-events: auto;
       touch-action: none;
-      box-shadow: inset 0 0 12px rgba(22, 42, 104, 0.1);
+      box-shadow: inset 0 0 14px rgba(22, 42, 104, 0.12);
     `;
 
-    // Inner Thumb Stick (60px)
+    // Directional Cross
+    const crossHoriz = document.createElement('div');
+    crossHoriz.style.cssText = 'position:absolute;top:50%;left:15%;width:70%;height:1px;background:rgba(22,42,104,0.3);pointer-events:none;';
+    const crossVert = document.createElement('div');
+    crossVert.style.cssText = 'position:absolute;left:50%;top:15%;width:1px;height:70%;background:rgba(22,42,104,0.3);pointer-events:none;';
+    joyRing.appendChild(crossHoriz);
+    joyRing.appendChild(crossVert);
+
+    // Inner Thumb Stick
     const joyThumb = document.createElement('div');
     joyThumb.id = 'mobile-joystick-thumb';
     joyThumb.style.cssText = `
-      width: 60px;
-      height: 60px;
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
       background: #162a68;
       border: 2px solid #faf8f2;
@@ -212,40 +220,34 @@ export class MobileControls {
       left: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none;
-      box-shadow: 0 2px 6px rgba(22, 42, 104, 0.4);
+      box-shadow: 0 3px 8px rgba(22, 42, 104, 0.4);
       transition: transform 0.04s ease-out;
     `;
-
-    // Cross directional markings on joystick base
-    const crossHoriz = document.createElement('div');
-    crossHoriz.style.cssText = 'position:absolute;top:50%;left:15%;width:70%;height:1px;background:rgba(22,42,104,0.3);pointer-events:none;';
-    const crossVert = document.createElement('div');
-    crossVert.style.cssText = 'position:absolute;left:50%;top:15%;width:1px;height:70%;background:rgba(22,42,104,0.3);pointer-events:none;';
-    joyRing.appendChild(crossHoriz);
-    joyRing.appendChild(crossVert);
-
     joyRing.appendChild(joyThumb);
     joyContainer.appendChild(joyRing);
     container.appendChild(joyContainer);
+
     this.joyContainer = joyContainer;
     this.joyRing = joyRing;
     this.joyThumb = joyThumb;
+    this.controls['joyContainer'] = joyContainer;
 
-    // 4. Bottom-Right Diamond Combat Cluster
-    // Sized so that 100px Fire is surrounded by 76px action buttons with 12px margins
-    const combatCluster = document.createElement('div');
-    combatCluster.id = 'mobile-combat-cluster';
-    combatCluster.style.cssText = `
-      position: absolute;
-      bottom: calc(24px + env(safe-area-inset-bottom));
-      right: calc(24px + env(safe-area-inset-right));
-      width: 270px;
-      height: 270px;
-      pointer-events: none;
-      z-index: 15;
-    `;
+    // 4. Dedicated Sprint Button & Lock Target (docked above joystick)
+    const btnSprint = this.createHudButton('btn-touch-sprint', `
+      <svg viewBox="0 0 28 28" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="16" cy="6" r="3"/>
+        <path d="M7 23 L11 16 L15 17 L19 23"/>
+        <path d="M12 11 L16 13 L21 10"/>
+        <path d="M12 11 L9 15 L5 14"/>
+      </svg>
+      <span id="sprint-lock-tag" style="position: absolute; bottom: -16px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px; color: #162a68;">SPRINT</span>
+    `, 52, false);
+    container.appendChild(btnSprint);
+    this.btnSprint = btnSprint;
+    this.controls['btnSprint'] = btnSprint;
 
-    // Vector Blueprint SVG Icons (ICON ONLY - Zero Text!)
+    // 5. Combat Buttons (Diamond Cluster + Extra Tactical Controls)
+    // SVG Icons
     const fireSvg = `
       <svg viewBox="0 0 36 36" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M18 5 L22 13 L22 28 L14 28 L14 13 Z" fill="rgba(255,255,255,0.2)"/>
@@ -289,154 +291,166 @@ export class MobileControls {
       </svg>
     `;
 
+    const proneSvg = `
+      <svg viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <ellipse cx="7" cy="18" rx="2.5" ry="2.5"/>
+        <path d="M10 18 L24 18 L27 24"/>
+        <line x1="5" y1="26" x2="27" y2="26" stroke-width="2" stroke-dasharray="3 2"/>
+      </svg>
+    `;
+
     const reloadSvg = `
       <svg viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M26 13 A11 11 0 1 0 25 21"/>
         <polyline points="22 13 26 13 26 9"/>
         <rect x="13.5" y="10" width="5" height="12" rx="1" fill="currentColor" opacity="0.25"/>
         <line x1="13.5" y1="14" x2="18.5" y2="14"/>
-        <line x1="13.5" y1="18" x2="18.5" y2="18"/>
       </svg>
     `;
 
-    // Diamond Layout Buttons (Icon Only):
-    // Fire (Center, 100px)
-    const btnFire = this.createButton('btn-touch-fire', fireSvg, 100, 85, 85, true);
-    // ADS (Top, 76px)
-    const btnAds = this.createButton('btn-touch-aim', adsSvg, 76, 97, 0, false);
-    // Jump (Right, 76px)
-    const btnJump = this.createButton('btn-touch-jump', jumpSvg, 76, 194, 97, false);
-    // Crouch / Slide (Bottom, 76px)
-    const btnCrouch = this.createButton('btn-touch-slide', crouchSvg, 76, 97, 194, false);
-    // Reload (Left, 76px)
-    const btnReload = this.createButton('btn-touch-reload', reloadSvg, 76, 0, 97, false);
+    const peekLeftSvg = `
+      <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 6 C10 6 6 10 6 15 L6 22 L22 22 L22 15 C22 10 18 6 14 6 Z"/>
+        <line x1="10" y1="14" x2="6" y2="10"/>
+        <polyline points="6 14 10 14 10 10"/>
+      </svg>
+    `;
 
-    combatCluster.appendChild(btnFire);
-    combatCluster.appendChild(btnAds);
-    combatCluster.appendChild(btnJump);
-    combatCluster.appendChild(btnCrouch);
-    combatCluster.appendChild(btnReload);
-    container.appendChild(combatCluster);
-    this.combatCluster = combatCluster;
+    const peekRightSvg = `
+      <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 6 C10 6 6 10 6 15 L6 22 L22 22 L22 15 C22 10 18 6 14 6 Z"/>
+        <line x1="18" y1="14" x2="22" y2="10"/>
+        <polyline points="22 14 18 14 18 10"/>
+      </svg>
+    `;
 
-    this.buttons = {
-      fire: btnFire,
-      ads: btnAds,
-      jump: btnJump,
-      crouch: btnCrouch,
-      reload: btnReload,
-      grenade: btnGrenade
-    };
+    const meleeSvg = `
+      <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 4 L24 8 L12 20 L8 20 L8 16 Z"/>
+        <line x1="6" y1="22" x2="10" y2="18"/>
+      </svg>
+    `;
 
-    // 5. Collapsible Tactical Drawer (Right Edge)
-    const tacticalDrawer = document.createElement('div');
-    tacticalDrawer.id = 'mobile-tactical-drawer';
-    tacticalDrawer.style.cssText = `
+    const grenadeSvg = `
+      <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+        <svg viewBox="0 0 28 28" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 4 L16 4"/>
+          <circle cx="8" cy="6" r="3"/>
+          <ellipse cx="14" cy="17" rx="7" ry="8" fill="rgba(22,42,104,0.08)"/>
+          <line x1="14" y1="9" x2="14" y2="25"/>
+          <line x1="8" y1="14" x2="20" y2="14"/>
+        </svg>
+        <span id="mobile-nade-num" style="position: absolute; top: -4px; right: -2px; font-size: 11px; font-weight: 700; background: #c9182b; color: #faf8f2; padding: 1px 5px; border-radius: 9px; border: 1.5px solid #162a68; line-height: 1.1;">2</span>
+      </div>
+    `;
+
+    // Instantiate Individual Customizable Controls
+    const btnFireRight = this.createHudButton('btn-touch-fire-right', fireSvg, 96, true);
+    const btnFireLeft = this.createHudButton('btn-touch-fire-left', fireSvg, 76, true);
+    const btnAds = this.createHudButton('btn-touch-aim', adsSvg, 72, false);
+    const btnJump = this.createHudButton('btn-touch-jump', jumpSvg, 72, false);
+    const btnCrouch = this.createHudButton('btn-touch-slide', crouchSvg, 70, false);
+    const btnProne = this.createHudButton('btn-touch-prone', proneSvg, 66, false);
+    const btnReload = this.createHudButton('btn-touch-reload', reloadSvg, 70, false);
+    const btnPeekLeft = this.createHudButton('btn-touch-peek-left', peekLeftSvg, 56, false);
+    const btnPeekRight = this.createHudButton('btn-touch-peek-right', peekRightSvg, 56, false);
+    const btnGrenade = this.createHudButton('btn-touch-grenade', grenadeSvg, 56, false);
+    const btnMelee = this.createHudButton('btn-touch-melee', meleeSvg, 56, false);
+
+    container.appendChild(btnFireRight);
+    container.appendChild(btnFireLeft);
+    container.appendChild(btnAds);
+    container.appendChild(btnJump);
+    container.appendChild(btnCrouch);
+    container.appendChild(btnProne);
+    container.appendChild(btnReload);
+    container.appendChild(btnPeekLeft);
+    container.appendChild(btnPeekRight);
+    container.appendChild(btnGrenade);
+    container.appendChild(btnMelee);
+
+    this.controls['btnFireRight'] = btnFireRight;
+    this.controls['btnFireLeft'] = btnFireLeft;
+    this.controls['btnAds'] = btnAds;
+    this.controls['btnJump'] = btnJump;
+    this.controls['btnCrouch'] = btnCrouch;
+    this.controls['btnProne'] = btnProne;
+    this.controls['btnReload'] = btnReload;
+    this.controls['btnPeekLeft'] = btnPeekLeft;
+    this.controls['btnPeekRight'] = btnPeekRight;
+    this.controls['btnGrenade'] = btnGrenade;
+    this.controls['btnMelee'] = btnMelee;
+
+    // 6. Contextual Pickup Buttons (Left & Right)
+    const btnPickLeft = this.createPickupButton('btn-touch-pick-left', 'PICK');
+    const btnPickRight = this.createPickupButton('btn-touch-pick-right', 'PICK');
+    container.appendChild(btnPickLeft);
+    container.appendChild(btnPickRight);
+    this.controls['btnPickLeft'] = btnPickLeft;
+    this.controls['btnPickRight'] = btnPickRight;
+
+    // Vertical Loot List Stack (shows when multiple ground loot items are close)
+    const lootListStack = document.createElement('div');
+    lootListStack.id = 'mobile-loot-stack';
+    lootListStack.style.cssText = `
       position: absolute;
-      top: calc(75px + env(safe-area-inset-top));
-      right: calc(12px + env(safe-area-inset-right));
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 8px;
-      pointer-events: auto;
-      z-index: 20;
-    `;
-
-    const toggleTab = document.createElement('button');
-    toggleTab.id = 'btn-tactical-toggle';
-    toggleTab.className = 'sketch-btn';
-    toggleTab.innerHTML = `☰ TAC`;
-    toggleTab.style.cssText = `
-      padding: 6px 10px;
-      font-size: 11px;
-      font-weight: 700;
-      background: rgba(248, 246, 240, 0.9);
-      border: 2px solid #162a68;
-      color: #162a68;
-      border-radius: 6px;
-      cursor: pointer;
-      box-shadow: 2px 2px 0px rgba(22,42,104,0.3);
-    `;
-
-    const drawerBody = document.createElement('div');
-    drawerBody.id = 'tactical-drawer-body';
-    drawerBody.style.cssText = `
+      left: 50%;
+      top: 48%;
+      transform: translate(-50%, -50%);
       display: none;
       flex-direction: column;
       gap: 6px;
-      background: rgba(248, 246, 240, 0.95);
+      width: 240px;
+      max-height: 180px;
+      overflow-y: auto;
+      background: rgba(248, 246, 240, 0.96);
       border: 2px solid #162a68;
-      padding: 8px;
       border-radius: 8px;
-      box-shadow: 3px 3px 0px rgba(22,42,104,0.3);
-      backdrop-filter: blur(4px);
+      padding: 8px;
+      box-shadow: 4px 4px 0px rgba(22,42,104,0.3);
+      z-index: 25;
+      pointer-events: auto;
     `;
+    container.appendChild(lootListStack);
+    this.lootListStack = lootListStack;
 
-    const subButtons = [
-      { id: 'btn-tactical-map', label: '🗺 MAP', action: () => this.toggleMap() },
-      { id: 'btn-tactical-radio', label: '📻 RADIO', action: () => this.toggleRadio() },
-      { id: 'btn-tactical-insp', label: '🔍 INSP', action: () => this.player.inspectWeapon() },
-      { id: 'btn-tactical-dive', label: '🕊 DIVE', action: () => this.player.tryDive() },
-      { id: 'btn-tactical-hud', label: '👁 HUD', action: () => this.toggleHUDHide() }
-    ];
+    // 7. Register In-Game HUD Elements for Customizer Moving
+    const hudWeaponBar = document.getElementById('hud-weapon-bar');
+    if (hudWeaponBar) {
+      hudWeaponBar.classList.add('mobile-hud-control');
+      this.controls['weaponBar'] = hudWeaponBar;
+    }
+    const minimapContainer = document.getElementById('minimap-container');
+    if (minimapContainer) {
+      minimapContainer.classList.add('mobile-hud-control');
+      this.controls['minimap'] = minimapContainer;
+    }
+    const hudTopCenter = document.getElementById('hud-top-center-bar');
+    if (hudTopCenter) {
+      hudTopCenter.classList.add('mobile-hud-control');
+      this.controls['topScore'] = hudTopCenter;
+    }
 
-    subButtons.forEach(sb => {
-      const b = document.createElement('button');
-      b.id = sb.id;
-      b.className = 'sketch-btn';
-      b.textContent = sb.label;
-      b.style.cssText = `
-        padding: 5px 12px;
-        font-size: 11px;
-        font-weight: 700;
-        text-align: left;
-        background: #faf8f2;
-        border: 1.5px solid #162a68;
-        color: #162a68;
-        cursor: pointer;
-      `;
-      b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        sb.action();
-      });
-      drawerBody.appendChild(b);
-    });
-
-    toggleTab.addEventListener('click', (e) => {
-      e.stopPropagation();
-      this.isTacticalDrawerOpen = !this.isTacticalDrawerOpen;
-      drawerBody.style.display = this.isTacticalDrawerOpen ? 'flex' : 'none';
-      toggleTab.innerHTML = this.isTacticalDrawerOpen ? '✕ CLOSE' : '☰ TAC';
-    });
-
-    tacticalDrawer.appendChild(toggleTab);
-    tacticalDrawer.appendChild(drawerBody);
-    container.appendChild(tacticalDrawer);
-    this.tacticalDrawer = tacticalDrawer;
-    this.drawerBody = drawerBody;
-    this.toggleTab = toggleTab;
+    // Attach drag customization listeners to all controls
+    for (const [id, el] of Object.entries(this.controls)) {
+      if (!el) continue;
+      this.setupDraggableControl(id, el);
+    }
   }
 
-  createButton(id, label, size, left, top, isPrimary = false) {
+  createHudButton(id, html, size, isPrimary = false) {
     const btn = document.createElement('div');
     btn.id = id;
-    btn.className = 'blueprint-touch-btn' + (isPrimary ? ' primary' : '');
-    btn.innerHTML = label;
+    btn.className = 'blueprint-touch-btn mobile-hud-control' + (isPrimary ? ' primary' : '');
+    btn.innerHTML = html;
     btn.style.cssText = `
       position: absolute;
-      left: ${left}px;
-      top: ${top}px;
       width: ${size}px;
       height: ${size}px;
       border-radius: 50%;
       border: ${isPrimary ? '3px solid #c9182b' : '2px solid #162a68'};
       background: ${isPrimary ? 'rgba(201, 24, 43, 0.92)' : 'rgba(248, 246, 240, 0.9)'};
       color: ${isPrimary ? '#faf8f2' : '#162a68'};
-      font-family: 'Space Mono', monospace;
-      font-size: ${size >= 90 ? '14px' : '11px'};
-      font-weight: 700;
-      letter-spacing: 0.5px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -444,14 +458,146 @@ export class MobileControls {
       touch-action: none;
       box-shadow: 2px 2px 0px ${isPrimary ? 'rgba(201,24,43,0.3)' : 'rgba(22,42,104,0.25)'};
       cursor: pointer;
-      transition: transform 0.08s ease, background 0.08s ease;
+      transform: translate(-50%, -50%);
+      z-index: 15;
     `;
     return btn;
   }
 
-  bindPointerEvents() {
-    // 1. Joystick Pointer Handling
+  createPickupButton(id, defaultText) {
+    const btn = document.createElement('div');
+    btn.id = id;
+    btn.className = 'blueprint-touch-btn mobile-hud-control tactical-pick-btn';
+    btn.style.cssText = `
+      position: absolute;
+      padding: 6px 14px;
+      min-width: 100px;
+      height: 48px;
+      border-radius: 8px;
+      border: 2px solid #162a68;
+      background: rgba(248, 246, 240, 0.94);
+      color: #162a68;
+      font-family: 'Space Mono', monospace;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: auto;
+      touch-action: none;
+      box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.25);
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+    `;
+    btn.innerHTML = `
+      <div style="display: flex; flex-direction: column; text-align: left;">
+        <span class="pick-label-action" style="font-size: 11px; font-weight: 700; color: #c9182b;">${defaultText}</span>
+        <span class="pick-label-item" style="font-size: 10px; font-weight: 700; opacity: 0.85;">ITEM</span>
+      </div>
+      <span style="font-size: 14px;">✋</span>
+    `;
+    return btn;
+  }
+
+  // Setup Drag-and-Drop Editing for HUD Customizer
+  setupDraggableControl(id, el) {
+    el.addEventListener('pointerdown', (e) => {
+      if (!this.isCustomizerEditing) return;
+      e.stopPropagation();
+
+      // Select in Customizer Inspector
+      if (this.game && this.game.hudCustomizer) {
+        this.game.hudCustomizer.selectControl(id);
+      }
+
+      // Check if control is locked
+      const layout = this.game.hudCustomizer ? this.game.hudCustomizer.getActiveLayout() : null;
+      const ctrlData = layout && layout.controls ? layout.controls[id] : null;
+      if (ctrlData && ctrlData.locked) {
+        if (this.game.hudCustomizer) this.game.hudCustomizer.showToast('🔒 Control is locked. Unlock to move.');
+        return;
+      }
+
+      el.setPointerCapture(e.pointerId);
+      this.dragState.active = true;
+      this.dragState.controlId = id;
+      this.dragState.pointerId = e.pointerId;
+      this.dragState.startX = e.clientX;
+      this.dragState.startY = e.clientY;
+      this.dragState.initialNormX = ctrlData ? ctrlData.x : 0.5;
+      this.dragState.initialNormY = ctrlData ? ctrlData.y : 0.5;
+    });
+
+    el.addEventListener('pointermove', (e) => {
+      if (!this.isCustomizerEditing || !this.dragState.active || this.dragState.pointerId !== e.pointerId) return;
+
+      const dx = e.clientX - this.dragState.startX;
+      const dy = e.clientY - this.dragState.startY;
+
+      const screenW = window.innerWidth;
+      const screenH = window.innerHeight;
+
+      let newNormX = this.dragState.initialNormX + (dx / screenW);
+      let newNormY = this.dragState.initialNormY + (dy / screenH);
+
+      // Grid Snapping
+      if (this.game.hudCustomizer && this.game.hudCustomizer.gridEnabled) {
+        const step = this.game.hudCustomizer.gridSizePercent / 100;
+        newNormX = Math.round(newNormX / step) * step;
+        newNormY = Math.round(newNormY / step) * step;
+      }
+
+      // Clamp within screen safe area
+      newNormX = Math.max(0.04, Math.min(0.96, newNormX));
+      newNormY = Math.max(0.04, Math.min(0.96, newNormY));
+
+      const layout = this.game.hudCustomizer.getActiveLayout();
+      if (layout && layout.controls && layout.controls[id]) {
+        layout.controls[id].x = newNormX;
+        layout.controls[id].y = newNormY;
+        this.applyNormalizedControl(id, layout.controls[id]);
+        this.game.hudCustomizer.updateInspectorCoords(layout.controls[id]);
+      }
+    });
+
+    const endDrag = (e) => {
+      if (this.dragState.active && this.dragState.pointerId === e.pointerId) {
+        this.dragState.active = false;
+        this.dragState.controlId = null;
+        this.dragState.pointerId = null;
+      }
+    };
+
+    el.addEventListener('pointerup', endDrag);
+    el.addEventListener('pointercancel', endDrag);
+  }
+
+  // Apply layout coordinate model to DOM element
+  applyNormalizedControl(id, ctrl) {
+    const el = this.controls[id];
+    if (!el || !ctrl) return;
+
+    el.style.left = `${(ctrl.x * 100).toFixed(2)}%`;
+    el.style.top = `${(ctrl.y * 100).toFixed(2)}%`;
+    el.style.opacity = ctrl.visible ? ctrl.opacity.toString() : '0.15';
+    el.style.display = (ctrl.visible || this.isCustomizerEditing) ? 'flex' : 'none';
+
+    // Apply scale & transform
+    const scale = ctrl.size || 1.0;
+    el.style.transform = `translate(-50%, -50%) scale(${scale})`;
+
+    // Apply Style Classes
+    el.classList.remove('style-circle', 'style-rounded', 'style-tactical', 'style-minimal');
+    if (ctrl.style) {
+      el.classList.add(`style-${ctrl.style}`);
+    }
+  }
+
+  // Bind Gameplay Touch Actions
+  bindTouchControls() {
+    // 1. Joystick Pointer Handling + Sprint Lock
     this.joyRing.addEventListener('pointerdown', (e) => {
+      if (this.isCustomizerEditing) return;
       e.stopPropagation();
       this.joyRing.setPointerCapture(e.pointerId);
       this.joystick.active = true;
@@ -464,7 +610,7 @@ export class MobileControls {
     });
 
     this.joyRing.addEventListener('pointermove', (e) => {
-      if (!this.joystick.active || e.pointerId !== this.joystick.pointerId) return;
+      if (this.isCustomizerEditing || !this.joystick.active || e.pointerId !== this.joystick.pointerId) return;
       this.updateJoystickPosition(e.clientX, e.clientY);
     });
 
@@ -475,22 +621,41 @@ export class MobileControls {
         this.joystick.vectorX = 0;
         this.joystick.vectorZ = 0;
         this.joyThumb.style.transform = `translate(-50%, -50%)`;
-        if (this.inputManager) {
-          this.inputManager.setMoveVector(0, 0);
+
+        // If sprint is locked, keep forward sprint active!
+        if (this.isSprintLocked) {
+          this.player.keys.forward = true;
+          this.player.keys.sprint = true;
+          if (this.inputManager) {
+            this.inputManager.setMoveVector(0, -1);
+          }
+        } else {
+          if (this.inputManager) {
+            this.inputManager.setMoveVector(0, 0);
+          }
+          this.player.keys.forward = false;
+          this.player.keys.backward = false;
+          this.player.keys.left = false;
+          this.player.keys.right = false;
+          this.player.keys.sprint = false;
         }
-        this.player.keys.forward = false;
-        this.player.keys.backward = false;
-        this.player.keys.left = false;
-        this.player.keys.right = false;
       }
     };
 
     this.joyRing.addEventListener('pointerup', endJoy);
     this.joyRing.addEventListener('pointercancel', endJoy);
 
-    // 2. Look Drag Pointer Handling (Aiming)
+    // 2. Dedicated Sprint Button
+    this.btnSprint.addEventListener('pointerdown', (e) => {
+      if (this.isCustomizerEditing) return;
+      e.stopPropagation();
+      this.isSprintHeld = true;
+      this.toggleSprintLock();
+    });
+
+    // 3. Look Drag Surface
     this.lookZone.addEventListener('pointerdown', (e) => {
-      if (this.lookPointer.active) return;
+      if (this.isCustomizerEditing || this.lookPointer.active) return;
       this.lookPointer.active = true;
       this.lookPointer.pointerId = e.pointerId;
       this.lookPointer.lastX = e.clientX;
@@ -499,7 +664,7 @@ export class MobileControls {
     });
 
     this.lookZone.addEventListener('pointermove', (e) => {
-      if (!this.lookPointer.active || e.pointerId !== this.lookPointer.pointerId) return;
+      if (this.isCustomizerEditing || !this.lookPointer.active || e.pointerId !== this.lookPointer.pointerId) return;
       const dx = e.clientX - this.lookPointer.lastX;
       const dy = e.clientY - this.lookPointer.lastY;
       this.lookPointer.lastX = e.clientX;
@@ -521,13 +686,20 @@ export class MobileControls {
         this.lookPointer.pointerId = null;
       }
     };
-
     this.lookZone.addEventListener('pointerup', endLook);
     this.lookZone.addEventListener('pointercancel', endLook);
 
-    // 3. Combat Buttons Multi-Touch Handling
-    // Fire
-    this.setupButtonTouch(this.buttons.fire, () => {
+    // 4. Combat Buttons
+    // Right Fire
+    this.setupButtonTouch(this.controls['btnFireRight'], () => {
+      this.player.isShooting = true;
+      if (this.game.attemptShoot) this.game.attemptShoot();
+    }, () => {
+      this.player.isShooting = false;
+    });
+
+    // Left Fire (Claw)
+    this.setupButtonTouch(this.controls['btnFireLeft'], () => {
       this.player.isShooting = true;
       if (this.game.attemptShoot) this.game.attemptShoot();
     }, () => {
@@ -535,18 +707,22 @@ export class MobileControls {
     });
 
     // ADS
-    this.setupButtonTouch(this.buttons.ads, () => {
+    this.setupButtonTouch(this.controls['btnAds'], () => {
       this.player.isAiming = !this.player.isAiming;
       if (this.player.onAimChange) this.player.onAimChange(this.player.isAiming);
-      this.buttons.ads.style.background = this.player.isAiming ? '#162a68' : 'rgba(248, 246, 240, 0.9)';
-      this.buttons.ads.style.color = this.player.isAiming ? '#faf8f2' : '#162a68';
+      const btn = this.controls['btnAds'];
+      btn.style.background = this.player.isAiming ? '#162a68' : 'rgba(248, 246, 240, 0.9)';
+      btn.style.color = this.player.isAiming ? '#faf8f2' : '#162a68';
     });
 
     // Jump
-    this.setupButtonTouch(this.buttons.jump, () => {
+    this.setupButtonTouch(this.controls['btnJump'], () => {
       if (this.player.isSliding || this.player.isDiving) {
         this.player.cancelSlide();
         this.player.isDiving = false;
+      }
+      if (this.player.isProning) {
+        this.player.tryProne(); // Stand up from prone
       }
       if (this.player.isGrounded && !this.player.keys.crouch) {
         if (!this.player.tryMantle()) {
@@ -557,35 +733,87 @@ export class MobileControls {
     });
 
     // Crouch / Slide
-    this.setupButtonTouch(this.buttons.crouch, () => {
+    this.setupButtonTouch(this.controls['btnCrouch'], () => {
+      if (this.player.isProning) {
+        this.player.tryProne(); // Cancel prone
+      }
       this.player.keys.crouch = !this.player.keys.crouch;
       if (this.player.keys.crouch && (this.player.keys.sprint || this.player.isTacSprinting)) {
         this.player.trySlide();
       }
-      this.buttons.crouch.style.background = this.player.keys.crouch ? '#162a68' : 'rgba(248, 246, 240, 0.9)';
-      this.buttons.crouch.style.color = this.player.keys.crouch ? '#faf8f2' : '#162a68';
+      const btn = this.controls['btnCrouch'];
+      btn.style.background = this.player.keys.crouch ? '#162a68' : 'rgba(248, 246, 240, 0.9)';
+      btn.style.color = this.player.keys.crouch ? '#faf8f2' : '#162a68';
+    });
+
+    // Prone
+    this.setupButtonTouch(this.controls['btnProne'], () => {
+      const isProne = this.player.tryProne();
+      const btn = this.controls['btnProne'];
+      btn.style.background = isProne ? '#162a68' : 'rgba(248, 246, 240, 0.9)';
+      btn.style.color = isProne ? '#faf8f2' : '#162a68';
     });
 
     // Reload
-    this.setupButtonTouch(this.buttons.reload, () => {
+    this.setupButtonTouch(this.controls['btnReload'], () => {
       if (this.player.onReloadRequested) this.player.onReloadRequested();
     });
 
+    // Peek Left
+    this.setupButtonTouch(this.controls['btnPeekLeft'], () => {
+      const state = this.player.setPeek(-1);
+      const btn = this.controls['btnPeekLeft'];
+      btn.style.background = state === -1 ? '#162a68' : 'rgba(248, 246, 240, 0.9)';
+      btn.style.color = state === -1 ? '#faf8f2' : '#162a68';
+    });
+
+    // Peek Right
+    this.setupButtonTouch(this.controls['btnPeekRight'], () => {
+      const state = this.player.setPeek(1);
+      const btn = this.controls['btnPeekRight'];
+      btn.style.background = state === 1 ? '#162a68' : 'rgba(248, 246, 240, 0.9)';
+      btn.style.color = state === 1 ? '#faf8f2' : '#162a68';
+    });
+
     // Grenade
-    this.setupButtonTouch(this.buttons.grenade, () => {
+    this.setupButtonTouch(this.controls['btnGrenade'], () => {
       if (this.player.onGrenadeRequested) this.player.onGrenadeRequested();
     });
+
+    // Melee Knife
+    this.setupButtonTouch(this.controls['btnMelee'], () => {
+      if (this.weapons) {
+        this.weapons.switchWeapon(4); // Switch to Knife and attack
+        if (this.game.attemptShoot) this.game.attemptShoot();
+      }
+    });
+
+    // Contextual Pickups
+    const handlePick = () => {
+      if (this.game && this.game.lootSystem) {
+        if (this.nearbyLoot.length > 1) {
+          this.toggleLootStack();
+        } else if (this.nearbyLoot.length === 1) {
+          this.game.lootSystem.pickupItem(this.nearbyLoot[0], this.player, this.weapons, this.hud);
+        }
+      }
+    };
+    this.setupButtonTouch(this.controls['btnPickLeft'], handlePick);
+    this.setupButtonTouch(this.controls['btnPickRight'], handlePick);
   }
 
   setupButtonTouch(el, onPress, onRelease = null) {
+    if (!el) return;
     el.addEventListener('pointerdown', (e) => {
+      if (this.isCustomizerEditing) return;
       e.stopPropagation();
-      el.style.transform = 'scale(0.92)';
+      el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, 'scale(0.92)');
       if (onPress) onPress();
     });
 
     const release = (e) => {
-      el.style.transform = 'scale(1.0)';
+      if (this.isCustomizerEditing) return;
+      el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, 'scale(1.0)');
       if (onRelease) onRelease();
     };
 
@@ -605,6 +833,13 @@ export class MobileControls {
 
     this.joyThumb.style.transform = `translate(calc(-50% + ${thumbX}px), calc(-50% + ${thumbY}px))`;
 
+    // Check Upward Sprint Lock: dragging upwards past sprint threshold
+    if (dy < -this.joystick.maxRadius * 0.85 && Math.abs(dx) < 30) {
+      if (!this.isSprintLocked) {
+        this.setSprintLocked(true);
+      }
+    }
+
     // Normalize to -1.0 .. +1.0
     const normX = thumbX / this.joystick.maxRadius;
     const normY = thumbY / this.joystick.maxRadius;
@@ -616,12 +851,110 @@ export class MobileControls {
       this.inputManager.setMoveVector(normX, normY);
     }
 
-    // Also fallback to WASD key states for backward compatibility
-    this.player.keys.forward = normY < -0.3;
-    this.player.keys.backward = normY > 0.3;
-    this.player.keys.left = normX < -0.3;
-    this.player.keys.right = normX > 0.3;
-    this.player.keys.sprint = dist >= this.joystick.maxRadius * 0.95;
+    this.player.keys.forward = normY < -0.28 || this.isSprintLocked;
+    this.player.keys.backward = normY > 0.28 && !this.isSprintLocked;
+    this.player.keys.left = normX < -0.28;
+    this.player.keys.right = normX > 0.28;
+    this.player.keys.sprint = dist >= this.joystick.maxRadius * 0.9 || this.isSprintLocked;
+  }
+
+  setSprintLocked(locked) {
+    this.isSprintLocked = locked;
+    if (this.btnSprint) {
+      this.btnSprint.style.background = locked ? '#c9182b' : 'rgba(248, 246, 240, 0.9)';
+      this.btnSprint.style.color = locked ? '#faf8f2' : '#162a68';
+      this.btnSprint.style.borderColor = locked ? '#c9182b' : '#162a68';
+      const tag = document.getElementById('sprint-lock-tag');
+      if (tag) tag.textContent = locked ? 'LOCKED' : 'SPRINT';
+    }
+  }
+
+  toggleSprintLock() {
+    this.setSprintLocked(!this.isSprintLocked);
+  }
+
+  // Handle Nearby Loot from LootSystem
+  updateNearbyLoot(items) {
+    this.nearbyLoot = items || [];
+    const hasItems = this.nearbyLoot.length > 0;
+
+    const btnL = this.controls['btnPickLeft'];
+    const btnR = this.controls['btnPickRight'];
+
+    if (!hasItems) {
+      if (btnL) btnL.style.display = 'none';
+      if (btnR) btnR.style.display = 'none';
+      if (this.lootListStack) this.lootListStack.style.display = 'none';
+      return;
+    }
+
+    const first = this.nearbyLoot[0];
+    const action = this.nearbyLoot.length > 1 ? 'PICK ALL' : 'PICK';
+
+    [btnL, btnR].forEach(btn => {
+      if (!btn) return;
+      btn.style.display = 'flex';
+      const actionEl = btn.querySelector('.pick-label-action');
+      const itemEl = btn.querySelector('.pick-label-item');
+      if (actionEl) actionEl.textContent = action;
+      if (itemEl) itemEl.textContent = first.name;
+    });
+
+    this.renderLootStack();
+  }
+
+  renderLootStack() {
+    if (!this.lootListStack) return;
+    this.lootListStack.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid #162a68; padding-bottom: 4px; margin-bottom: 4px;">
+        <span style="font-size: 11px; font-weight: 700; color: #162a68;">NEARBY CRATES (${this.nearbyLoot.length})</span>
+        <button class="sketch-btn" id="btn-pick-all-stack" style="padding: 2px 6px; font-size: 10px; background: #c9182b; color: #fff;">PICK ALL</button>
+      </div>
+    `;
+
+    this.nearbyLoot.forEach(item => {
+      const row = document.createElement('div');
+      row.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 8px;
+        background: #faf8f2;
+        border: 1px solid #162a68;
+        border-radius: 4px;
+        cursor: pointer;
+      `;
+      row.innerHTML = `
+        <div>
+          <div style="font-size: 11px; font-weight: 700; color: #162a68;">${item.name}</div>
+          <div style="font-size: 9px; opacity: 0.7;">${item.sub}</div>
+        </div>
+        <button class="sketch-btn" style="padding: 2px 6px; font-size: 10px;">PICK</button>
+      `;
+      row.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.game && this.game.lootSystem) {
+          this.game.lootSystem.pickupItem(item, this.player, this.weapons, this.hud);
+        }
+      });
+      this.lootListStack.appendChild(row);
+    });
+
+    const btnPickAll = document.getElementById('btn-pick-all-stack');
+    if (btnPickAll) {
+      btnPickAll.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.game && this.game.lootSystem) {
+          this.game.lootSystem.pickupAll(this.player, this.weapons, this.hud);
+        }
+      });
+    }
+  }
+
+  toggleLootStack() {
+    if (!this.lootListStack) return;
+    this.isLootListExpanded = !this.isLootListExpanded;
+    this.lootListStack.style.display = this.isLootListExpanded ? 'flex' : 'none';
   }
 
   updateGrenades(count) {
@@ -629,66 +962,16 @@ export class MobileControls {
     if (nadeNum) nadeNum.textContent = count;
   }
 
-  toggleMap() {
-    if (this.game.minimap) {
-      this.game.minimap.toggleMapMode();
-    }
-  }
-
-  toggleRadio() {
-    if (this.game.voiceChat) {
-      this.game.voiceChat.showRadioWheel();
-    }
-  }
-
-  toggleHUDHide() {
-    this.isHUDHidden = !this.isHUDHidden;
-    const hudContainer = document.getElementById('hud-container');
-    if (hudContainer) {
-      hudContainer.style.opacity = this.isHUDHidden ? '0' : '1';
-      hudContainer.style.pointerEvents = this.isHUDHidden ? 'none' : 'auto';
-    }
-    if (this.combatCluster) {
-      this.combatCluster.style.opacity = this.isHUDHidden ? '0.15' : '1';
-    }
-    if (this.joyContainer) {
-      this.joyContainer.style.opacity = this.isHUDHidden ? '0.15' : '1';
-    }
-  }
-
-  toggle() {
-    if (this.isEnabled) {
-      this.disable();
-    } else {
-      this.enable();
-    }
-  }
-
-  enterCustomizerMode() {
-    this.enable();
-    if (this.onExitCustomizer) {
-      setTimeout(() => {
-        if (this.onExitCustomizer) this.onExitCustomizer();
-      }, 1500);
-    }
-  }
-
   requestLandscapeFullscreen() {
     try {
       const docEl = document.documentElement;
-      if (docEl.requestFullscreen) {
-        docEl.requestFullscreen().catch(() => {});
-      } else if (docEl.webkitRequestFullscreen) {
-        docEl.webkitRequestFullscreen();
-      } else if (docEl.msRequestFullscreen) {
-        docEl.msRequestFullscreen();
-      }
-
+      if (docEl.requestFullscreen) docEl.requestFullscreen().catch(() => {});
+      else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
       if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('landscape').catch(() => {});
       }
     } catch (err) {
-      console.warn('Fullscreen/Orientation request deferred:', err.message);
+      console.warn('Orientation request deferred:', err.message);
     }
   }
 
@@ -702,20 +985,14 @@ export class MobileControls {
         overlay.style.display = 'none';
         return;
       }
-      // Check if viewport is in portrait mode
       const isPortrait = window.innerWidth < window.innerHeight;
-      if (isPortrait) {
-        overlay.style.display = 'flex';
-      } else {
-        overlay.style.display = 'none';
-      }
+      overlay.style.display = isPortrait ? 'flex' : 'none';
     };
 
     const btnFs = document.getElementById('btn-request-mobile-fullscreen');
     if (btnFs) {
       btnFs.addEventListener('click', () => {
         this.requestLandscapeFullscreen();
-        if (this.game && this.game.soundEngine) this.game.soundEngine.playUIClick();
         setTimeout(checkOrientation, 300);
       });
     }
@@ -725,17 +1002,22 @@ export class MobileControls {
       btnDismiss.addEventListener('click', () => {
         userDismissed = true;
         if (overlay) overlay.style.display = 'none';
-        if (this.game && this.game.soundEngine) this.game.soundEngine.playUIClick();
       });
     }
 
     window.addEventListener('resize', checkOrientation);
     window.addEventListener('orientationchange', checkOrientation);
-    document.addEventListener('fullscreenchange', () => {
-      setTimeout(checkOrientation, 200);
-    });
-
     checkOrientation();
   }
-}
 
+  toggle() {
+    if (this.isEnabled) this.disable();
+    else this.enable();
+  }
+
+  enterCustomizerMode() {
+    if (this.game && this.game.hudCustomizer) {
+      this.game.hudCustomizer.open();
+    }
+  }
+}
