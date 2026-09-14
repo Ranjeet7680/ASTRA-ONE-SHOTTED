@@ -19,7 +19,9 @@ export class MobileControls {
       'btn-touch-wep1': { x: 38, y: 90, size: 48, opacity: 0.8 },
       'btn-touch-wep2': { x: 46, y: 90, size: 48, opacity: 0.8 },
       'btn-touch-wep3': { x: 54, y: 90, size: 48, opacity: 0.8 },
-      'btn-touch-wep4': { x: 62, y: 90, size: 48, opacity: 0.8 }
+      'btn-touch-wep4': { x: 62, y: 90, size: 48, opacity: 0.8 },
+      'btn-touch-voice': { x: 70, y: 20, size: 52, opacity: 0.85 },
+      'btn-touch-inspect': { x: 80, y: 20, size: 52, opacity: 0.85 }
     };
 
     this.layout = this.loadLayout();
@@ -192,7 +194,9 @@ export class MobileControls {
       { id: 'btn-touch-wep1', label: '1' },
       { id: 'btn-touch-wep2', label: '2' },
       { id: 'btn-touch-wep3', label: '3' },
-      { id: 'btn-touch-wep4', label: '4' }
+      { id: 'btn-touch-wep4', label: '4' },
+      { id: 'btn-touch-voice', label: 'RAD' },
+      { id: 'btn-touch-inspect', label: 'INSP' }
     ];
 
     this.buttons = {};
@@ -540,6 +544,18 @@ export class MobileControls {
       case 'btn-touch-wep2': if (isDown) this.weapons.switchWeapon(1); break;
       case 'btn-touch-wep3': if (isDown) this.weapons.switchWeapon(2); break;
       case 'btn-touch-wep4': if (isDown) this.weapons.switchWeapon(3); break;
+
+      case 'btn-touch-voice':
+        if (isDown && this.game && this.game.voiceChat) {
+          this.game.voiceChat.toggleWheel();
+        }
+        break;
+
+      case 'btn-touch-inspect':
+        if (isDown && this.player) {
+          this.player.inspectWeapon();
+        }
+        break;
     }
   }
 }

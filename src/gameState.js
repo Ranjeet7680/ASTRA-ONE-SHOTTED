@@ -18,6 +18,8 @@ export class GameStateManager {
     this.modalModeSelect = document.getElementById('modal-mode-select');
     this.modalGunsmith = document.getElementById('modal-gunsmith');
     this.modalCharacter = document.getElementById('modal-character');
+    this.modalPlayerProfile = document.getElementById('modal-player-profile');
+    this.modalPostMatch = document.getElementById('modal-post-match');
 
     // Loading Bar Elements
     this.loadingBar = document.getElementById('game-loading-bar');
@@ -328,6 +330,68 @@ export class GameStateManager {
       });
     }
 
+    // Lobby Profile Card click -> Open Operator Profile Modal
+    const lobbyProfileCard = document.getElementById('lobby-profile-card');
+    if (lobbyProfileCard) {
+      lobbyProfileCard.addEventListener('click', () => {
+        this.game.soundEngine.playUIClick();
+        this.showPlayerProfile();
+      });
+    }
+
+    const btnCloseProfile = document.getElementById('btn-close-player-profile');
+    if (btnCloseProfile) {
+      btnCloseProfile.addEventListener('click', () => {
+        this.game.soundEngine.playUIClick();
+        if (this.modalPlayerProfile) this.modalPlayerProfile.style.display = 'none';
+      });
+    }
+
+    const btnCopyId = document.getElementById('btn-copy-id');
+    if (btnCopyId) {
+      btnCopyId.addEventListener('click', () => {
+        const idText = document.getElementById('profile-modal-id')?.textContent || '';
+        if (navigator.clipboard && idText) {
+          navigator.clipboard.writeText(idText);
+          const toast = document.getElementById('profile-copy-toast');
+          if (toast) {
+            toast.style.display = 'inline';
+            setTimeout(() => { toast.style.display = 'none'; }, 1800);
+          }
+        }
+      });
+    }
+
+    const btnSaveCallsign = document.getElementById('btn-save-callsign');
+    if (btnSaveCallsign) {
+      btnSaveCallsign.addEventListener('click', () => {
+        const input = document.getElementById('profile-input-callsign');
+        if (input && input.value.trim() && this.game.auth) {
+          this.game.auth.setCallsign(input.value.trim());
+          this.updateLobbyUser();
+          this.showPlayerProfile();
+          if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        }
+      });
+    }
+
+    // Post-Match debriefing action buttons
+    const btnPostmatchReplay = document.getElementById('btn-postmatch-replay');
+    if (btnPostmatchReplay) {
+      btnPostmatchReplay.addEventListener('click', () => {
+        if (this.modalPostMatch) this.modalPostMatch.style.display = 'none';
+        this.restartGame();
+      });
+    }
+
+    const btnPostmatchLobby = document.getElementById('btn-postmatch-lobby');
+    if (btnPostmatchLobby) {
+      btnPostmatchLobby.addEventListener('click', () => {
+        if (this.modalPostMatch) this.modalPostMatch.style.display = 'none';
+        this.showLobby();
+      });
+    }
+
     // 3. Mode Selection Modal Handlers
     const btnCloseMode = document.getElementById('btn-close-mode-select');
     if (btnCloseMode) {
@@ -617,7 +681,13 @@ export class GameStateManager {
     if (this.screenMainMenu) this.screenMainMenu.style.display = 'none';
     if (this.screenPause) this.screenPause.style.display = 'none';
     if (this.screenGameOver) this.screenGameOver.style.display = 'none';
+    if (this.modalPostMatch) this.modalPostMatch.style.display = 'none';
     if (this.game.lobby) this.game.lobby.hide();
+
+    // Automatic Fullscreen Request
+    if (this.game.player) {
+      this.game.player.requestFullscreen();
+    }
 
     this.game.hud.show();
     this.game.restart();
@@ -636,27 +706,116 @@ export class GameStateManager {
     this.game.domElement.requestPointerLock();
   }
 
-  gameOver(score, wave, kills, headshots) {
-    this.currentState = 'GAME_OVER';
-    if (this.goScore) this.goScore.textContent = score;
-    if (this.goWave) this.goWave.textContent = wave;
-    if (this.goKills) this.goKills.textContent = kills;
-    if (this.goHeadshots) this.goHeadshots.textContent = headshots;
+  gameOver(score, wave, kills = 0, headshots = 0, isWin = false, deaths = 1, damage = 0) {
+    this.showPostMatch({
+      score: score || 0,
+      kills: kills || 0,
+      deaths: deaths || 1,
+      headshots: headshots || 0,
+      damage: damage || ((kills || 0) * 115),
+      isWin: isWin,
+      modeLabel: typeof wave === 'string' ? wave : `WAVE ${wave || 1} SURVIVAL`
+    });
+  }
 
-    if (this.screenGameOver) this.screenGameOver.style.display = 'flex';
+  showPostMatch(results = {}) {
+    this.currentState = 'GAME_OVER';
     if (document.exitPointerLock) document.exitPointerLock();
 
-    // Reward BP to user profile
-    if (this.game.auth && this.game.auth.currentUser) {
-      this.game.auth.currentUser.bp += Math.floor(score / 5) + 50;
-      this.game.auth.currentUser.matches++;
-      this.game.auth.saveUser(this.game.auth.currentUser);
+    const kills = results.kills || 0;
+    const deaths = results.deaths || 0;
+    const headshots = results.headshots || 0;
+    const damage = results.damage || (kills * 115);
+    const isWin = !!results.isWin;
+    const modeLabel = results.modeLabel || this.selectedModeConfig.title;
+
+    let recorded = { xpGained: kills * 110 + (isWin ? 500 : 250), bpGained: kills * 25 + (isWin ? 150 : 75) };
+    if (this.game.auth) {
+      recorded = this.game.auth.recordMatch({
+        kills,
+        deaths,
+        headshots,
+        damage,
+        isWin
+      }) || recorded;
     }
+
+    const titleEl = document.getElementById('postmatch-title');
+    const subEl = document.getElementById('postmatch-subtitle');
+    const modeEl = document.getElementById('postmatch-mode-label');
+    const killsEl = document.getElementById('postmatch-kills');
+    const deathsEl = document.getElementById('postmatch-deaths');
+    const kdEl = document.getElementById('postmatch-kd');
+    const headshotsEl = document.getElementById('postmatch-headshots');
+    const damageEl = document.getElementById('postmatch-damage');
+    const bpEl = document.getElementById('postmatch-bp');
+    const xpEl = document.getElementById('postmatch-xp');
+
+    if (titleEl) {
+      titleEl.textContent = isWin ? 'VICTORY' : 'DEFEAT';
+      titleEl.style.color = isWin ? '#162a68' : '#c9182b';
+    }
+    if (subEl) {
+      subEl.textContent = isWin ? 'OPERATION OBJECTIVE ACHIEVED' : 'TACTICAL WITHDRAWAL';
+    }
+    if (modeEl) modeEl.textContent = modeLabel;
+    if (killsEl) killsEl.textContent = kills;
+    if (deathsEl) deathsEl.textContent = deaths;
+    if (kdEl) kdEl.textContent = (kills / Math.max(1, deaths)).toFixed(2);
+    if (headshotsEl) headshotsEl.textContent = headshots;
+    if (damageEl) damageEl.textContent = Math.round(damage).toLocaleString();
+    if (bpEl) bpEl.textContent = `+${recorded.bpGained || 0} BP`;
+    if (xpEl) xpEl.textContent = `+${recorded.xpGained || 0} XP`;
+
+    if (this.modalPostMatch) {
+      this.modalPostMatch.style.display = 'flex';
+    }
+  }
+
+  showPlayerProfile() {
+    if (!this.game.auth || !this.game.auth.currentUser) return;
+    const u = this.game.auth.currentUser;
+
+    const avatarEl = document.getElementById('profile-modal-avatar');
+    const inputCallsign = document.getElementById('profile-input-callsign');
+    const idEl = document.getElementById('profile-modal-id');
+    const rankEl = document.getElementById('profile-modal-rank');
+    const levelEl = document.getElementById('profile-modal-level');
+    const xpText = document.getElementById('profile-xp-text');
+    const xpBar = document.getElementById('profile-xp-bar');
+
+    if (avatarEl) avatarEl.src = u.avatar;
+    if (inputCallsign) inputCallsign.value = u.name;
+    if (idEl) idEl.textContent = u.id || 'ASTRA-0000000000';
+    if (rankEl) rankEl.textContent = u.rank || 'GOLD I';
+    if (levelEl) levelEl.textContent = `LEVEL ${u.level || 1}`;
+
+    const xp = u.xp || 0;
+    const nextXp = u.xpToNextLevel || 3000;
+    if (xpText) xpText.textContent = `${xp.toLocaleString()} / ${nextXp.toLocaleString()} XP`;
+    if (xpBar) xpBar.style.width = `${Math.min(100, Math.round((xp / nextXp) * 100))}%`;
+
+    const statMatches = document.getElementById('profile-stat-matches');
+    const statWinrate = document.getElementById('profile-stat-winrate');
+    const statKd = document.getElementById('profile-stat-kd');
+    const statKdRatio = document.getElementById('profile-stat-kills-deaths');
+    const statHeadshots = document.getElementById('profile-stat-headshots');
+    const statAvgDmg = document.getElementById('profile-stat-avgdmg');
+
+    if (statMatches) statMatches.textContent = u.matches || 0;
+    if (statWinrate) statWinrate.textContent = this.game.auth.getWinRate();
+    if (statKd) statKd.textContent = this.game.auth.getKD();
+    if (statKdRatio) statKdRatio.textContent = `${u.kills || 0} / ${u.deaths || 0}`;
+    if (statHeadshots) statHeadshots.textContent = this.game.auth.getHeadshotRate();
+    if (statAvgDmg) statAvgDmg.textContent = this.game.auth.getAvgDamage().toLocaleString();
+
+    if (this.modalPlayerProfile) this.modalPlayerProfile.style.display = 'flex';
   }
 
   restartGame() {
     this.currentState = 'PLAYING';
     if (this.screenGameOver) this.screenGameOver.style.display = 'none';
+    if (this.modalPostMatch) this.modalPostMatch.style.display = 'none';
     if (this.screenPause) this.screenPause.style.display = 'none';
     if (this.game.lobby) this.game.lobby.hide();
     this.game.restart();

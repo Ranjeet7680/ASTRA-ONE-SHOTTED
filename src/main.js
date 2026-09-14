@@ -15,6 +15,8 @@ import { MobileControls } from './mobileControls.js';
 import { TDMManager } from './tdm.js';
 import { AuthManager } from './auth.js';
 import { LobbyScene } from './lobby.js';
+import { MinimapManager } from './minimap.js';
+import { VoiceChatSystem } from './voiceChat.js';
 
 class Game {
   constructor() {
@@ -47,7 +49,7 @@ class Game {
     this.materials = new MaterialLibrary();
     this.soundEngine = new SoundEngine();
     this.effects = new EffectsManager(this.scene, this.materials);
-    this.hud = new HUD();
+    this.hud = new HUD(this);
     this.level = new Level(this.scene, this.materials, 'small');
     this.weapons = new WeaponSystem(this.camera, this.materials, this.soundEngine, this.effects);
     this.player = new Player(this.camera, this.domElement, this.level, this.soundEngine, this.effects);
@@ -77,6 +79,8 @@ class Game {
     this.mobileControls = new MobileControls(this.player, this.weapons, this);
     this.auth = new AuthManager();
     this.lobby = new LobbyScene(this.scene, this.materials, this.customization, this.weapons);
+    this.minimap = new MinimapManager(this);
+    this.voiceChat = new VoiceChatSystem(this);
 
     this.currentMode = 'wave'; // 'wave' or 'tdm'
 
@@ -144,6 +148,14 @@ class Game {
     // Active weapon index query for dynamic FOV
     this.player.onGetActiveWeaponIndex = () => this.weapons.currentWeaponIndex;
 
+    // Directional damage indicator and healing aura feedback to HUD
+    this.player.onDamageReceived = (amount, relativeAngle, sourcePos) => {
+      this.hud.showDirectionalDamage(relativeAngle);
+    };
+    this.player.onHealingEffect = (active) => {
+      this.hud.setHealingEffect(active);
+    };
+
     // Player Death -> Game Over or TDM Respawn
     this.player.onPlayerDeath = () => {
       if (this.currentMode === 'tdm') {
@@ -151,9 +163,12 @@ class Game {
       } else {
         this.stateManager.gameOver(
           this.hud.score,
-          this.waves.currentWave,
+          `WAVE ${this.waves.currentWave}`,
           this.waves.totalKills,
-          this.waves.totalHeadshots
+          this.waves.totalHeadshots,
+          false,
+          1,
+          this.hud.score * 12
         );
       }
     };
@@ -162,9 +177,12 @@ class Game {
     this.tdm.onMatchEnded = (results) => {
       this.stateManager.gameOver(
         this.hud.score,
-        `TDM ${results.winner}`,
+        `TDM: ${results.winner}`,
         results.playerKills,
-        0
+        0,
+        results.winner === 'BLUE TEAM',
+        results.playerDeaths,
+        results.playerDamage
       );
     };
 
@@ -245,8 +263,10 @@ class Game {
 
       // Update Systems
       this.player.update(delta);
-      this.weapons.update(delta);
+      this.weapons.update(delta, this.player.getPlayerStateForWeapon());
       this.effects.update(delta);
+      this.minimap.update(delta);
+      this.hud.update(delta);
 
       // Update Grenades physics and explosion raycast
       const allTargets = this.currentMode === 'wave' ? this.waves.enemies : this.tdm.bots;

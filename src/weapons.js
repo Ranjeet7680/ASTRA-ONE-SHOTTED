@@ -415,7 +415,7 @@ export class WeaponSystem {
     });
   }
 
-  update(delta) {
+  update(delta, playerState = {}) {
     const wep = this.activeWeapon;
 
     // 1. Muzzle Flash timer
@@ -462,17 +462,37 @@ export class WeaponSystem {
     this.recoilPos.z = lerp(this.recoilPos.z, 0, delta * 18);
     this.recoilRot.x = lerp(this.recoilRot.x, 0, delta * 16);
 
-    // 5. Update Weapon Holder Transform
+    // 5. Tactical Sprint & Inspect Animations
+    const isTacSprint = playerState.isTacSprinting && !this.isAiming && !this.isReloading;
+    this.tacSprintAlpha = lerp(this.tacSprintAlpha || 0, isTacSprint ? 1.0 : 0.0, delta * 10);
+
+    const sprintRotX = this.tacSprintAlpha * 0.65; // Tilt up 38 degrees
+    const sprintRotZ = this.tacSprintAlpha * -0.28;
+    const sprintPosY = this.tacSprintAlpha * 0.04;
+    const sprintPosZ = this.tacSprintAlpha * -0.05;
+
+    // Inspect Animation
+    let inspectRotY = 0;
+    let inspectRotZ = 0;
+    let inspectRotX = 0;
+    if (playerState.isInspecting) {
+      const p = playerState.inspectProgress || 0;
+      inspectRotY = Math.sin(p * Math.PI * 2) * 0.45;
+      inspectRotZ = Math.sin(p * Math.PI) * 0.55;
+      inspectRotX = -Math.sin(p * Math.PI) * 0.2;
+    }
+
+    // 6. Update Weapon Holder Transform
     this.weaponHolder.position.set(
       this.currentRestPos.x,
-      this.currentRestPos.y + reloadOffsetY,
-      this.currentRestPos.z + this.recoilPos.z
+      this.currentRestPos.y + reloadOffsetY + sprintPosY,
+      this.currentRestPos.z + this.recoilPos.z + sprintPosZ
     );
 
     this.weaponHolder.rotation.set(
-      this.recoilRot.x,
-      0,
-      reloadRotationZ
+      this.recoilRot.x + sprintRotX + inspectRotX,
+      inspectRotY,
+      reloadRotationZ + sprintRotZ + inspectRotZ
     );
   }
 

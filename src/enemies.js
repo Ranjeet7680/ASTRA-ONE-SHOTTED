@@ -488,11 +488,15 @@ export class EnemyProjectile {
 
     // Collision against Player (player capsule radius ~0.5, height ~1.8)
     const pCenter = new THREE.Vector3(player.position.x, player.position.y + 1.0, player.position.z);
-    if (this.position.distanceTo(pCenter) < 0.65) {
-      player.takeDamage(this.damage);
+    const distToPlayer = this.position.distanceTo(pCenter);
+    if (distToPlayer < 0.65) {
+      player.takeDamage(this.damage, this.shooter ? this.shooter.position : this.position);
       effects.createEnemyBloodSplatter(this.position, new THREE.Vector3(0, 1, 0), 6);
       this.destroy(scene);
       return;
+    } else if (distToPlayer < 2.4 && !this.hasWhizzed) {
+      this.hasWhizzed = true;
+      if (player.soundEngine) player.soundEngine.playBulletWhiz();
     }
 
     // Collision against Level Geometry

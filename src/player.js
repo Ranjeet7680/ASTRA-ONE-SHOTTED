@@ -71,6 +71,19 @@ export class Player {
     this.kills = 0;
     this.deaths = 0;
 
+    // Weapon Inspect Animation (<kbd>I</kbd>)
+    this.isInspecting = false;
+    this.inspectTimer = 0;
+    this.inspectDuration = 1.8;
+
+    // Jump Landing Compression & Damage Flinch
+    this.landingOffset = 0;
+    this.flinchPitch = 0;
+    this.flinchRoll = 0;
+
+    // Low HP Heartbeat
+    this.heartbeatTimer = 0;
+
 
     // Input States
     this.keys = {
@@ -159,6 +172,13 @@ export class Player {
           break;
         case 'KeyR':
           if (this.onReloadRequested) this.onReloadRequested();
+          break;
+        case 'KeyI':
+          this.inspectWeapon();
+          break;
+        case 'F11':
+          e.preventDefault();
+          this.toggleFullscreen();
           break;
         case 'Digit1':
           if (this.onWeaponSwitch) this.onWeaponSwitch(0);
@@ -275,8 +295,42 @@ export class Player {
     return false;
   }
 
+  inspectWeapon() {
+    if (this.isInspecting || this.isShooting || this.isDead || this.isAiming) return;
+    this.isInspecting = true;
+    this.inspectTimer = 0;
+    this.soundEngine.playWeaponInspect();
+  }
+
+  requestFullscreen() {
+    const el = document.documentElement;
+    if (!document.fullscreenElement) {
+      if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    }
+  }
+
+  exitFullscreen() {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  toggleFullscreen() {
+    if (document.fullscreenElement) this.exitFullscreen();
+    else this.requestFullscreen();
+  }
+
+  getPlayerStateForWeapon() {
+    return {
+      isTacSprinting: this.isTacSprinting,
+      isInspecting: this.isInspecting,
+      inspectProgress: this.isInspecting ? (this.inspectTimer / this.inspectDuration) : 0
+    };
+  }
+
   // Take damage from enemies
-  takeDamage(amount) {
+  takeDamage(amount, sourcePos = null) {
     if (this.isDead || this.invulnerableTimer > 0) return;
 
     this.hp = Math.max(0, this.hp - amount);
@@ -284,9 +338,26 @@ export class Player {
     this.timeSinceLastDamage = 0;
     this.hasPlayedRegenSound = false;
 
+    // Flinch impulse
+    this.flinchPitch = -0.07;
+    this.flinchRoll = (Math.random() - 0.5) * 0.08;
+
     // Audio & Screen Feedback
     this.soundEngine.playPlayerDamage();
-    this.effects.addTrauma(0.45);
+    this.effects.addTrauma(0.48);
+
+    // Directional calculation
+    let relativeAngle = 0;
+    if (sourcePos) {
+      const dx = sourcePos.x - this.position.x;
+      const dz = sourcePos.z - this.position.z;
+      const hitAngle = Math.atan2(dx, dz);
+      relativeAngle = hitAngle - this.yaw;
+    }
+
+    if (this.onDamageReceived) {
+      this.onDamageReceived(amount, relativeAngle, sourcePos);
+    }
 
     const vignette = document.getElementById('damage-vignette');
     if (vignette) {
@@ -352,19 +423,41 @@ export class Player {
       this.invulnerableTimer -= delta;
     }
 
-    // 10-Second Auto-Health Regeneration
+    // Inspect Animation timer
+    if (this.isInspecting) {
+      this.inspectTimer += delta;
+      if (this.inspectTimer >= this.inspectDuration || this.isShooting || this.isAiming) {
+        this.isInspecting = false;
+      }
+    }
+
+    // Low HP Heartbeat Audio Pulse
+    if (this.hp <= 30 && !this.isDead) {
+      this.heartbeatTimer = (this.heartbeatTimer || 0) + delta;
+      if (this.heartbeatTimer >= 0.85) {
+        this.heartbeatTimer = 0;
+        this.soundEngine.playHeartbeat();
+      }
+    } else {
+      this.heartbeatTimer = 0;
+    }
+
+    // 10-Second Auto-Health Regeneration & Healing Fill Aura
     this.timeSinceLastDamage += delta;
     if (this.timeSinceLastDamage >= 10.0 && this.hp < this.maxHp) {
       this.hp = Math.min(this.maxHp, this.hp + delta * 25);
       if (!this.hasPlayedRegenSound) {
         this.soundEngine.playHealthRegen();
+        this.soundEngine.playHealingAura();
         this.hasPlayedRegenSound = true;
       }
-      // Remove low health warning when restored
+      if (this.onHealingEffect) this.onHealingEffect(true);
       if (this.hp > 30) {
         const vignette = document.getElementById('damage-vignette');
         if (vignette) vignette.classList.remove('low-health');
       }
+    } else {
+      if (this.onHealingEffect) this.onHealingEffect(false);
     }
 
     // Tactical Sprint timer
@@ -461,18 +554,23 @@ export class Player {
       this.bobTimer = 0;
     }
 
-    // 6. Camera Position & Rotation with Screen Shake
+    // Flinch & Landing compression recovery
+    this.flinchPitch = lerp(this.flinchPitch || 0, 0, delta * 12);
+    this.flinchRoll = lerp(this.flinchRoll || 0, 0, delta * 12);
+    this.landingOffset = lerp(this.landingOffset || 0, 0, delta * 12);
+
+    // 6. Camera Position & Rotation with Screen Shake, Landing, & Flinch
     const shake = this.effects.shakeOffset;
     this.camera.position.set(
       this.position.x + bobOffsetX + shake.x,
-      this.position.y + this.currentEyeHeight + bobOffsetY + shake.y,
+      this.position.y + this.currentEyeHeight + bobOffsetY + shake.y + this.landingOffset,
       this.position.z
     );
 
     const euler = new THREE.Euler(
-      this.pitch + shake.pitch,
+      this.pitch + shake.pitch + this.flinchPitch,
       this.yaw + shake.yaw,
-      this.roll + shake.roll,
+      this.roll + shake.roll + this.flinchRoll,
       'YXZ'
     );
     this.camera.quaternion.setFromEuler(euler);
@@ -516,11 +614,20 @@ export class Player {
       }
     }
 
+    const wasGrounded = this.isGrounded;
+    const fallVelY = this.velocity.y;
+
     // Ground snap / stair climb
     if (this.position.y <= floorY) {
       this.position.y = floorY;
       this.velocity.y = 0;
       this.isGrounded = true;
+
+      // Detect landing from air
+      if (!wasGrounded && fallVelY < -2.5) {
+        this.landingOffset = Math.max(-0.25, fallVelY * 0.04);
+        this.soundEngine.playFootstep();
+      }
     } else {
       this.isGrounded = false;
     }

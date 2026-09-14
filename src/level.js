@@ -1,13 +1,16 @@
 import * as THREE from 'three';
 import { BoxCollider } from './utilities.js';
+import { BlueprintProps } from './props.js';
 
 export class Level {
   constructor(scene, materials, currentMapSize = 'small') {
     this.scene = scene;
     this.materials = materials;
+    this.props = new BlueprintProps(this.materials);
     this.currentMapSize = currentMapSize;
     this.group = new THREE.Group();
     this.colliders = [];
+    this.mapFeatures = [];
     this.spawnPoints = [];
     this.sniperSpawnPoints = [];
     this.blueSpawnPoints = [];
@@ -21,12 +24,12 @@ export class Level {
 
   setMapSize(size) {
     this.currentMapSize = size;
-    // Clear existing arena geometry
     while (this.group.children.length > 0) {
       const obj = this.group.children[0];
       this.group.remove(obj);
     }
     this.colliders = [];
+    this.mapFeatures = [];
     this.spawnPoints = [];
     this.sniperSpawnPoints = [];
     this.blueSpawnPoints = [];
@@ -36,6 +39,18 @@ export class Level {
     this.buildSkyDoodles();
   }
 
+  addProp(propData) {
+    if (!propData) return;
+    this.group.add(propData.group);
+    if (propData.colliders) {
+      for (const c of propData.colliders) {
+        this.colliders.push(new BoxCollider(c.min.x, c.min.y, c.min.z, c.max.x, c.max.y, c.max.z, 'wall'));
+      }
+    }
+    if (propData.mapIcon) {
+      this.mapFeatures.push(propData.mapIcon);
+    }
+  }
 
   // Helper to create a solid architectural block with ink outlines and AABB collision
   createBlock(x, y, z, width, height, depth, material = this.materials.architecturalPaperMaterial, isWalkableFloor = false) {
@@ -59,6 +74,10 @@ export class Level {
       isWalkableFloor ? 'floor' : 'wall'
     );
     this.colliders.push(collider);
+
+    if (!isWalkableFloor && height >= 1.0 && width >= 1.0 && depth >= 1.0) {
+      this.mapFeatures.push({ type: 'wall', x, z, width, depth, height });
+    }
 
     return { group, mesh, collider };
   }
@@ -141,6 +160,16 @@ export class Level {
     this.createBlock(14.2, 4.6, 0, 0.3, 0.8, 24, this.materials.accentBlockMaterial);
     this.createStairs(17, 0, 8, 12, 3.5, 0.35, 0.6, 0, 1);
 
+    // 3D Blueprint Props (House, Car, Trees, Sandbags)
+    this.addProp(this.props.createHouse(13, -11, 7, 6, 3.8, 0));
+    this.addProp(this.props.createCar(-10, 5, 0.4));
+    this.addProp(this.props.createSandbagBunker(0, -8, 0));
+    this.addProp(this.props.createSandbagBunker(0, 8, Math.PI));
+    this.addProp(this.props.createTree(-17, -17, 1.1));
+    this.addProp(this.props.createTree(17, -17, 1.1));
+    this.addProp(this.props.createTree(-17, 17, 1.1));
+    this.addProp(this.props.createTree(17, 17, 1.1));
+
     // Spawns
     this.playerSpawnPoint.set(0, 1.8, 16);
 
@@ -213,6 +242,19 @@ export class Level {
     ];
     covers.forEach(c => {
       this.createBlock(c.x, c.y, c.z, c.w, c.h, c.d, this.materials.hatchSurfaceMaterial);
+    });
+
+    // 3D Blueprint Props (Houses, Bus Roadblock, Cars, Trees, Sandbags)
+    this.addProp(this.props.createHouse(-18, -18, 10, 8, 4.2, 0));
+    this.addProp(this.props.createHouse(18, -18, 10, 8, 4.2, 0));
+    this.addProp(this.props.createBus(0, -14, Math.PI / 2));
+    this.addProp(this.props.createCar(-14, 14, 0.3));
+    this.addProp(this.props.createCar(14, 14, -0.4));
+    this.addProp(this.props.createSandbagBunker(-8, 2, 0.5));
+    this.addProp(this.props.createSandbagBunker(8, 2, -0.5));
+    [-26, -14, 14, 26].forEach(tx => {
+      this.addProp(this.props.createTree(tx, -32, 1.2));
+      this.addProp(this.props.createTree(tx, 32, 1.2));
     });
 
     this.playerSpawnPoint.set(0, 1.8, 22);
@@ -292,6 +334,24 @@ export class Level {
       this.createBlock(-16, 1.0, x, 1.4, 2.0, 4, this.materials.hatchSurfaceMaterial);
       this.createBlock(16, 1.0, x, 1.4, 2.0, 4, this.materials.hatchSurfaceMaterial);
     }
+
+    // 3D Blueprint Props (Residential Houses, 2 City Buses, 4 Cars, Checkpoint Bunkers, Trees)
+    this.addProp(this.props.createHouse(-32, -26, 14, 10, 4.8, 0));
+    this.addProp(this.props.createHouse(32, -26, 14, 10, 4.8, 0));
+    this.addProp(this.props.createBus(-20, 22, 0.2));
+    this.addProp(this.props.createBus(20, -20, -0.6));
+    this.addProp(this.props.createCar(-24, -8, 0.4));
+    this.addProp(this.props.createCar(24, 12, -0.3));
+    this.addProp(this.props.createCar(-12, 32, 1.2));
+    this.addProp(this.props.createCar(12, -32, -1.0));
+    this.addProp(this.props.createSandbagBunker(0, 32, 0));
+    this.addProp(this.props.createSandbagBunker(0, -32, Math.PI));
+    this.addProp(this.props.createSandbagBunker(-32, 0, Math.PI / 2));
+    this.addProp(this.props.createSandbagBunker(32, 0, -Math.PI / 2));
+    [-46, -30, -14, 14, 30, 46].forEach(tx => {
+      this.addProp(this.props.createTree(tx, -48, 1.3));
+      this.addProp(this.props.createTree(tx, 48, 1.3));
+    });
 
     this.playerSpawnPoint.set(0, 1.8, 42);
 
