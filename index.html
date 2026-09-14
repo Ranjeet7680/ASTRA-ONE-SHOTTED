@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASTRA: One Shotted</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --paper-bg: #f8f6f0;
+      --paper-line: rgba(70, 110, 180, 0.18);
+      --margin-line: rgba(220, 70, 70, 0.25);
+      --ink-blue: #162a68;
+      --ink-blue-dark: #0f1c48;
+      --ink-blue-light: #2b499d;
+      --ink-red: #c9182b;
+      --ink-red-bright: #e62238;
+      --font-tech: 'Space Mono', monospace;
+      --font-sketch: 'Architects Daughter', cursive, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--paper-bg);
+      font-family: var(--font-tech);
+      color: var(--ink-blue);
+    }
+
+    #game-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Subtle Paper Texture & Ruled Lines Overlay across screen */
+    #paper-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+      background:
+        /* Red notebook margin line */
+        linear-gradient(90deg, transparent 78px, var(--margin-line) 79px, var(--margin-line) 80px, transparent 81px),
+        /* Horizontal blue notebook ruled lines */
+        repeating-linear-gradient(180deg, transparent 0, transparent 27px, var(--paper-line) 28px);
+      opacity: 0.85;
+      mix-blend-mode: multiply;
+    }
+
+    /* Screen-space Damage Vignette */
+    #damage-vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 3;
+      box-shadow: inset 0 0 80px rgba(200, 20, 40, 0);
+      transition: box-shadow 0.15s ease-out;
+    }
+
+    #damage-vignette.hit {
+      box-shadow: inset 0 0 100px rgba(200, 20, 40, 0.65);
+    }
+
+    #damage-vignette.low-health {
+      animation: pulseVignette 1.2s infinite ease-in-out;
+    }
+
+    @keyframes pulseVignette {
+      0% { box-shadow: inset 0 0 80px rgba(200, 20, 40, 0.3); }
+      50% { box-shadow: inset 0 0 130px rgba(200, 20, 40, 0.7); }
+      100% { box-shadow: inset 0 0 80px rgba(200, 20, 40, 0.3); }
+    }
+
+    /* HUD Layer */
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+      display: none;
+    }
+
+    /* Top Left: Score */
+    .hud-top-left {
+      position: absolute;
+      top: 24px;
+      left: 100px;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .hud-top-left span.num {
+      font-size: 24px;
+      color: var(--ink-blue-dark);
+      font-family: var(--font-tech);
+    }
+
+    /* Top Right: Wave & Enemies */
+    .hud-top-right {
+      position: absolute;
+      top: 24px;
+      right: 36px;
+      text-align: right;
+    }
+
+    .hud-top-right .wave-label {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--ink-blue-dark);
+    }
+
+    .hud-top-right .enemies-label {
+      font-size: 15px;
+      letter-spacing: 1px;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    /* Center Crosshair */
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      pointer-events: none;
+    }
+
+    .crosshair-dot {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 4px;
+      height: 4px;
+      background-color: var(--ink-blue);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .crosshair-line {
+      position: absolute;
+      background-color: var(--ink-blue);
+    }
+
+    .crosshair-line.top {
+      top: 0;
+      left: 50%;
+      width: 2px;
+      height: 6px;
+      transform: translateX(-50%);
+    }
+    .crosshair-line.bottom {
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      height: 6px;
+      transform: translateX(-50%);
+    }
+    .crosshair-line.left {
+      top: 50%;
+      left: 0;
+      width: 6px;
+      height: 2px;
+      transform: translateY(-50%);
+    }
+    .crosshair-line.right {
+      top: 50%;
+      right: 0;
+      width: 6px;
+      height: 2px;
+      transform: translateY(-50%);
+    }
+
+    /* Hit Marker */
+    #hitmarker {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      width: 28px;
+      height: 28px;
+      pointer-events: none;
+      transition: transform 0.05s ease-out;
+    }
+
+    #hitmarker.active {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    #hitmarker svg {
+      width: 100%;
+      height: 100%;
+      stroke: var(--ink-blue-dark);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+    }
+
+    #hitmarker.crit svg {
+      stroke: var(--ink-red);
+      stroke-width: 2.8;
+    }
+
+    /* Sniper Scope Overlay */
+    #sniper-scope {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    #sniper-scope svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Kill / Notification Popups */
+    #kill-feed {
+      position: absolute;
+      top: 36%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+    }
+
+    .kill-item {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink-blue-dark);
+      background: rgba(255, 255, 255, 0.7);
+      padding: 3px 12px;
+      border: 1.5px solid var(--ink-blue);
+      border-radius: 4px;
+      animation: popFade 1.2s forwards ease-out;
+    }
+
+    .kill-item.headshot {
+      color: var(--ink-red);
+      border-color: var(--ink-red);
+    }
+
+    @keyframes popFade {
+      0% { opacity: 0; transform: translateY(10px) scale(0.9); }
+      15% { opacity: 1; transform: translateY(0) scale(1.05); }
+      30% { transform: scale(1); }
+      75% { opacity: 1; transform: translateY(-5px); }
+      100% { opacity: 0; transform: translateY(-18px); }
+    }
+
+    /* Wave Announcement Banner */
+    #wave-banner {
+      position: absolute;
+      top: 25%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    #wave-banner.show {
+      opacity: 1;
+    }
+
+    #wave-banner .title {
+      font-family: var(--font-sketch);
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--ink-blue-dark);
+      text-shadow: 2px 2px 0px rgba(255, 255, 255, 0.8);
+      letter-spacing: 3px;
+    }
+
+    #wave-banner .subtitle {
+      font-size: 20px;
+      color: var(--ink-red);
+      font-weight: 700;
+      margin-top: 6px;
+      letter-spacing: 2px;
+    }
+
+    /* Bottom Left: Health Bar */
+    .hud-bottom-left {
+      position: absolute;
+      bottom: 28px;
+      left: 100px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hp-label-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .hp-val {
+      font-size: 24px;
+      color: var(--ink-blue-dark);
+    }
+
+    .hp-bar-container {
+      width: 220px;
+      height: 18px;
+      border: 2px solid var(--ink-blue);
+      position: relative;
+      background: rgba(255, 255, 255, 0.4);
+      padding: 2px;
+    }
+
+    .hp-bar-fill {
+      height: 100%;
+      width: 100%;
+      background: repeating-linear-gradient(
+        45deg,
+        var(--ink-blue),
+        var(--ink-blue) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+      transition: width 0.15s ease-out;
+    }
+
+    .hp-bar-fill.danger {
+      background: repeating-linear-gradient(
+        45deg,
+        var(--ink-red),
+        var(--ink-red) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+    }
+
+    /* Bottom Right: Ammo & Weapon Info */
+    .hud-bottom-right {
+      position: absolute;
+      bottom: 28px;
+      right: 36px;
+      text-align: right;
+    }
+
+    .weapon-name-display {
+      font-family: var(--font-sketch);
+      font-size: 28px;
+      color: var(--ink-blue-dark);
+      letter-spacing: 1.5px;
+    }
+
+    .weapon-desc-display {
+      font-size: 13px;
+      opacity: 0.8;
+      margin-bottom: 6px;
+      font-style: italic;
+    }
+
+    .ammo-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .ammo-current {
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--ink-blue-dark);
+    }
+
+    .ammo-slash {
+      font-size: 22px;
+      opacity: 0.6;
+    }
+
+    .ammo-reserve {
+      font-size: 20px;
+      opacity: 0.85;
+    }
+
+    .ammo-tally {
+      font-family: var(--font-sketch);
+      font-size: 16px;
+      letter-spacing: 3px;
+      color: var(--ink-blue);
+      margin-top: 4px;
+      min-height: 20px;
+    }
+
+    .reload-prompt {
+      color: var(--ink-red);
+      font-weight: 700;
+      font-size: 14px;
+      animation: blink 0.8s infinite;
+      display: none;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    /* Weapon Selector Slots */
+    .weapon-slots {
+      position: absolute;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 12px;
+    }
+
+    .weapon-slot {
+      padding: 6px 14px;
+      border: 1.5px solid rgba(22, 42, 104, 0.4);
+      background: rgba(248, 246, 240, 0.7);
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 3px;
+      transition: all 0.15s ease;
+    }
+
+    .weapon-slot.active {
+      border: 2px solid var(--ink-blue-dark);
+      background: rgba(22, 42, 104, 0.12);
+      transform: translateY(-4px);
+    }
+
+    /* Interactive UI Screens / Modals */
+    .screen-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(248, 246, 240, 0.88);
+      backdrop-filter: blur(4px);
+    }
+
+    .sketch-card {
+      background: #faf8f2;
+      border: 3px solid var(--ink-blue-dark);
+      box-shadow: 8px 8px 0px rgba(22, 42, 104, 0.2);
+      padding: 38px 48px;
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+      position: relative;
+    }
+
+    .sketch-title {
+      font-family: var(--font-sketch);
+      font-size: 46px;
+      color: var(--ink-blue-dark);
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+
+    .sketch-subtitle {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--ink-red);
+      letter-spacing: 4px;
+      margin-bottom: 28px;
+      text-transform: uppercase;
+    }
+
+    .sketch-btn-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-top: 24px;
+    }
+
+    .sketch-btn {
+      font-family: var(--font-tech);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink-blue-dark);
+      background: transparent;
+      border: 2px solid var(--ink-blue-dark);
+      padding: 12px 24px;
+      cursor: pointer;
+      letter-spacing: 1.5px;
+      transition: all 0.12s ease;
+      position: relative;
+    }
+
+    .sketch-btn:hover {
+      background: var(--ink-blue-dark);
+      color: #faf8f2;
+      transform: translate(-2px, -2px);
+      box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.3);
+    }
+
+    .sketch-btn:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px rgba(22, 42, 104, 0.3);
+    }
+
+    .sketch-btn.danger-btn:hover {
+      background: var(--ink-red);
+      border-color: var(--ink-red);
+    }
+
+    /* Modal dialog styling */
+    .modal-content {
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.6;
+      max-height: 60vh;
+      overflow-y: auto;
+      padding-right: 12px;
+      margin: 18px 0;
+    }
+
+    .modal-content h3 {
+      font-family: var(--font-sketch);
+      font-size: 22px;
+      color: var(--ink-blue-dark);
+      margin: 14px 0 6px 0;
+      border-bottom: 1.5px dashed var(--ink-blue);
+      padding-bottom: 4px;
+    }
+
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px dotted rgba(22, 42, 104, 0.2);
+    }
+
+    .key-badge {
+      background: rgba(22, 42, 104, 0.1);
+      border: 1px solid var(--ink-blue);
+      padding: 2px 7px;
+      font-weight: 700;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    .setting-slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 14px 0;
+    }
+
+    .setting-slider-row input[type="range"] {
+      width: 50%;
+      accent-color: var(--ink-blue);
+    }
+
+    /* Stats Grid for Game Over */
+    .gameover-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+      text-align: left;
+    }
+
+    .stat-box {
+      border: 1.5px solid var(--ink-blue);
+      padding: 12px;
+      background: rgba(22, 42, 104, 0.04);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.75;
+      text-transform: uppercase;
+    }
+
+    .stat-val {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--ink-blue-dark);
+      margin-top: 4px;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--ink-blue);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Three.js Canvas Container -->
+  <div id="game-container"></div>
+
+  <!-- Ruled notebook paper overlay -->
+  <div id="paper-overlay"></div>
+
+  <!-- Damage red ink vignette -->
+  <div id="damage-vignette"></div>
+
+  <!-- 1. NEXORA COMPANY SPLASH SCREEN -->
+  <div id="screen-splash" class="screen-overlay" style="display: flex; flex-direction: column; background: #faf8f2; z-index: 100; cursor: pointer;">
+    <div style="text-align: center; animation: pulseFade 2.2s infinite alternate ease-in-out;">
+      <svg width="110" height="110" viewBox="0 0 100 100" style="margin-bottom: 16px;">
+        <polygon points="50,6 92,28 92,72 50,94 8,72 8,28" fill="none" stroke="#162a68" stroke-width="4" stroke-dasharray="6,4" />
+        <polygon points="50,18 80,35 80,65 50,82 20,65 20,35" fill="#162a68" opacity="0.12" stroke="#162a68" stroke-width="2" />
+        <circle cx="50" cy="50" r="14" fill="none" stroke="#c9182b" stroke-width="3" />
+        <circle cx="50" cy="50" r="5" fill="#c9182b" />
+      </svg>
+      <div style="font-family: 'Space Mono', monospace; font-size: 38px; font-weight: 700; color: #162a68; letter-spacing: 8px;">NEXORA</div>
+      <div style="font-size: 13px; font-weight: 700; color: #c9182b; letter-spacing: 4px; margin-top: 6px;">INTERACTIVE STUDIOS</div>
+      <div style="font-size: 11px; opacity: 0.55; margin-top: 28px; letter-spacing: 2px;">CLICK ANYWHERE TO CONTINUE</div>
+    </div>
+  </div>
+
+  <!-- 2. GAME LOADING SCREEN WITH PROGRESS BAR & ARCHITECTURAL AI BG -->
+  <div id="screen-loading" class="screen-overlay" style="display: none; flex-direction: column; background: #f8f6f0; z-index: 90; position: relative; overflow: hidden;">
+    <!-- AI-Generated Blueprint Architectural Vector Backdrop -->
+    <div class="blueprint-sketch-bg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.22; overflow: hidden; z-index: 1;">
+      <svg width="100%" height="100%" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="arch-grid-load" width="40" height="40" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="40" y2="0" stroke="#162a68" stroke-width="0.75" opacity="0.4"/>
+            <line x1="0" y1="0" x2="0" y2="40" stroke="#162a68" stroke-width="0.75" opacity="0.4"/>
+          </pattern>
+          <pattern id="arch-hatch-load" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="10" stroke="#162a68" stroke-width="1" opacity="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="1600" height="900" fill="url(#arch-grid-load)" />
+        <polygon points="120,780 120,320 320,200 480,310 480,780" fill="none" stroke="#162a68" stroke-width="2.5" />
+        <polygon points="320,200 320,780" fill="none" stroke="#162a68" stroke-width="1.8" />
+        <polygon points="320,200 480,310 480,780 320,780" fill="url(#arch-hatch-load)" opacity="0.3" />
+        <line x1="120" y1="420" x2="320" y2="330" stroke="#162a68" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="120" y1="520" x2="320" y2="440" stroke="#162a68" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="120" y1="620" x2="320" y2="550" stroke="#162a68" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="320" y1="330" x2="480" y2="420" stroke="#162a68" stroke-width="1"/>
+        <line x1="320" y1="440" x2="480" y2="530" stroke="#162a68" stroke-width="1"/>
+        <line x1="320" y1="550" x2="480" y2="640" stroke="#162a68" stroke-width="1"/>
+        <ellipse cx="800" cy="740" rx="340" ry="110" fill="none" stroke="#162a68" stroke-width="2"/>
+        <ellipse cx="800" cy="620" rx="270" ry="85" fill="none" stroke="#162a68" stroke-width="2"/>
+        <ellipse cx="800" cy="500" rx="190" ry="60" fill="none" stroke="#162a68" stroke-width="2"/>
+        <line x1="460" y1="740" x2="530" y2="620" stroke="#162a68" stroke-width="1.5"/>
+        <line x1="1140" y1="740" x2="1070" y2="620" stroke="#162a68" stroke-width="1.5"/>
+        <polygon points="1120,780 1260,140 1420,290 1420,780" fill="none" stroke="#162a68" stroke-width="2.5"/>
+        <polygon points="1260,140 1260,780" stroke="#162a68" stroke-width="1.8"/>
+        <polygon points="1260,140 1420,290 1420,780 1260,780" fill="url(#arch-hatch-load)" opacity="0.4"/>
+        <line x1="0" y1="780" x2="1600" y2="780" stroke="#162a68" stroke-width="3"/>
+        <text x="140" y="290" fill="#162a68" font-family="'Space Mono', monospace" font-size="14" letter-spacing="2">▲ ELEV. +78.4M // SECTOR-A</text>
+        <text x="1270" y="110" fill="#162a68" font-family="'Space Mono', monospace" font-size="14" letter-spacing="2">▲ SPIRE PEAK +142.0M</text>
+        <text x="800" y="470" fill="#162a68" font-family="'Space Mono', monospace" font-size="14" text-anchor="middle" letter-spacing="3">MONUMENT ROTUNDA // TDM DISTRICT</text>
+        <text x="40" y="860" fill="#162a68" font-family="'Space Mono', monospace" font-size="12" letter-spacing="2">NEXORA ARCHITECTURAL SCHEMATIC • REV 4.09 • SCALE 1:100</text>
+        <text x="1560" y="860" fill="#162a68" font-family="'Space Mono', monospace" font-size="12" text-anchor="end" letter-spacing="2">LAT 34.0522° N, LON 118.2437° W</text>
+      </svg>
+    </div>
+
+    <!-- Foreground Loading Panel -->
+    <div style="text-align: center; width: 85%; max-width: 580px; position: relative; z-index: 2;">
+      <div style="font-family: 'Architects Daughter', cursive; font-size: 46px; color: #162a68; font-weight: 700; letter-spacing: 3px;">ASTRA: ONE SHOTTED</div>
+      <div style="font-size: 13px; color: #c9182b; font-weight: 700; letter-spacing: 4px; margin-bottom: 32px;">INITIALIZING TACTICAL BLUEPRINT</div>
+
+      <!-- Loading Progress Bar -->
+      <div style="width: 100%; height: 24px; border: 2.5px solid #162a68; padding: 2px; background: rgba(255,255,255,0.75); position: relative; box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.2);">
+        <div id="game-loading-bar" style="height: 100%; width: 0%; background: repeating-linear-gradient(45deg, #162a68, #162a68 6px, #2b499d 6px, #2b499d 12px); transition: width 0.15s linear;"></div>
+      </div>
+
+      <div id="loading-status-text" style="font-size: 12px; margin-top: 12px; font-weight: 700; opacity: 0.85; letter-spacing: 1px; color: #162a68;">INITIALIZING THREE.JS WEBGL ENGINE... 0%</div>
+
+      <!-- Rotating Tactical Tip -->
+      <div style="margin-top: 48px; padding: 12px 18px; border: 1.5px dashed rgba(22, 42, 104, 0.4); background: rgba(248, 246, 240, 0.85); font-size: 13px; box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.15);">
+        <span style="color: #c9182b; font-weight: 700;">TACTICAL INTEL:</span>
+        <span id="loading-tip-text">Slide canceling with SPACE immediately resets sprint acceleration.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. AUTHENTICATION SCREEN (GOOGLE, FACEBOOK, GUEST) WITH ARCHITECTURAL BG -->
+  <div id="screen-auth" class="screen-overlay" style="display: none; z-index: 80; position: relative; overflow: hidden; background: #f8f6f0;">
+    <!-- AI-Generated Blueprint Architectural Vector Backdrop -->
+    <div class="blueprint-sketch-bg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.18; overflow: hidden; z-index: 1;">
+      <svg width="100%" height="100%" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="arch-grid-auth" width="40" height="40" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="40" y2="0" stroke="#162a68" stroke-width="0.75" opacity="0.4"/>
+            <line x1="0" y1="0" x2="0" y2="40" stroke="#162a68" stroke-width="0.75" opacity="0.4"/>
+          </pattern>
+        </defs>
+        <rect width="1600" height="900" fill="url(#arch-grid-auth)" />
+        <polygon points="100,800 240,220 380,340 380,800" fill="none" stroke="#162a68" stroke-width="2"/>
+        <line x1="240" y1="220" x2="240" y2="800" stroke="#162a68" stroke-width="1.5"/>
+        <polygon points="1200,800 1340,160 1480,280 1480,800" fill="none" stroke="#162a68" stroke-width="2"/>
+        <line x1="1340" y1="160" x2="1340" y2="800" stroke="#162a68" stroke-width="1.5"/>
+        <line x1="0" y1="800" x2="1600" y2="800" stroke="#162a68" stroke-width="2.5"/>
+      </svg>
+    </div>
+
+    <!-- Auth Card -->
+    <div class="sketch-card" style="max-width: 480px; position: relative; z-index: 2; background: rgba(250, 248, 242, 0.95);">
+      <div class="sketch-title" style="font-size: 34px;">ACCESS CONTROL</div>
+      <div class="sketch-subtitle" style="margin-bottom: 24px;">IDENTIFY YOUR OPERATOR</div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <!-- Google Login -->
+        <button class="sketch-btn" id="btn-login-google" style="display: flex; align-items: center; justify-content: center; gap: 12px; border-color: #162a68;">
+          <svg width="20" height="20" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M23.7 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.6c-.3 1.5-1.1 2.8-2.4 3.7v3.1h3.9c2.3-2.1 3.6-5.2 3.6-9.1z"/>
+            <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.9-3.1c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.8-5H1.1v3.2C3.2 21.4 7.3 24 12 24z"/>
+            <path fill="#FBBC05" d="M5.2 14.1c-.3-.7-.4-1.4-.4-2.1s.1-1.4.4-2.1V6.7H1.1C.4 8.1 0 9.8 0 12s.4 3.9 1.1 5.3l4.1-3.2z"/>
+            <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4C17.9 1.2 15.2 0 12 0 7.3 0 3.2 2.6 1.1 6.7l4.1 3.2c1-2.9 3.7-5.1 6.8-5.1z"/>
+          </svg>
+          CONTINUE WITH GOOGLE
+        </button>
+
+        <!-- Facebook Login -->
+        <button class="sketch-btn" id="btn-login-fb" style="display: flex; align-items: center; justify-content: center; gap: 12px; border-color: #1877F2; color: #1877F2;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          CONTINUE WITH FACEBOOK
+        </button>
+
+        <!-- Divider -->
+        <div style="display: flex; align-items: center; gap: 10px; margin: 4px 0; opacity: 0.6;">
+          <div style="flex: 1; height: 1px; background: #162a68;"></div>
+          <span>OR</span>
+          <div style="flex: 1; height: 1px; background: #162a68;"></div>
+        </div>
+
+        <!-- Guest Login with Nickname -->
+        <input type="text" id="input-guest-name" placeholder="ENTER OPERATOR CALLSIGN..." maxlength="16" style="padding: 10px; border: 2px solid #162a68; background: #fff; font-family: 'Space Mono', monospace; font-weight: 700; text-align: center;">
+        <button class="sketch-btn" id="btn-login-guest" style="background: #162a68; color: #fff;">PLAY AS GUEST</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. PUBG MOBILE-STYLE 3D LOBBY OVERLAY -->
+  <div id="screen-pubg-lobby" class="pubg-lobby-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 30; pointer-events: none;">
+    <!-- Top Left: Player Profile Card -->
+    <div style="position: absolute; top: 20px; left: 24px; display: flex; align-items: center; gap: 14px; background: rgba(248, 246, 240, 0.88); border: 2px solid #162a68; padding: 10px 16px; box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.2); pointer-events: auto;">
+      <img id="lobby-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=AstraAgent" style="width: 50px; height: 50px; border: 2px solid #162a68; background: #fff;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="lobby-name" style="font-weight: 700; font-size: 16px; color: #162a68;">Operator</span>
+          <span id="lobby-level" style="background: #162a68; color: #fff; font-size: 11px; padding: 1px 6px; font-weight: 700;">LV. 35</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px; font-size: 12px; font-weight: 700;">
+          <span id="lobby-rank" style="color: #c9182b;">DIAMOND II</span>
+          <span style="opacity: 0.8;">🪙 BP <span id="lobby-bp">3,850</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Right: Server Info & Quick Icons -->
+    <div style="position: absolute; top: 20px; right: 24px; display: flex; align-items: center; gap: 12px; pointer-events: auto;">
+      <div style="background: rgba(248, 246, 240, 0.88); border: 1.5px solid #162a68; padding: 6px 12px; font-size: 12px; font-weight: 700; color: #162a68;">
+        <span style="color: #34a853;">●</span> 24ms (REGION: ASIA)
+      </div>
+      <button class="sketch-btn" id="btn-lobby-audio-toggle" style="padding: 6px 12px; font-size: 13px;">🔊</button>
+      <button class="sketch-btn" id="btn-lobby-logout" style="padding: 6px 12px; font-size: 12px;">LOGOUT</button>
+    </div>
+
+    <!-- Center: Touch / Mouse Drag Orbit Area -->
+    <div id="lobby-char-touch-area" style="position: absolute; top: 15%; left: 25%; width: 50%; height: 70%; pointer-events: auto; cursor: grab;"></div>
+
+    <!-- Right Sidebar: PUBG Style Menu Buttons -->
+    <div style="position: absolute; top: 120px; right: 24px; display: flex; flex-direction: column; gap: 10px; pointer-events: auto;">
+      <button class="sketch-btn" id="btn-lobby-gunsmith" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
+        🔫 GUNSMITH
+      </button>
+      <button class="sketch-btn" id="btn-lobby-operator" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
+        👤 OPERATOR
+      </button>
+      <button class="sketch-btn" id="btn-lobby-hud" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
+        📱 CUSTOMIZE HUD
+      </button>
+      <button class="sketch-btn" id="btn-lobby-intel" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
+        📖 HOW TO PLAY
+      </button>
+      <button class="sketch-btn" id="btn-lobby-settings" style="width: 170px; text-align: left; padding: 10px 14px; font-size: 13px;">
+        ⚙️ SETTINGS
+      </button>
+    </div>
+
+    <!-- Bottom Left: PUBG Style Prominent [START] Button & Mode Card -->
+    <div style="position: absolute; bottom: 28px; left: 24px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto;">
+      <!-- Mode / Map Selector Card -->
+      <div id="btn-lobby-mode-select" style="background: rgba(248, 246, 240, 0.92); border: 2px solid #162a68; padding: 8px 16px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.2);">
+        <div>
+          <div style="font-size: 11px; opacity: 0.7; font-weight: 700;">MODE / MAP</div>
+          <div id="lobby-mode-title" style="font-size: 15px; font-weight: 700; color: #162a68;">TDM 4v4: COURTYARD BLITZ</div>
+        </div>
+        <span style="font-size: 14px; font-weight: 700;">CHANGE ▾</span>
+      </div>
+
+      <!-- Big Tactical START Button -->
+      <button class="sketch-btn" id="btn-lobby-start" style="padding: 16px 44px; font-size: 26px; font-weight: 700; background: #162a68; color: #fff; letter-spacing: 4px; box-shadow: 6px 6px 0px rgba(22, 42, 104, 0.3);">
+        START MATCH
+      </button>
+    </div>
+
+    <!-- Bottom Center: Squad Slots -->
+    <div style="position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; pointer-events: auto;">
+      <div style="width: 60px; height: 60px; border: 2px solid #162a68; background: rgba(248, 246, 240, 0.8); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">
+        YOU
+      </div>
+      <div style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.4); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;">
+        +
+      </div>
+      <div style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.4); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;">
+        +
+      </div>
+      <div style="width: 60px; height: 60px; border: 2px dashed rgba(22, 42, 104, 0.5); background: rgba(248, 246, 240, 0.4); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; cursor: pointer;">
+        +
+      </div>
+    </div>
+  </div>
+
+  <!-- In-Game HUD -->
+  <div id="hud">
+
+    <!-- Top Left: Score -->
+    <div class="hud-top-left">
+      SCORE <span class="num" id="score-display">0</span>
+    </div>
+
+    <!-- Top Right: Wave & Remaining -->
+    <div class="hud-top-right">
+      <div class="wave-label" id="wave-display">WAVE 1</div>
+      <div class="enemies-label" id="enemies-left-display">ENEMIES LEFT: 5</div>
+    </div>
+
+    <!-- Top Center: TDM Score Bar -->
+    <div id="tdm-score-bar" style="display: none; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); display: none; align-items: center; gap: 16px; background: rgba(248, 246, 240, 0.9); padding: 6px 20px; border: 2px solid #162a68; box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.25); font-family: 'Space Mono', monospace; font-weight: 700; z-index: 12;">
+      <span style="color: #162a68; font-size: 20px;">BLUE <span id="tdm-blue-score">0</span></span>
+      <span style="opacity: 0.5; font-size: 14px;">TARGET <span id="tdm-target-score">30</span></span>
+      <span style="color: #c9182b; font-size: 20px;"><span id="tdm-red-score">0</span> RED</span>
+    </div>
+
+    <!-- Center Crosshair -->
+    <div id="crosshair">
+      <div class="crosshair-dot"></div>
+      <div class="crosshair-line top"></div>
+      <div class="crosshair-line bottom"></div>
+      <div class="crosshair-line left"></div>
+      <div class="crosshair-line right"></div>
+    </div>
+
+    <!-- Hitmarker -->
+    <div id="hitmarker">
+      <svg viewBox="0 0 24 24">
+        <line x1="4" y1="4" x2="9" y2="9" />
+        <line x1="20" y1="4" x2="15" y2="9" />
+        <line x1="4" y1="20" x2="9" y2="15" />
+        <line x1="20" y1="20" x2="15" y2="15" />
+      </svg>
+    </div>
+
+    <!-- Kill Notifications -->
+    <div id="kill-feed"></div>
+
+    <!-- Wave Notification Banner -->
+    <div id="wave-banner">
+      <div class="title" id="wave-banner-title">WAVE 1</div>
+      <div class="subtitle" id="wave-banner-subtitle">PREPARE YOUR DEFENSES</div>
+    </div>
+
+    <!-- Bottom Left: HP & Grenade -->
+    <div class="hud-bottom-left">
+      <div class="hp-label-row">
+        <span>HP</span>
+        <span class="hp-val" id="hp-display">100</span>
+      </div>
+      <div class="hp-bar-container">
+        <div class="hp-bar-fill" id="hp-bar"></div>
+      </div>
+      <div style="font-size: 13px; font-weight: 700; color: #162a68; margin-top: 4px;">
+        [G] GRENADES: <span id="grenade-count">2</span>
+      </div>
+    </div>
+
+    <!-- Bottom Center: Weapon Slots -->
+    <div class="weapon-slots">
+      <div class="weapon-slot active" id="slot-1">1: PISTOL</div>
+      <div class="weapon-slot" id="slot-2">2: SHOTGUN</div>
+      <div class="weapon-slot" id="slot-3">3: RIFLE</div>
+      <div class="weapon-slot" id="slot-4">4: SNIPER</div>
+    </div>
+
+    <!-- Bottom Right: Ammo & Weapon -->
+    <div class="hud-bottom-right">
+      <div class="weapon-name-display" id="weapon-name">PISTOL</div>
+      <div class="weapon-desc-display" id="weapon-desc">Semi-automatic, precise blueprint sidearm</div>
+      <div class="ammo-row">
+        <span class="ammo-current" id="ammo-current">12</span>
+        <span class="ammo-slash">/</span>
+        <span class="ammo-reserve" id="ammo-reserve">60</span>
+      </div>
+      <div class="ammo-tally" id="ammo-tally">|||| |||| ||</div>
+      <div class="reload-prompt" id="reload-prompt">[R] TO RELOAD</div>
+    </div>
+  </div>
+
+  <!-- Sniper Scoped View Overlay (image 2 style) -->
+  <div id="sniper-scope">
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <defs>
+        <!-- Hatch pattern for scope exterior mask -->
+        <pattern id="scope-hatch" width="8" height="8" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+          <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(22, 42, 104, 0.15)" stroke-width="1.5" />
+        </pattern>
+        <!-- Mask to create circular scope opening -->
+        <mask id="scope-mask">
+          <rect width="1920" height="1080" fill="white" />
+          <circle cx="960" cy="540" r="380" fill="black" />
+        </mask>
+      </defs>
+
+      <!-- Masked Exterior: off-white with sketch hatching -->
+      <rect width="1920" height="1080" fill="#f6f4ee" opacity="0.94" mask="url(#scope-mask)" />
+      <rect width="1920" height="1080" fill="url(#scope-hatch)" mask="url(#scope-mask)" />
+
+      <!-- Scope Outline Rings -->
+      <circle cx="960" cy="540" r="380" fill="none" stroke="#162a68" stroke-width="3" />
+      <circle cx="960" cy="540" r="374" fill="none" stroke="#162a68" stroke-width="1" stroke-dasharray="4,4" />
+      <circle cx="960" cy="540" r="280" fill="none" stroke="rgba(22, 42, 104, 0.4)" stroke-width="1" />
+      <circle cx="960" cy="540" r="160" fill="none" stroke="rgba(22, 42, 104, 0.4)" stroke-width="1" />
+
+      <!-- Crosshairs -->
+      <line x1="580" y1="540" x2="1340" y2="540" stroke="#162a68" stroke-width="1.8" />
+      <line x1="960" y1="160" x2="960" y2="920" stroke="#162a68" stroke-width="1.8" />
+
+      <!-- Milliradian Elevation Ticks -->
+      <line x1="952" y1="620" x2="968" y2="620" stroke="#162a68" stroke-width="1.5" />
+      <line x1="946" y1="700" x2="974" y2="700" stroke="#162a68" stroke-width="1.5" />
+      <line x1="952" y1="780" x2="968" y2="780" stroke="#162a68" stroke-width="1.5" />
+      
+      <!-- Windage Ticks -->
+      <line x1="880" y1="532" x2="880" y2="548" stroke="#162a68" stroke-width="1.5" />
+      <line x1="800" y1="526" x2="800" y2="554" stroke="#162a68" stroke-width="1.5" />
+      <line x1="1040" y1="532" x2="1040" y2="548" stroke="#162a68" stroke-width="1.5" />
+      <line x1="1120" y1="526" x2="1120" y2="554" stroke="#162a68" stroke-width="1.5" />
+
+      <!-- Compass / Tech text in scope -->
+      <text x="960" y="210" text-anchor="middle" fill="#162a68" font-family="'Space Mono', monospace" font-size="12" letter-spacing="2">ELEVATION 0.0</text>
+      <text x="960" y="870" text-anchor="middle" fill="#162a68" font-family="'Space Mono', monospace" font-size="12" letter-spacing="2">OPTIC ZOOM 4X</text>
+    </svg>
+  </div>
+
+  <!-- Screen: Main Menu -->
+  <div id="screen-main-menu" class="screen-overlay">
+    <div class="sketch-card" style="max-width: 640px;">
+      <div class="sketch-title">ASTRA</div>
+      <div class="sketch-subtitle">ONE SHOTTED</div>
+      <p style="font-size: 14px; opacity: 0.85; margin-bottom: 24px;">
+        Architectural Blueprint Arena FPS. Survive waves or engage in tactical 4v4, 8v8 & 12v12 TDM!
+      </p>
+      <div class="sketch-btn-list">
+        <button class="sketch-btn" id="btn-play-menu" style="background: #162a68; color: #fff;">PLAY (SELECT MODE)</button>
+        <button class="sketch-btn" id="btn-open-gunsmith">GUNSMITH (WEAPON CUSTOMIZE)</button>
+        <button class="sketch-btn" id="btn-open-operator">OPERATOR (CHARACTER CUSTOMIZE)</button>
+        <button class="sketch-btn" id="btn-open-hud-custom">CUSTOMIZE BUTTONS (MOBILE HUD)</button>
+        <button class="sketch-btn" id="btn-how-to-play">HOW TO PLAY & INTEL</button>
+        <button class="sketch-btn" id="btn-settings">SETTINGS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Mode & Map Selection -->
+  <div id="modal-mode-select" class="screen-overlay" style="display: none;">
+    <div class="sketch-card" style="max-width: 640px;">
+      <div class="sketch-title" style="font-size: 34px;">OPERATION SELECT</div>
+      <div class="sketch-subtitle" style="margin-bottom: 20px;">CHOOSE GAME MODE & ARENA SCALE</div>
+
+      <div class="sketch-btn-list" style="gap: 12px;">
+        <button class="sketch-btn" id="btn-mode-wave" style="border-left: 6px solid #162a68; text-align: left;">
+          <div><strong>WAVE SURVIVAL (ENDLESS)</strong></div>
+          <div style="font-size: 12px; opacity: 0.75; margin-top: 2px;">Solo tactical holdout against escalating hostile waves.</div>
+        </button>
+
+        <button class="sketch-btn" id="btn-mode-tdm-4v4" style="border-left: 6px solid #2255bb; text-align: left;">
+          <div><strong>TDM: 4 VS 4 (SMALL MAP)</strong></div>
+          <div style="font-size: 12px; opacity: 0.75; margin-top: 2px;">Courtyard Blitz. Compact close-quarters combat. First to 30 kills.</div>
+        </button>
+
+        <button class="sketch-btn" id="btn-mode-tdm-8v8" style="border-left: 6px solid #5522aa; text-align: left;">
+          <div><strong>TDM: 8 VS 8 (MEDIUM MAP)</strong></div>
+          <div style="font-size: 12px; opacity: 0.75; margin-top: 2px;">The Compound. Multi-level balconies, central bridges. First to 50 kills.</div>
+        </button>
+
+        <button class="sketch-btn" id="btn-mode-tdm-12v12" style="border-left: 6px solid #c9182b; text-align: left;">
+          <div><strong>TDM: 12 VS 12 (BIG MAP)</strong></div>
+          <div style="font-size: 12px; opacity: 0.75; margin-top: 2px;">Architect District. Huge 116m battlefield with 3-tier monument. First to 75 kills.</div>
+        </button>
+      </div>
+
+      <button class="sketch-btn" id="btn-close-mode-select" style="margin-top: 20px;">BACK</button>
+    </div>
+  </div>
+
+  <!-- Modal: Gunsmith Weapon Customization -->
+  <div id="modal-gunsmith" class="screen-overlay" style="display: none;">
+    <div class="sketch-card" style="max-width: 820px; width: 95%;">
+      <div class="sketch-title" style="font-size: 32px;">GUNSMITH</div>
+      <div class="sketch-subtitle" style="margin-bottom: 12px;">ATTACHMENTS & BLUEPRINT CUSTOMIZATION</div>
+
+      <!-- 3D Weapon Preview Canvas -->
+      <div style="width: 100%; height: 180px; border: 2px dashed #162a68; margin-bottom: 14px; position: relative; background: #faf8f2;">
+        <canvas id="gunsmith-canvas" style="width: 100%; height: 100%;"></canvas>
+      </div>
+
+      <!-- Weapon Selector Tabs -->
+      <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 14px;">
+        <button class="sketch-btn" id="gs-wep-0" style="padding: 6px 14px; font-size: 13px;">PISTOL</button>
+        <button class="sketch-btn" id="gs-wep-1" style="padding: 6px 14px; font-size: 13px;">SHOTGUN</button>
+        <button class="sketch-btn" id="gs-wep-2" style="padding: 6px 14px; font-size: 13px; background: #162a68; color: #fff;">RIFLE</button>
+        <button class="sketch-btn" id="gs-wep-3" style="padding: 6px 14px; font-size: 13px;">SNIPER</button>
+      </div>
+
+      <!-- Attachment Configuration Grid -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: left; font-size: 13px; max-height: 220px; overflow-y: auto;">
+        <div>
+          <label><strong>OPTIC SIGHT:</strong></label>
+          <select id="gs-optic" style="width: 100%; padding: 6px; margin-top: 4px; font-family: 'Space Mono', monospace;">
+            <option value="iron">Iron Sights (Standard)</option>
+            <option value="reddot">Blueprint Red Dot (+Precision)</option>
+            <option value="holo">Holographic Reticle (+Targeting)</option>
+            <option value="scope4x">4x Precision Optic (+Zoom)</option>
+          </select>
+        </div>
+
+        <div>
+          <label><strong>MUZZLE:</strong></label>
+          <select id="gs-muzzle" style="width: 100%; padding: 6px; margin-top: 4px; font-family: 'Space Mono', monospace;">
+            <option value="default">Standard Flash Hider</option>
+            <option value="compensator">Compensator (-28% Recoil)</option>
+            <option value="suppressor">Tactical Suppressor (Quiet, Smooth)</option>
+          </select>
+        </div>
+
+        <div>
+          <label><strong>UNDERBARREL / GRIP:</strong></label>
+          <select id="gs-grip" style="width: 100%; padding: 6px; margin-top: 4px; font-family: 'Space Mono', monospace;">
+            <option value="none">Standard Handguard</option>
+            <option value="vertical">Vertical Foregrip (+30% Accuracy)</option>
+            <option value="angled">Angled Grip (+Quick ADS)</option>
+            <option value="laser">Tactical Laser (Tight Hipfire)</option>
+          </select>
+        </div>
+
+        <div>
+          <label><strong>MAGAZINE:</strong></label>
+          <select id="gs-mag" style="width: 100%; padding: 6px; margin-top: 4px; font-family: 'Space Mono', monospace;">
+            <option value="standard">Standard Capacity</option>
+            <option value="extended">Extended Drum (+50% Capacity)</option>
+          </select>
+        </div>
+
+        <div style="grid-column: span 2;">
+          <label><strong>BLUEPRINT INK SKIN:</strong></label>
+          <select id="gs-skin" style="width: 100%; padding: 6px; margin-top: 4px; font-family: 'Space Mono', monospace;">
+            <option value="blue">Classic Ballpoint Blue</option>
+            <option value="crimson">Crimson Rebel Red</option>
+            <option value="carbon">Charcoal Graphite Pencil</option>
+            <option value="sepia">Sepia Parchment</option>
+            <option value="purple">Royal Blueprint Violet</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-top: 18px; justify-content: center;">
+        <button class="sketch-btn" id="btn-close-gunsmith" style="background: #162a68; color: #fff;">SAVE & EQUIP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Operator Character Customization -->
+  <div id="modal-character" class="screen-overlay" style="display: none;">
+    <div class="sketch-card" style="max-width: 680px; width: 95%;">
+      <div class="sketch-title" style="font-size: 32px;">OPERATOR</div>
+      <div class="sketch-subtitle" style="margin-bottom: 12px;">CHARACTER & BLUEPRINT MANNEQUIN</div>
+
+      <!-- 3D Character Preview Canvas -->
+      <div style="width: 100%; height: 200px; border: 2px dashed #162a68; margin-bottom: 14px; position: relative; background: #faf8f2;">
+        <canvas id="char-canvas" style="width: 100%; height: 100%;"></canvas>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: left; font-size: 13px;">
+        <div>
+          <label><strong>INK COLOR THEME:</strong></label>
+          <select id="char-ink" style="width: 100%; padding: 6px; margin-top: 4px; font-family: 'Space Mono', monospace;">
+            <option value="blue">Ballpoint Blue Ink</option>
+            <option value="crimson">Crimson Rebel Red</option>
+            <option value="carbon">Charcoal Graphite</option>
+            <option value="purple">Royal Violet</option>
+            <option value="sepia">Sepia Sketch</option>
+          </select>
+        </div>
+
+        <div>
+          <label><strong>HEADGEAR & ACCESSORY:</strong></label>
+          <select id="char-headgear" style="width: 100%; padding: 6px; margin-top: 4px; font-family: 'Space Mono', monospace;">
+            <option value="visor">Architect Tactical Visor</option>
+            <option value="beret">Military Sketch Beret</option>
+            <option value="none">Clean Sketch Mannequin</option>
+          </select>
+        </div>
+
+        <div style="grid-column: span 2;">
+          <label><strong>CHEST ARMOR & PLATING:</strong></label>
+          <select id="char-armor" style="width: 100%; padding: 6px; margin-top: 4px; font-family: 'Space Mono', monospace;">
+            <option value="medium">Cross-Hatched Tactical Rig (Medium)</option>
+            <option value="heavy">Dense Shaded Juggernaut Plating (Heavy)</option>
+            <option value="light">Clean Blueprint Silhouette (Light)</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="sketch-btn" id="btn-close-character" style="margin-top: 18px; background: #162a68; color: #fff;">SAVE & APPLY</button>
+    </div>
+  </div>
+
+  <!-- Modal: How to Play -->
+  <div id="modal-how-to-play" class="screen-overlay" style="display: none;">
+    <div class="sketch-card" style="max-width: 680px;">
+      <div class="sketch-title" style="font-size: 32px;">HOW TO PLAY</div>
+      <div class="sketch-subtitle" style="margin-bottom: 12px;">MANUAL & INTEL</div>
+
+      <div class="modal-content">
+        <h3>CALL OF DUTY MOVEMENT</h3>
+        <div class="control-row"><span>Tactical Sprint</span><span>Double-Tap <span class="key-badge">SHIFT</span></span></div>
+        <div class="control-row"><span>Slide</span><span>Sprint + <span class="key-badge">CTRL</span> or <span class="key-badge">C</span></span></div>
+        <div class="control-row"><span>Slide Cancel</span><span>Press <span class="key-badge">SPACE</span> while sliding</span></div>
+        <div class="control-row"><span>Mantle / Vault</span><span><span class="key-badge">SPACE</span> against waist/chest cover</span></div>
+        <div class="control-row"><span>Throw Grenade</span><span><span class="key-badge">G</span></span></div>
+        <div class="control-row"><span>10s Health Auto-Regen</span><span>Avoid damage for 10s to fully heal</span></div>
+
+        <h3>BASIC CONTROLS</h3>
+        <div class="control-row"><span>Move Forward / Left / Back / Right</span><span><span class="key-badge">W</span> <span class="key-badge">A</span> <span class="key-badge">S</span> <span class="key-badge">D</span></span></div>
+        <div class="control-row"><span>Aim & Look</span><span><span class="key-badge">MOUSE</span></span></div>
+        <div class="control-row"><span>Fire Weapon</span><span><span class="key-badge">LEFT CLICK</span></span></div>
+        <div class="control-row"><span>Aim Down Sights / Sniper Scope</span><span><span class="key-badge">RIGHT CLICK</span></span></div>
+        <div class="control-row"><span>Reload Magazine</span><span><span class="key-badge">R</span></span></div>
+        <div class="control-row"><span>Switch Weapons</span><span><span class="key-badge">1</span> <span class="key-badge">2</span> <span class="key-badge">3</span> <span class="key-badge">4</span> or <span class="key-badge">SCROLL</span></span></div>
+        <div class="control-row"><span>Pause Game</span><span><span class="key-badge">ESC</span></span></div>
+
+        <h3>GAME MODES</h3>
+        <p><strong>WAVE SURVIVAL:</strong> Solo survival against escalating waves of Grunts, Rushers, Heavies, and Snipers.</p>
+        <p><strong>TEAM DEATHMATCH:</strong> Blue Team vs Red Team! 4v4 (Small Map), 8v8 (Medium Map), or 12v12 (Big Map). First team to the kill target wins.</p>
+      </div>
+
+      <button class="sketch-btn" id="btn-close-how-to-play">BACK</button>
+    </div>
+  </div>
+
+  <!-- Modal: Settings -->
+  <div id="modal-settings" class="screen-overlay" style="display: none;">
+    <div class="sketch-card" style="max-width: 560px;">
+      <div class="sketch-title" style="font-size: 32px;">SETTINGS</div>
+      <div class="sketch-subtitle" style="margin-bottom: 16px;">CALIBRATION</div>
+
+      <div class="modal-content">
+        <div class="setting-slider-row">
+          <span>MOUSE SENSITIVITY</span>
+          <input type="range" id="setting-sens" min="0.5" max="3.0" step="0.1" value="1.0">
+        </div>
+        <div class="setting-slider-row">
+          <span>MASTER VOLUME</span>
+          <input type="range" id="setting-master-vol" min="0" max="1" step="0.05" value="0.8">
+        </div>
+        <div class="setting-slider-row">
+          <span>SFX VOLUME</span>
+          <input type="range" id="setting-sfx-vol" min="0" max="1" step="0.05" value="0.9">
+        </div>
+        <div class="setting-slider-row">
+          <span>FOV (FIELD OF VIEW)</span>
+          <input type="range" id="setting-fov" min="65" max="105" step="1" value="75">
+        </div>
+
+        <div style="margin-top: 18px; text-align: center;">
+          <button class="sketch-btn" id="btn-settings-hud-custom" style="width: 100%; margin-bottom: 8px;">CUSTOMIZE MOBILE HUD BUTTONS</button>
+          <button class="sketch-btn" id="btn-toggle-touch-controls" style="width: 100%;">TOGGLE TOUCH CONTROLS ON/OFF</button>
+        </div>
+      </div>
+
+      <button class="sketch-btn" id="btn-close-settings">SAVE & CLOSE</button>
+    </div>
+  </div>
+
+  <!-- Screen: Pause Menu -->
+  <div id="screen-pause" class="screen-overlay" style="display: none;">
+    <div class="sketch-card">
+      <div class="sketch-title">PAUSED</div>
+      <div class="sketch-subtitle">SKETCH SUSPENDED</div>
+      <div class="sketch-btn-list">
+        <button class="sketch-btn" id="btn-resume">RESUME</button>
+        <button class="sketch-btn" id="btn-pause-custom-hud">CUSTOMIZE HUD BUTTONS</button>
+        <button class="sketch-btn" id="btn-pause-settings">SETTINGS</button>
+        <button class="sketch-btn" id="btn-pause-restart">RESTART</button>
+        <button class="sketch-btn danger-btn" id="btn-pause-quit">QUIT TO MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen: Game Over -->
+  <div id="screen-game-over" class="screen-overlay" style="display: none;">
+    <div class="sketch-card">
+      <div class="sketch-title" style="color: var(--ink-red);">GAME OVER</div>
+      <div class="sketch-subtitle">ERASED FROM THE BLUEPRINT</div>
+
+      <div class="gameover-stats">
+        <div class="stat-box">
+          <div class="stat-label">FINAL SCORE</div>
+          <div class="stat-val" id="go-score">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">ROUND / WAVE</div>
+          <div class="stat-val" id="go-wave">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">TOTAL KILLS</div>
+          <div class="stat-val" id="go-kills">0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">HEADSHOTS</div>
+          <div class="stat-val" id="go-headshots">0</div>
+        </div>
+      </div>
+
+      <div class="sketch-btn-list">
+        <button class="sketch-btn" id="btn-restart">TRY AGAIN</button>
+        <button class="sketch-btn" id="btn-gameover-menu">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
