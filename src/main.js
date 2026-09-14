@@ -17,6 +17,7 @@ import { AuthManager } from './auth.js';
 import { LobbyScene } from './lobby.js';
 import { MinimapManager } from './minimap.js';
 import { VoiceChatSystem } from './voiceChat.js';
+import { KillstreakManager } from './killstreaks.js';
 
 class Game {
   constructor() {
@@ -50,10 +51,11 @@ class Game {
     this.soundEngine = new SoundEngine();
     this.effects = new EffectsManager(this.scene, this.materials);
     this.hud = new HUD(this);
+    this.killstreaks = new KillstreakManager(this);
     this.level = new Level(this.scene, this.materials, 'small');
     this.weapons = new WeaponSystem(this.camera, this.materials, this.soundEngine, this.effects);
     this.player = new Player(this.camera, this.domElement, this.level, this.soundEngine, this.effects);
-    this.combat = new CombatSystem(this.scene, this.camera, this.level, this.effects, this.soundEngine, this.hud);
+    this.combat = new CombatSystem(this.scene, this.camera, this.level, this.effects, this.soundEngine, this.hud, this.killstreaks);
     this.waves = new WaveManager(
       this.scene,
       this.level,
@@ -158,6 +160,9 @@ class Game {
 
     // Player Death -> Game Over or TDM Respawn
     this.player.onPlayerDeath = () => {
+      if (this.killstreaks) {
+        this.killstreaks.onPlayerDeath();
+      }
       if (this.currentMode === 'tdm') {
         this.tdm.handlePlayerKilled();
       } else {
@@ -228,6 +233,9 @@ class Game {
     this.player.reset();
     this.effects.reset();
     this.grenades.reset();
+    if (this.killstreaks) {
+      this.killstreaks.reset();
+    }
     this.weapons.weapons.forEach(w => {
       w.currentAmmo = w.magSize;
       w.reserveAmmo = w.maxReserve / 2;
@@ -265,6 +273,12 @@ class Game {
       this.player.update(delta);
       this.weapons.update(delta, this.player.getPlayerStateForWeapon());
       this.effects.update(delta);
+      if (this.level && this.level.update) {
+        this.level.update(delta);
+      }
+      if (this.killstreaks && this.killstreaks.update) {
+        this.killstreaks.update(delta);
+      }
       this.minimap.update(delta);
       this.hud.update(delta);
 

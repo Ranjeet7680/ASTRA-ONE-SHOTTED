@@ -133,6 +133,9 @@ export class Player {
       this.yaw -= e.movementX * factor;
       this.pitch -= e.movementY * factor;
 
+      this.lastLookDeltaX = (this.lastLookDeltaX || 0) + e.movementX;
+      this.lastLookDeltaY = (this.lastLookDeltaY || 0) + e.movementY;
+
       // Clamp pitch (-85 to +85 degrees)
       const maxPitch = Math.PI / 2 - 0.08;
       this.pitch = clamp(this.pitch, -maxPitch, maxPitch);
@@ -391,11 +394,23 @@ export class Player {
   }
 
   getPlayerStateForWeapon() {
+    const dx = this.lastLookDeltaX || 0;
+    const dy = this.lastLookDeltaY || 0;
+    this.lastLookDeltaX = 0;
+    this.lastLookDeltaY = 0;
+
+    const horizSpeed = Math.hypot(this.velocity.x, this.velocity.z);
     return {
       isTacSprinting: this.isTacSprinting,
       isInspecting: this.isInspecting,
       isSliding: this.isSliding,
       isDiving: this.isDiving,
+      isMoving: horizSpeed > 0.4,
+      speed: horizSpeed,
+      isSprinting: this.keys.sprint || this.isTacSprinting,
+      isGrounded: this.isGrounded,
+      mouseDeltaX: dx,
+      mouseDeltaY: dy,
       inspectProgress: this.isInspecting ? (this.inspectTimer / this.inspectDuration) : 0
     };
   }
@@ -768,8 +783,9 @@ export class Player {
     this.position.z = testPos.z;
 
     // Safety arena bounds
-    this.position.x = clamp(this.position.x, -30, 30);
-    this.position.z = clamp(this.position.z, -30, 30);
+    const maxBound = (this.level && this.level.arenaBounds) ? this.level.arenaBounds : 42;
+    this.position.x = clamp(this.position.x, -maxBound, maxBound);
+    this.position.z = clamp(this.position.z, -maxBound, maxBound);
     if (this.position.y < 0) this.position.y = 0;
   }
 }

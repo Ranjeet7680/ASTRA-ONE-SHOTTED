@@ -33,6 +33,12 @@ export class WeaponSystem {
     this.isAiming = false;
     this.adsAlpha = 0;
 
+    // Aim Sway Inertia, Breathing & Figure-8 Bobbing State
+    this.swayYaw = 0;
+    this.swayPitch = 0;
+    this.bobTimer = 0;
+    this.drawProgress = 1.0;
+
     // Weapon Definitions
     this.weapons = [
       {
@@ -327,8 +333,13 @@ export class WeaponSystem {
       document.getElementById('sniper-scope').style.display = 'none';
     }
 
-    // Play switch slide audio click
-    this.soundEngine.playClick(this.soundEngine.ctx ? this.soundEngine.ctx.currentTime : 0, 750, 0.05, 0.4);
+    // Play weapon draw audio & start draw animation transition
+    if (this.soundEngine && this.soundEngine.playDrawWeapon) {
+      this.soundEngine.playDrawWeapon();
+    } else {
+      this.soundEngine.playClick(this.soundEngine.ctx ? this.soundEngine.ctx.currentTime : 0, 750, 0.05, 0.4);
+    }
+    this.drawProgress = 0.0;
   }
 
   // Aim Down Sights (Right Mouse Button)
@@ -386,6 +397,14 @@ export class WeaponSystem {
     this.muzzleFlash.scale.set(scale, scale, scale);
     this.muzzleFlash.material.visible = true;
     this.muzzleFlashTimer = 0.05;
+
+    // Eject Physical Brass Shell Casing & Barrel Smoke Puff
+    const rightDir = new THREE.Vector3(1, 0, 0).applyQuaternion(this.camera.quaternion);
+    const upDir = new THREE.Vector3(0, 1, 0).applyQuaternion(this.camera.quaternion);
+    const forwardDir = new THREE.Vector3(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    const muzzlePos = this.getMuzzleWorldPosition();
+    this.effects.createEjectedShell(muzzlePos, rightDir, upDir, this.soundEngine);
+    this.effects.createMuzzleSmoke(muzzlePos, forwardDir);
 
     return wep;
   }
@@ -462,7 +481,40 @@ export class WeaponSystem {
     this.recoilPos.z = lerp(this.recoilPos.z, 0, delta * 18);
     this.recoilRot.x = lerp(this.recoilRot.x, 0, delta * 16);
 
-    // 5. Tactical Sprint, Dolphin Dive, Slide & Inspect Animations
+    // 5. Draw Animation Transition (Weapon rising into frame)
+    this.drawProgress = Math.min(1.0, (this.drawProgress !== undefined ? this.drawProgress : 1.0) + delta * 4.5);
+    const drawOffsetY = (1 - this.drawProgress) * -0.28;
+    const drawRotX = (1 - this.drawProgress) * -0.4;
+
+    // 6. Aim Sway Inertia (lag behind rapid mouse/touch movements)
+    const mouseDx = playerState.mouseDeltaX || 0;
+    const mouseDy = playerState.mouseDeltaY || 0;
+    const targetSwayYaw = clamp(-mouseDx * 0.0018, -0.06, 0.06);
+    const targetSwayPitch = clamp(-mouseDy * 0.0018, -0.06, 0.06);
+
+    this.swayYaw = lerp(this.swayYaw || 0, targetSwayYaw, delta * 14);
+    this.swayPitch = lerp(this.swayPitch || 0, targetSwayPitch, delta * 14);
+
+    // Idle Breathing Sway
+    const breatheTime = performance.now() * 0.0015;
+    const breatheX = Math.sin(breatheTime * 1.5) * 0.002;
+    const breatheY = Math.cos(breatheTime * 3.0) * 0.0015;
+
+    // 7. Figure-8 Walking & Sprinting Bobbing
+    const isMoving = playerState.isMoving;
+    const isSprint = playerState.isSprinting || playerState.isTacSprinting;
+    if (isMoving && playerState.isGrounded !== false) {
+      this.bobTimer += delta * (isSprint ? 12.0 : 7.2);
+    } else {
+      this.bobTimer = lerp(this.bobTimer, 0, delta * 6);
+    }
+
+    const bobMult = (this.isAiming ? 0.15 : (isSprint ? 1.6 : 1.0));
+    const walkBobX = Math.sin(this.bobTimer * 0.5) * 0.016 * bobMult;
+    const walkBobY = Math.abs(Math.sin(this.bobTimer)) * 0.014 * bobMult;
+    const walkBobRoll = Math.sin(this.bobTimer * 0.5) * 0.02 * bobMult;
+
+    // 8. Tactical Sprint, Dolphin Dive, Slide & Inspect Animations
     const isTacSprint = playerState.isTacSprinting && !this.isAiming && !this.isReloading && !playerState.isDiving;
     this.tacSprintAlpha = lerp(this.tacSprintAlpha || 0, isTacSprint ? 1.0 : 0.0, delta * 10);
 
@@ -494,17 +546,17 @@ export class WeaponSystem {
       inspectRotX = -Math.sin(p * Math.PI) * 0.2;
     }
 
-    // 6. Update Weapon Holder Transform
+    // 9. Update Weapon Holder Transform
     this.weaponHolder.position.set(
-      this.currentRestPos.x,
-      this.currentRestPos.y + reloadOffsetY + sprintPosY + divePosY + slidePosY,
+      this.currentRestPos.x + walkBobX + breatheX + this.swayYaw * 0.2,
+      this.currentRestPos.y + reloadOffsetY + sprintPosY + divePosY + slidePosY + drawOffsetY + walkBobY + breatheY + this.swayPitch * 0.2,
       this.currentRestPos.z + this.recoilPos.z + sprintPosZ
     );
 
     this.weaponHolder.rotation.set(
-      this.recoilRot.x + sprintRotX + inspectRotX + diveRotX,
-      inspectRotY,
-      reloadRotationZ + sprintRotZ + inspectRotZ + slideRotZ
+      this.recoilRot.x + sprintRotX + inspectRotX + diveRotX + drawRotX + this.swayPitch,
+      inspectRotY + this.swayYaw,
+      reloadRotationZ + sprintRotZ + inspectRotZ + slideRotZ + walkBobRoll
     );
   }
 

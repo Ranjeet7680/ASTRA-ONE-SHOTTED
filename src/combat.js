@@ -2,13 +2,14 @@ import * as THREE from 'three';
 import { randomRange } from './utilities.js';
 
 export class CombatSystem {
-  constructor(scene, camera, level, effects, soundEngine, hud) {
+  constructor(scene, camera, level, effects, soundEngine, hud, killstreaks = null) {
     this.scene = scene;
     this.camera = camera;
     this.level = level;
     this.effects = effects;
     this.soundEngine = soundEngine;
     this.hud = hud;
+    this.killstreaks = killstreaks;
 
     this.raycaster = new THREE.Raycaster();
     this.raycaster.far = 150;
@@ -120,8 +121,14 @@ export class CombatSystem {
           const scoreGain = (closestTarget.scoreValue || 100) + (isHeadshot ? 50 : 0);
           this.hud.addScore(scoreGain);
           this.hud.showKillPopup(name, isHeadshot, scoreGain);
+
+          // COD Killstreak & Medal Integration
+          if (this.killstreaks) {
+            this.killstreaks.onKill(closestTarget, isHeadshot, closestTargetDist);
+          }
+
           if (this.onEnemyKilled) {
-            this.onEnemyKilled(closestTarget, isHeadshot);
+            this.onEnemyKilled(closestTarget, isHeadshot, closestTargetDist);
           }
         }
       } else if (closestObstacleHit) {
@@ -189,8 +196,13 @@ export class CombatSystem {
             const name = target.name || target.type || 'HOSTILE';
             this.hud.addScore(100);
             this.hud.showKillPopup(name, false, 100);
+
+            if (this.killstreaks) {
+              this.killstreaks.onKill(target, false, dist);
+            }
+
             if (this.onEnemyKilled) {
-              this.onEnemyKilled(target, false);
+              this.onEnemyKilled(target, false, dist);
             }
           }
         }

@@ -48,8 +48,10 @@ export class MobileControls {
       lastY: 0
     };
 
+    this.isHUDHidden = false;
     this.buildMobileDOM();
     this.bindTouchEvents();
+    this.setupOrientationAndFullscreen();
 
     // Auto-detect mobile device or touch support
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -259,6 +261,43 @@ export class MobileControls {
     container.appendChild(editorBar);
     this.editorBar = editorBar;
 
+    // HUD Visibility Toggle Button (Hide / Show controls)
+    const toggleBtn = document.createElement('div');
+    toggleBtn.id = 'btn-touch-hud-toggle';
+    toggleBtn.style.cssText = `
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      width: 72px;
+      height: 36px;
+      border-radius: 6px;
+      background: rgba(248, 246, 240, 0.9);
+      border: 2px solid #162a68;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #162a68;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: auto;
+      z-index: 1000;
+      box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.25);
+    `;
+    toggleBtn.innerHTML = '👁️ HIDE';
+    toggleBtn.addEventListener('touchstart', (e) => {
+      this.toggleHUDVisibility();
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    toggleBtn.addEventListener('click', (e) => {
+      this.toggleHUDVisibility();
+      e.preventDefault();
+    });
+    container.appendChild(toggleBtn);
+    this.hudToggleBtn = toggleBtn;
+
     document.body.appendChild(container);
     this.mobileContainer = container;
 
@@ -285,6 +324,57 @@ export class MobileControls {
       this.saveLayout();
       this.exitCustomizerMode();
     });
+  }
+
+  toggleHUDVisibility() {
+    this.isHUDHidden = !this.isHUDHidden;
+    for (const [id, btn] of Object.entries(this.buttons)) {
+      btn.style.opacity = this.isHUDHidden ? '0.06' : `${this.layout[id].opacity}`;
+      btn.style.pointerEvents = this.isHUDHidden ? 'none' : 'auto';
+    }
+    if (this.joyZone) {
+      this.joyZone.style.opacity = this.isHUDHidden ? '0.1' : '1.0';
+    }
+    if (this.hudToggleBtn) {
+      this.hudToggleBtn.innerHTML = this.isHUDHidden ? '👁️ SHOW' : '👁️ HIDE';
+      this.hudToggleBtn.style.opacity = '0.9';
+    }
+  }
+
+  setupOrientationAndFullscreen() {
+    const rotateOverlay = document.getElementById('mobile-rotate-overlay');
+    const btnFullscreen = document.getElementById('btn-request-mobile-fullscreen');
+
+    const checkOrientation = () => {
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isPortrait = window.innerHeight > window.innerWidth;
+
+      if (rotateOverlay) {
+        if (isTouch && isPortrait) {
+          rotateOverlay.style.display = 'flex';
+        } else {
+          rotateOverlay.style.display = 'none';
+        }
+      }
+    };
+
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    checkOrientation();
+
+    if (btnFullscreen) {
+      btnFullscreen.addEventListener('click', () => {
+        if (this.player && this.player.requestFullscreen) {
+          this.player.requestFullscreen();
+        }
+        try {
+          if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('landscape').catch(() => {});
+          }
+        } catch (e) {}
+        setTimeout(checkOrientation, 300);
+      });
+    }
   }
 
   applyLayout() {
@@ -396,6 +486,8 @@ export class MobileControls {
           const factor = 0.0035 * this.player.mouseSensitivity;
           this.player.yaw -= dx * factor;
           this.player.pitch -= dy * factor;
+          this.player.lastLookDeltaX = (this.player.lastLookDeltaX || 0) + dx;
+          this.player.lastLookDeltaY = (this.player.lastLookDeltaY || 0) + dy;
           const maxPitch = Math.PI / 2 - 0.08;
           this.player.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.player.pitch));
           e.preventDefault();

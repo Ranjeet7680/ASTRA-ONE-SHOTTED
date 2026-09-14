@@ -735,4 +735,146 @@ export class SoundEngine {
       osc.stop(startTime + 0.55);
     });
   }
+
+  // COD-Style Kill Stinger (heavy guitar/synth punch)
+  playKillStinger() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    [220, 330, 440].forEach((f) => {
+      const osc = this.ctx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(f, t);
+      osc.frequency.exponentialRampToValueAtTime(f * 0.85, t + 0.28);
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(2800, t);
+      filter.frequency.exponentialRampToValueAtTime(500, t + 0.25);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.24, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(t);
+      osc.stop(t + 0.3);
+    });
+  }
+
+  // COD Streak Fanfare (heroic brass chord)
+  playStreakFanfare(tier = 1) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const root = tier === 1 ? 523.25 : (tier === 2 ? 587.33 : 659.25);
+    const chord = [root, root * 1.25, root * 1.5, root * 2.0];
+    chord.forEach((freq, idx) => {
+      const osc = this.ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, t + idx * 0.04);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.18, t + idx * 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
+
+      osc.connect(gain);
+      gain.connect(this.sfxGain);
+      osc.start(t + idx * 0.04);
+      osc.stop(t + 0.7);
+    });
+  }
+
+  // UAV Radar Ping (High-tech frequency chirp)
+  playUAVPing() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(980, t);
+    osc.frequency.exponentialRampToValueAtTime(1480, t + 0.12);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.25, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+    osc.start(t);
+    osc.stop(t + 0.42);
+  }
+
+  // Tactical Airstrike Sound (jet swoosh + thunderous explosion cluster)
+  playAirStrikeBomb() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    // 1. Low jet engine swoosh roar
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = this.createNoiseBuffer(1.4);
+    if (noise.buffer) {
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(320, t);
+      filter.frequency.exponentialRampToValueAtTime(1200, t + 0.6);
+      filter.frequency.exponentialRampToValueAtTime(180, t + 1.3);
+
+      const jetGain = this.ctx.createGain();
+      jetGain.gain.setValueAtTime(0.01, t);
+      jetGain.gain.linearRampToValueAtTime(0.35, t + 0.55);
+      jetGain.gain.exponentialRampToValueAtTime(0.001, t + 1.35);
+
+      noise.connect(filter);
+      filter.connect(jetGain);
+      jetGain.connect(this.sfxGain);
+      noise.start(t);
+      noise.stop(t + 1.4);
+    }
+
+    // 2. Heavy explosive detonations
+    [0.7, 1.1, 1.5].forEach((del) => {
+      const osc = this.ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140, t + del);
+      osc.frequency.exponentialRampToValueAtTime(25, t + del + 0.5);
+
+      const boomGain = this.ctx.createGain();
+      boomGain.gain.setValueAtTime(0.65, t + del);
+      boomGain.gain.exponentialRampToValueAtTime(0.001, t + del + 0.6);
+
+      osc.connect(boomGain);
+      boomGain.connect(this.sfxGain);
+      osc.start(t + del);
+      osc.stop(t + del + 0.65);
+    });
+  }
+
+  // Shell Casing Bounce / Ground Tink
+  playShellDrop() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const pitch = 2400 + Math.random() * 800;
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(pitch, t);
+    osc.frequency.exponentialRampToValueAtTime(pitch * 0.9, t + 0.05);
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+
+    osc.connect(gain);
+    gain.connect(this.sfxGain);
+    osc.start(t);
+    osc.stop(t + 0.07);
+  }
+
+  // Weapon Draw / Equip (Tactical slide rack & sling snap)
+  playDrawWeapon() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.playClick(t, 850, 0.04, 0.22);
+    this.playClick(t + 0.1, 1400, 0.03, 0.18);
+  }
 }

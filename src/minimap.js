@@ -99,9 +99,12 @@ export class MinimapManager {
 
   getArenaSize() {
     const size = this.game.level.currentMapSize;
-    if (size === 'big') return 120;
-    if (size === 'medium') return 80;
-    return 50;
+    if (size === 'sea_port' || size === 'sea' || size === 'big') return 90;
+    if (size === 'airport') return 88;
+    if (size === 'train_station' || size === 'train' || size === 'medium') return 76;
+    if (size === 'village') return 68;
+    if (size === 'tv_station' || size === 'tv') return 66;
+    return 60; // city / small
   }
 
   update(delta) {
@@ -254,6 +257,15 @@ export class MinimapManager {
           ctx.strokeStyle = '#fff';
           ctx.lineWidth = 1.2;
           ctx.stroke();
+
+          // UAV highlight halo
+          if (this.game.killstreaks && this.game.killstreaks.isUAVActive()) {
+            ctx.beginPath();
+            ctx.arc(bx, by, 7.5, 0, Math.PI * 2);
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+          }
         }
       });
     } else if (this.game.currentMode === 'wave' && this.game.waves) {
@@ -271,7 +283,37 @@ export class MinimapManager {
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 1.2;
         ctx.stroke();
+
+        // UAV highlight halo
+        if (this.game.killstreaks && this.game.killstreaks.isUAVActive()) {
+          ctx.beginPath();
+          ctx.arc(ex, ey, 7.5, 0, Math.PI * 2);
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
       });
+    }
+
+    // UAV Radar Sweep Line & Scanner Effect
+    if (this.game.killstreaks && this.game.killstreaks.isUAVActive()) {
+      const sweep = this.game.killstreaks.uavSweepAngle;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, radius, sweep - 0.4, sweep);
+      ctx.lineTo(cx, cy);
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.18)';
+      ctx.fill();
+
+      // Sharp sweep front line
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(sweep) * radius, cy + Math.sin(sweep) * radius);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
     }
 
     // 4. Render Tactical Pings

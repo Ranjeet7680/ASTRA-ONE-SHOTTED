@@ -34,6 +34,24 @@ export class EffectsManager {
       polygonOffsetUnits: -1
     });
 
+    // Physical Ejected Brass Shell Casings
+    this.shells = [];
+    const shellGeom = new THREE.CylinderGeometry(0.015, 0.015, 0.065, 6);
+    shellGeom.rotateZ(Math.PI / 2);
+    const shellMat = new THREE.MeshBasicMaterial({ color: 0xd4a017 }); // Brass metallic gold
+    this.shellMeshBase = new THREE.Mesh(shellGeom, shellMat);
+
+    // Barrel Muzzle Smoke Puffs
+    this.muzzleSmokes = [];
+    const smokeGeom = new THREE.SphereGeometry(0.08, 6, 6);
+    const smokeMat = new THREE.MeshBasicMaterial({
+      color: 0xc8d2e6,
+      transparent: true,
+      opacity: 0.55,
+      depthWrite: false
+    });
+    this.smokeMeshBase = new THREE.Mesh(smokeGeom, smokeMat);
+
     // Screen Shake state
     this.trauma = 0; // 0 to 1
     this.shakeOffset = {
@@ -137,6 +155,55 @@ export class EffectsManager {
     this.decals.push(decal);
   }
 
+  // Spawn physical ejected brass shell casing
+  createEjectedShell(pos, rightDir, upDir, soundEngine = null) {
+    if (this.shells.length > 40) {
+      const old = this.shells.shift();
+      this.scene.remove(old.mesh);
+    }
+    const mesh = this.shellMeshBase.clone();
+    mesh.position.copy(pos);
+
+    const vel = rightDir.clone().multiplyScalar(randomRange(2.2, 3.8))
+      .add(upDir.clone().multiplyScalar(randomRange(1.8, 3.0)))
+      .add(new THREE.Vector3(randomRange(-0.4, 0.4), 0, randomRange(-0.4, 0.4)));
+
+    const rotVel = new THREE.Vector3(
+      randomRange(-15, 15),
+      randomRange(-15, 15),
+      randomRange(-15, 15)
+    );
+
+    this.scene.add(mesh);
+    this.shells.push({
+      mesh,
+      velocity: vel,
+      rotVelocity: rotVel,
+      hasBounced: false,
+      age: 0,
+      lifetime: 3.5,
+      soundEngine: soundEngine
+    });
+  }
+
+  // Spawn expanding barrel muzzle smoke puff
+  createMuzzleSmoke(pos, forwardDir) {
+    const mesh = this.smokeMeshBase.clone();
+    mesh.material = this.smokeMeshBase.material.clone();
+    mesh.position.copy(pos);
+
+    const vel = forwardDir.clone().multiplyScalar(randomRange(0.8, 1.8))
+      .add(new THREE.Vector3(0, randomRange(0.4, 1.0), 0));
+
+    this.scene.add(mesh);
+    this.muzzleSmokes.push({
+      mesh,
+      velocity: vel,
+      age: 0,
+      lifetime: randomRange(0.45, 0.7)
+    });
+  }
+
   update(delta) {
     // 1. Update Tracers
     for (let i = this.tracers.length - 1; i >= 0; i--) {
@@ -200,6 +267,61 @@ export class EffectsManager {
       this.shakeOffset.x = 0;
       this.shakeOffset.y = 0;
     }
+
+    // 5. Update Physical Brass Shell Casings
+    for (let i = this.shells.length - 1; i >= 0; i--) {
+      const s = this.shells[i];
+      s.age += delta;
+
+      if (s.mesh.position.y > 0.03) {
+        s.velocity.y += gravity * delta;
+        s.mesh.position.addScaledVector(s.velocity, delta);
+        s.mesh.rotation.x += s.rotVelocity.x * delta;
+        s.mesh.rotation.y += s.rotVelocity.y * delta;
+        s.mesh.rotation.z += s.rotVelocity.z * delta;
+
+        // Ground bounce at y <= 0.03
+        if (s.mesh.position.y <= 0.03) {
+          s.mesh.position.y = 0.03;
+          s.velocity.y = -s.velocity.y * 0.45;
+          s.velocity.x *= 0.6;
+          s.velocity.z *= 0.6;
+          s.rotVelocity.multiplyScalar(0.4);
+
+          if (!s.hasBounced) {
+            s.hasBounced = true;
+            if (s.soundEngine && s.soundEngine.playShellDrop) {
+              s.soundEngine.playShellDrop();
+            }
+          }
+        }
+      }
+
+      if (s.age >= s.lifetime) {
+        this.scene.remove(s.mesh);
+        this.shells.splice(i, 1);
+      }
+    }
+
+    // 6. Update Barrel Muzzle Smoke Puffs
+    for (let i = this.muzzleSmokes.length - 1; i >= 0; i--) {
+      const sm = this.muzzleSmokes[i];
+      sm.age += delta;
+      const progress = sm.age / sm.lifetime;
+
+      sm.velocity.y += 0.6 * delta; // rise up
+      sm.mesh.position.addScaledVector(sm.velocity, delta);
+
+      const scale = 1.0 + progress * 2.6;
+      sm.mesh.scale.set(scale, scale, scale);
+      sm.mesh.material.opacity = 0.55 * (1 - progress);
+
+      if (sm.age >= sm.lifetime) {
+        this.scene.remove(sm.mesh);
+        sm.mesh.material.dispose();
+        this.muzzleSmokes.splice(i, 1);
+      }
+    }
   }
 
   // Clean all dynamic effects
@@ -208,11 +330,15 @@ export class EffectsManager {
     this.inkDroplets.forEach(d => this.scene.remove(d.mesh));
     this.impactSparks.forEach(s => this.scene.remove(s.mesh));
     this.decals.forEach(d => this.scene.remove(d));
+    this.shells.forEach(s => this.scene.remove(s.mesh));
+    this.muzzleSmokes.forEach(m => this.scene.remove(m.mesh));
 
     this.tracers = [];
     this.inkDroplets = [];
     this.impactSparks = [];
     this.decals = [];
+    this.shells = [];
+    this.muzzleSmokes = [];
     this.trauma = 0;
   }
 }

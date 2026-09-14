@@ -446,8 +446,14 @@ export class GameStateManager {
       }
     });
 
-    // Map Selector Pills (Small, Medium, Big)
+    // Map Selector Pills (6 Iconic Maps + Backwards Compatibility)
     [
+      { id: 'city', btn: 'btn-sel-map-city' },
+      { id: 'village', btn: 'btn-sel-map-village' },
+      { id: 'train_station', btn: 'btn-sel-map-train' },
+      { id: 'airport', btn: 'btn-sel-map-airport' },
+      { id: 'tv_station', btn: 'btn-sel-map-tv' },
+      { id: 'sea_port', btn: 'btn-sel-map-sea' },
       { id: 'small', btn: 'btn-sel-map-small' },
       { id: 'medium', btn: 'btn-sel-map-med' },
       { id: 'big', btn: 'btn-sel-map-big' }
@@ -711,9 +717,18 @@ export class GameStateManager {
       this.game.player.requestFullscreen();
     }
 
+    // Configure game mode and map from selectedModeConfig
+    const mode = this.selectedModeConfig.mode === 'wave' ? 'wave' : 'tdm';
+    const teamSize = this.selectedModeConfig.teamSize || 4;
+    const mapSize = this.selectedModeConfig.mapSize || 'city';
+    this.game.startMode(mode, teamSize, mapSize);
+
     this.game.hud.show();
-    this.game.restart();
     this.game.domElement.requestPointerLock();
+  }
+
+  restartGame() {
+    this.startGame();
   }
 
   pauseGame() {
@@ -960,13 +975,22 @@ export class GameStateManager {
 
     // 4. Highlight active Map pill
     [
+      { id: 'city', btn: 'btn-sel-map-city' },
+      { id: 'village', btn: 'btn-sel-map-village' },
+      { id: 'train_station', btn: 'btn-sel-map-train' },
+      { id: 'airport', btn: 'btn-sel-map-airport' },
+      { id: 'tv_station', btn: 'btn-sel-map-tv' },
+      { id: 'sea_port', btn: 'btn-sel-map-sea' },
       { id: 'small', btn: 'btn-sel-map-small' },
       { id: 'medium', btn: 'btn-sel-map-med' },
       { id: 'big', btn: 'btn-sel-map-big' }
     ].forEach(mp => {
       const el = document.getElementById(mp.btn);
       if (el) {
-        if (this.selectedModeConfig.mapSize === mp.id) {
+        const isSelected = this.selectedModeConfig.mapSize === mp.id ||
+          (this.selectedModeConfig.mapSize === 'city' && mp.id === 'small') ||
+          (this.selectedModeConfig.mapSize === 'small' && mp.id === 'city');
+        if (isSelected) {
           el.classList.add('active');
         } else {
           el.classList.remove('active');
@@ -979,21 +1003,27 @@ export class GameStateManager {
 
   applySelectedModeConfig() {
     const mapNames = {
-      small: 'COURTYARD BLITZ',
-      medium: 'THE COMPOUND',
-      big: 'ARCHITECT DISTRICT'
+      city: 'METROPOLIS DOWNTOWN',
+      village: 'HIGHLAND HAMLET',
+      train_station: 'CENTRAL TERMINAL',
+      airport: 'SKY HARBOR TERMINAL',
+      tv_station: 'BROADCAST MEDIA CENTER',
+      sea_port: 'CARGO SEA PORT',
+      small: 'METROPOLIS DOWNTOWN',
+      medium: 'CENTRAL TERMINAL',
+      big: 'CARGO SEA PORT'
     };
-    const mapName = mapNames[this.selectedModeConfig.mapSize] || 'COURTYARD BLITZ';
+    const mapName = mapNames[this.selectedModeConfig.mapSize] || 'METROPOLIS DOWNTOWN';
 
     if (this.selectedModeConfig.mode === 'wave') {
       this.selectedModeConfig.teamSize = 1;
       this.selectedModeConfig.title = `WAVE SURVIVAL: ${mapName}`;
     } else if (this.selectedModeConfig.mode === 'ffa') {
-      this.selectedModeConfig.teamSize = this.selectedModeConfig.mapSize === 'small' ? 4 : (this.selectedModeConfig.mapSize === 'medium' ? 8 : 12);
+      this.selectedModeConfig.teamSize = ['city', 'small', 'village'].includes(this.selectedModeConfig.mapSize) ? 4 : (['train_station', 'tv_station', 'medium'].includes(this.selectedModeConfig.mapSize) ? 8 : 12);
       this.selectedModeConfig.title = `SOLO FFA: ${mapName}`;
     } else {
       // TDM
-      const teamCount = this.selectedModeConfig.mapSize === 'small' ? 4 : (this.selectedModeConfig.mapSize === 'medium' ? 8 : 12);
+      const teamCount = ['city', 'small', 'village'].includes(this.selectedModeConfig.mapSize) ? 4 : (['train_station', 'tv_station', 'medium'].includes(this.selectedModeConfig.mapSize) ? 8 : 12);
       this.selectedModeConfig.teamSize = teamCount;
       const squadLabel = this.selectedModeConfig.squadSize === 1 ? 'SOLO' : (this.selectedModeConfig.squadSize === 2 ? 'DUO' : 'SQUAD');
       this.selectedModeConfig.title = `TDM ${teamCount}v${teamCount} (${squadLabel}): ${mapName}`;
@@ -1021,7 +1051,17 @@ export class GameStateManager {
     if (slot0Name) slot0Name.textContent = user.name;
 
     // Set match parameters info badges
-    const mapNames = { small: 'COURTYARD BLITZ (46m)', medium: 'THE COMPOUND (76m)', big: 'ARCHITECT DISTRICT (116m)' };
+    const mapNames = {
+      city: 'METROPOLIS DOWNTOWN',
+      village: 'HIGHLAND HAMLET',
+      train_station: 'CENTRAL TERMINAL',
+      airport: 'SKY HARBOR TERMINAL',
+      tv_station: 'BROADCAST MEDIA CENTER',
+      sea_port: 'CARGO SEA PORT',
+      small: 'METROPOLIS DOWNTOWN',
+      medium: 'CENTRAL TERMINAL',
+      big: 'CARGO SEA PORT'
+    };
     const squadLabels = { 1: 'SOLO (1P)', 2: 'DUO (2P)', 4: 'SQUAD (4P)' };
     const teamLabels = { auto: 'AUTO BALANCE', blue: 'BLUE TASK FORCE', red: 'RED INSURGENTS' };
 
@@ -1030,7 +1070,7 @@ export class GameStateManager {
     const infoSquad = document.getElementById('mm-info-squad');
     const infoTeam = document.getElementById('mm-info-team');
     if (infoMode) infoMode.textContent = this.selectedModeConfig.mode.toUpperCase();
-    if (infoMap) infoMap.textContent = mapNames[this.selectedModeConfig.mapSize] || 'COURTYARD BLITZ';
+    if (infoMap) infoMap.textContent = mapNames[this.selectedModeConfig.mapSize] || 'METROPOLIS DOWNTOWN';
     if (infoSquad) infoSquad.textContent = squadLabels[this.selectedModeConfig.squadSize] || 'SQUAD (4P)';
     if (infoTeam) infoTeam.textContent = teamLabels[this.selectedModeConfig.teamPreference] || 'AUTO BALANCE';
 

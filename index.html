@@ -482,9 +482,11 @@
       background: #faf8f2;
       border: 3px solid var(--ink-blue-dark);
       box-shadow: 8px 8px 0px rgba(22, 42, 104, 0.2);
-      padding: 38px 48px;
+      padding: 28px 36px;
       max-width: 600px;
       width: 90%;
+      max-height: 92vh;
+      overflow-y: auto;
       text-align: center;
       position: relative;
     }
@@ -887,6 +889,296 @@
       color: #ffffff;
     }
 
+    /* Call of Duty Kill Medals Container */
+    .cod-medal-container {
+      position: absolute;
+      top: 18%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+      z-index: 55;
+    }
+
+    .cod-medal-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(248, 246, 240, 0.94);
+      border: 2px solid #162a68;
+      box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.35);
+      padding: 8px 18px;
+      animation: codMedalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      transition: all 0.35s ease;
+    }
+
+    .cod-medal-card.fade-out {
+      opacity: 0;
+      transform: translateY(-24px) scale(0.9);
+    }
+
+    @keyframes codMedalPop {
+      0% { transform: translateY(30px) scale(0.6); opacity: 0; }
+      70% { transform: translateY(-4px) scale(1.08); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .medal-emblem {
+      width: 44px;
+      height: 44px;
+      border: 2.5px solid;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #faf8f2;
+      box-shadow: 0 0 10px rgba(22, 42, 104, 0.15);
+    }
+
+    .medal-icon {
+      font-size: 22px;
+    }
+
+    .medal-details {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    .medal-name {
+      font-family: var(--font-tech);
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .medal-sub {
+      font-size: 11px;
+      font-weight: 700;
+      color: #162a68;
+      opacity: 0.8;
+    }
+
+    .medal-xp {
+      font-family: var(--font-tech);
+      font-size: 13px;
+      font-weight: 700;
+      color: #34a853;
+      letter-spacing: 1px;
+    }
+
+    /* Killstreak Announcement Banner */
+    .cod-streak-banner {
+      position: absolute;
+      top: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(22, 42, 104, 0.95);
+      color: #faf8f2;
+      border: 2px solid #ffd700;
+      padding: 10px 28px;
+      text-align: center;
+      z-index: 56;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.35);
+      pointer-events: none;
+    }
+
+    .cod-streak-banner.animate-streak {
+      animation: streakFlyin 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes streakFlyin {
+      0% { transform: translateX(-50%) scale(0.6); opacity: 0; }
+      100% { transform: translateX(-50%) scale(1.0); opacity: 1; }
+    }
+
+    .streak-title {
+      font-family: var(--font-tech);
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffd700;
+      letter-spacing: 3px;
+    }
+
+    .streak-sub {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      margin-top: 2px;
+    }
+
+    /* Streak HUD Badges (Bottom Right) */
+    .cod-streak-hud {
+      position: absolute;
+      bottom: 128px;
+      right: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      z-index: 15;
+    }
+
+    .streak-counter {
+      font-family: var(--font-tech);
+      font-size: 12px;
+      font-weight: 700;
+      color: #162a68;
+      background: rgba(248, 246, 240, 0.9);
+      padding: 3px 8px;
+      border: 1.5px solid #162a68;
+    }
+
+    .streak-slots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .streak-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 62px;
+      height: 52px;
+      background: rgba(248, 246, 240, 0.8);
+      border: 1.5px solid #162a68;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      opacity: 0.55;
+      transition: all 0.2s ease;
+    }
+
+    .streak-badge.ready {
+      opacity: 1.0;
+      background: #faf8f2;
+      border-color: #ffd700;
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+      transform: scale(1.04);
+    }
+
+    .streak-badge .badge-icon {
+      font-size: 18px;
+    }
+
+    .streak-badge .badge-lbl {
+      font-size: 9px;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* Mobile Landscape Rotation Lock Overlay */
+    #mobile-rotate-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #f8f6f0;
+      z-index: 99999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .phone-rotate-icon {
+      width: 68px;
+      height: 110px;
+      border: 4px solid #162a68;
+      border-radius: 12px;
+      position: relative;
+      margin-bottom: 24px;
+      animation: rotatePhone 2.2s infinite ease-in-out;
+    }
+
+    .phone-rotate-icon::after {
+      content: '';
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #162a68;
+    }
+
+    @keyframes rotatePhone {
+      0%, 20% { transform: rotate(0deg); }
+      50%, 80% { transform: rotate(-90deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    /* Mobile Specific Optimizations */
+    @media (max-width: 768px) {
+      .sketch-card {
+        padding: 16px 18px;
+        width: 96%;
+        max-height: 94vh;
+      }
+      .sketch-title {
+        font-size: 28px;
+      }
+      .sketch-subtitle {
+        font-size: 12px;
+        margin-bottom: 14px;
+      }
+      .sketch-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+      .hud-top-left {
+        left: 88px;
+        top: 14px;
+        font-size: 14px;
+      }
+      .hud-top-right {
+        right: 110px;
+        top: 14px;
+      }
+      .hud-bottom-left {
+        left: 14px;
+        bottom: 14px;
+      }
+      .hud-bottom-right {
+        right: 14px;
+        bottom: 14px;
+      }
+      .weapon-slots {
+        display: none;
+      }
+      .cod-streak-hud {
+        bottom: 80px;
+        right: 14px;
+      }
+      #minimap-container {
+        width: 96px;
+        height: 96px;
+        top: 10px;
+        right: 10px;
+      }
+      #minimap-canvas {
+        width: 96px;
+        height: 96px;
+      }
+      .hud-action-bar {
+        top: 112px;
+        right: 10px;
+      }
+      .hud-action-btn {
+        font-size: 9px;
+        padding: 2px 6px;
+      }
+    }
+
     /* Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
@@ -898,6 +1190,20 @@
   </style>
 </head>
 <body>
+  <!-- Mobile Landscape Prompt & Fullscreen Lock Overlay -->
+  <div id="mobile-rotate-overlay">
+    <div class="phone-rotate-icon"></div>
+    <div style="font-family: 'Space Mono', monospace; font-size: 22px; font-weight: 700; color: #162a68; letter-spacing: 2px; margin-bottom: 8px;">
+      ROTATE YOUR DEVICE
+    </div>
+    <div style="font-size: 13px; font-weight: 700; color: #c9182b; letter-spacing: 1px; max-width: 340px; margin-bottom: 20px;">
+      PLEASE ROTATE TO LANDSCAPE ORIENTATION FOR TACTICAL BLUEPRINT COMBAT
+    </div>
+    <button class="sketch-btn" id="btn-request-mobile-fullscreen" style="background: #162a68; color: #fff; padding: 12px 24px; font-size: 14px;">
+      ⛶ ENTER FULLSCREEN & LOCK
+    </button>
+  </div>
+
   <!-- Three.js Canvas Container -->
   <div id="game-container"></div>
 
@@ -1552,29 +1858,44 @@
         </div>
       </div>
 
-      <!-- 4. Map Arena Selection Section -->
+      <!-- 4. Map Arena Selection Section (6 Iconic Maps) -->
       <div style="margin-bottom: 20px; text-align: left;">
         <div style="font-size: 11px; font-weight: 700; color: #162a68; margin-bottom: 6px; letter-spacing: 1px;">
-          4. MAP & ARENA SCALE:
+          4. SELECT TACTICAL ARENA (6 ICONIC BLUEPRINT MAPS):
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-          <button class="mode-select-pill active" id="btn-sel-map-small" data-map="small">
-            <div><strong>COURTYARD BLITZ</strong></div>
-            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Small 46m Arena • Fast CQC</div>
+          <button class="mode-select-pill active" id="btn-sel-map-city" data-map="city">
+            <div><strong>🏙️ METROPOLIS</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Downtown & Skybridge</div>
           </button>
-          <button class="mode-select-pill" id="btn-sel-map-med" data-map="medium">
-            <div><strong>THE COMPOUND</strong></div>
-            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Medium 76m • Balconies & Bridges</div>
+          <button class="mode-select-pill" id="btn-sel-map-village" data-map="village">
+            <div><strong>🌾 HIGHLAND</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Barn & Rotating Windmill</div>
           </button>
-          <button class="mode-select-pill" id="btn-sel-map-big" data-map="big">
-            <div><strong>ARCHITECT DISTRICT</strong></div>
-            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Big 116m • 3-Tier Monument</div>
+          <button class="mode-select-pill" id="btn-sel-map-train" data-map="train_station">
+            <div><strong>🚆 TERMINAL</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Rail Tracks & Footbridge</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-map-airport" data-map="airport">
+            <div><strong>✈️ SKY HARBOR</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Tarmac Jet & Tower</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-map-tv" data-map="tv_station">
+            <div><strong>📡 BROADCAST</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">News Stage & Tower Spire</div>
+          </button>
+          <button class="mode-select-pill" id="btn-sel-map-sea" data-map="sea_port">
+            <div><strong>🚢 SEA PORT</strong></div>
+            <div style="font-size: 10px; opacity: 0.75; margin-top: 2px;">Cargo Ship & Crane Maze</div>
           </button>
         </div>
       </div>
 
       <!-- Hidden compatibility buttons -->
       <div style="display: none;">
+        <button id="btn-sel-map-small" data-map="small"></button>
+        <button id="btn-sel-map-med" data-map="medium"></button>
+        <button id="btn-sel-map-big" data-map="big"></button>
         <button id="btn-mode-wave"></button>
         <button id="btn-mode-tdm-4v4"></button>
         <button id="btn-mode-tdm-8v8"></button>
