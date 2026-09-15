@@ -127,6 +127,57 @@ export class HUD {
       });
     }
 
+    // Interactive 10s Ammo Refill Badge (manual tap to instant resupply/refill)
+    if (this.ammoFillBadge) {
+      this.ammoFillBadge.style.cursor = 'pointer';
+      this.ammoFillBadge.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        if (this.game && this.game.weapons) {
+          this.game.weapons.refillAmmo(true);
+          this.showAmmoFilledPulse();
+          if (navigator.vibrate) navigator.vibrate(20);
+        }
+      });
+    }
+
+    // Interactive Fire Mode Switcher (AUTO / BURST / SINGLE)
+    if (this.fireModeBtn) {
+      this.fireModeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (this.game && this.game.weapons) {
+          const modes = ['AUTO', 'BURST', 'SINGLE'];
+          const current = this.game.weapons.fireMode || 'AUTO';
+          const nextIdx = (modes.indexOf(current) + 1) % modes.length;
+          const nextMode = modes[nextIdx];
+          this.game.weapons.fireMode = nextMode;
+          this.fireModeBtn.textContent = `${nextMode} ▾`;
+          if (navigator.vibrate) navigator.vibrate(10);
+        }
+      });
+    }
+
+    // Tap on Reload prompt or Ammo counter to trigger reload / refill
+    const triggerReloadOrRefill = (e) => {
+      e.stopPropagation();
+      if (this.game && this.game.weapons) {
+        this.game.weapons.reload();
+        if (navigator.vibrate) navigator.vibrate(15);
+      }
+    };
+
+    if (this.reloadPrompt) {
+      this.reloadPrompt.style.cursor = 'pointer';
+      this.reloadPrompt.addEventListener('pointerdown', triggerReloadOrRefill);
+    }
+    if (this.ammoCurrent) {
+      this.ammoCurrent.style.cursor = 'pointer';
+      this.ammoCurrent.addEventListener('pointerdown', triggerReloadOrRefill);
+    }
+    if (this.weaponPillAmmo) {
+      this.weaponPillAmmo.style.cursor = 'pointer';
+      this.weaponPillAmmo.addEventListener('pointerdown', triggerReloadOrRefill);
+    }
+
     this.slots.forEach((slot, index) => {
       if (slot) {
         slot.addEventListener('click', (e) => {
@@ -378,8 +429,28 @@ export class HUD {
     if (this.ammoReserve) this.ammoReserve.textContent = weapon.reserveAmmo;
     if (this.ammoTally) this.ammoTally.textContent = this.generateTallyMarks(weapon.currentAmmo);
 
+    // Live Ammo Fill Countdown Indicator
+    if (this.ammoFillBadge && this.game && this.game.weapons) {
+      const timeLeft = Math.ceil(this.game.weapons.getRefillTimeLeft ? this.game.weapons.getRefillTimeLeft() : 0);
+      if (timeLeft <= 0) {
+        this.ammoFillBadge.innerHTML = '<span>⚡ REFILL READY</span>';
+      } else {
+        this.ammoFillBadge.innerHTML = `<span>⚡ REFILL (${timeLeft}s)</span>`;
+      }
+    }
+
     if (this.reloadPrompt) {
-      this.reloadPrompt.style.display = (weapon.currentAmmo === 0 && weapon.reserveAmmo > 0) ? 'block' : 'none';
+      if (weapon.currentAmmo === 0) {
+        if (weapon.reserveAmmo > 0) {
+          const isTouch = ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+          this.reloadPrompt.textContent = isTouch ? '⚡ TAP TO RELOAD' : '[R] TO RELOAD';
+        } else {
+          this.reloadPrompt.textContent = '⚡ TAP TO REFILL AMMO';
+        }
+        this.reloadPrompt.style.display = 'block';
+      } else {
+        this.reloadPrompt.style.display = 'none';
+      }
     }
 
     this.slots.forEach((slot, idx) => {

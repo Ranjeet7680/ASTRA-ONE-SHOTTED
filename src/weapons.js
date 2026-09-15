@@ -487,12 +487,16 @@ export class WeaponSystem {
     return wep;
   }
 
-  // Reload current weapon
+  // Reload current weapon (or trigger refill if completely dry)
   reload() {
     const wep = this.activeWeapon;
     if (this.isReloading) return;
     if (wep.currentAmmo === wep.magSize) return;
-    if (wep.reserveAmmo <= 0) return;
+    if (wep.reserveAmmo <= 0) {
+      // Out of reserve ammo: trigger emergency ammo resupply refill!
+      this.refillAmmo(true);
+      return;
+    }
 
     this.isReloading = true;
     this.reloadDuration = wep.reloadTime;
@@ -503,6 +507,34 @@ export class WeaponSystem {
   cancelReload() {
     this.isReloading = false;
     this.reloadTimer = 0;
+  }
+
+  // Explicit ammo refill/resupply (auto or manual tap)
+  refillAmmo(force = false) {
+    this.weapons.forEach(w => {
+      if (w.id !== 4) { // Not melee knife
+        const needed = w.magSize - w.currentAmmo;
+        if (needed > 0) {
+          w.currentAmmo += Math.min(needed, Math.ceil(w.magSize / 2));
+        }
+        w.reserveAmmo = Math.min(w.maxReserve, w.reserveAmmo + Math.ceil(w.magSize * 0.75));
+      }
+    });
+    this.ammoFillTimer = 0;
+    if (this.soundEngine && this.soundEngine.playReload) {
+      this.soundEngine.playReload();
+    }
+    if (this.onAmmoFilled) this.onAmmoFilled(force);
+  }
+
+  // Get remaining time until next automatic ammo refill
+  getRefillTimeLeft() {
+    return Math.max(0, this.ammoFillInterval - this.ammoFillTimer);
+  }
+
+  // Get progress (0.0 to 1.0) of next ammo refill
+  getRefillProgress() {
+    return Math.min(1.0, this.ammoFillTimer / this.ammoFillInterval);
   }
 
   // Give bonus ammo on wave clear
@@ -518,17 +550,7 @@ export class WeaponSystem {
     // 10-Second Ammo Auto-Fill in Matches
     this.ammoFillTimer += delta;
     if (this.ammoFillTimer >= this.ammoFillInterval) {
-      this.ammoFillTimer = 0;
-      this.weapons.forEach(w => {
-        if (w.id !== 4) { // Not melee knife
-          const needed = w.magSize - w.currentAmmo;
-          if (needed > 0) {
-            w.currentAmmo += Math.min(needed, Math.ceil(w.magSize / 2));
-          }
-          w.reserveAmmo = Math.min(w.maxReserve, w.reserveAmmo + Math.ceil(w.magSize * 0.75));
-        }
-      });
-      if (this.onAmmoFilled) this.onAmmoFilled();
+      this.refillAmmo(false);
     }
 
     // 1. Muzzle Flash timer

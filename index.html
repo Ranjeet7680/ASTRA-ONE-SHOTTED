@@ -19,6 +19,13 @@
       --ink-red-bright: #e62238;
       --font-tech: 'Space Mono', monospace;
       --font-sketch: 'Architects Daughter', cursive, sans-serif;
+      /* Responsive spacing tokens */
+      --sp-xs: clamp(4px, 1vw, 8px);
+      --sp-sm: clamp(8px, 2vw, 14px);
+      --sp-md: clamp(14px, 3vw, 24px);
+      --sp-lg: clamp(20px, 4vw, 36px);
+      /* Touch target minimum */
+      --touch-min: 48px;
     }
 
     * {
@@ -29,10 +36,19 @@
       -webkit-user-select: none;
     }
 
+    /* Remove 300ms tap delay & blue flash on all interactive elements */
+    button, input, select, a, [role="button"], [tabindex] {
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+    }
+
     html, body {
       width: 100%;
       height: 100%;
+      height: 100dvh;
       overflow: hidden;
+      overscroll-behavior: none;
       background-color: var(--paper-bg);
       font-family: var(--font-tech);
       color: var(--ink-blue);
@@ -346,23 +362,38 @@
     #hud-ammo-fill-badge {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      font-size: 10px;
+      gap: 5px;
+      font-size: 11px;
       font-weight: 700;
       color: #162a68;
-      background: rgba(248, 246, 240, 0.9);
+      background: rgba(248, 246, 240, 0.96);
       border: 1.5px solid #162a68;
-      border-radius: 12px;
-      padding: 2px 8px;
-      transition: all 0.25s ease;
+      border-radius: 14px;
+      padding: 3px 10px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.25);
+      transition: all 0.2s ease;
+    }
+
+    #hud-ammo-fill-badge:hover {
+      background: #162a68;
+      color: #faf8f2;
+      box-shadow: 0 0 10px rgba(22, 42, 104, 0.4);
+    }
+
+    #hud-ammo-fill-badge:active {
+      transform: scale(0.92);
     }
 
     #hud-ammo-fill-badge.pulse {
       background: #162a68;
       color: #faf8f2;
-      border-color: #faf8f2;
-      box-shadow: 0 0 10px rgba(34, 85, 187, 0.8);
-      transform: scale(1.08);
+      border-color: #ffd700;
+      box-shadow: 0 0 16px rgba(255, 215, 0, 0.7);
+      transform: scale(1.12);
     }
 
     /* Low Health Warning Heartbeat */
@@ -670,9 +701,18 @@
     .reload-prompt {
       color: var(--ink-red);
       font-weight: 700;
-      font-size: 14px;
+      font-size: 12px;
       animation: blink 0.8s infinite;
       display: none;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      background: rgba(248, 246, 240, 0.94);
+      border: 1.5px dashed var(--ink-red);
+      border-radius: 6px;
+      padding: 3px 8px;
+      margin-top: 4px;
+      box-shadow: 1px 1px 0px rgba(201, 24, 43, 0.2);
     }
 
     @keyframes blink {
@@ -863,9 +903,12 @@
       font-weight: 700;
       letter-spacing: 0.8px;
       padding: 9px 14px;
+      min-height: var(--touch-min);
       transition: all 0.16s ease-in-out;
       backdrop-filter: blur(8px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .pubg-icon-btn:hover {
@@ -874,6 +917,12 @@
       color: #f5a623;
       transform: translateX(-2px);
       box-shadow: 0 0 14px rgba(245, 166, 35, 0.3);
+    }
+
+    .pubg-icon-btn:active {
+      transform: scale(0.95) !important;
+      opacity: 0.85;
+      box-shadow: 0 0 6px rgba(245, 166, 35, 0.2) !important;
     }
 
     .pubg-currency-chip {
@@ -896,12 +945,13 @@
       background: linear-gradient(135deg, #ffb300 0%, #ff8f00 45%, #e65100 100%);
       color: #0b0f19;
       font-family: 'Space Mono', sans-serif;
-      font-size: 26px;
+      font-size: clamp(18px, 4vw, 26px);
       font-weight: 900;
-      letter-spacing: 4px;
+      letter-spacing: clamp(2px, 1vw, 4px);
       border: 2px solid #ffe082;
-      border-radius: 6px;
-      padding: 14px 44px;
+      border-radius: 8px;
+      padding: clamp(12px, 3vw, 14px) clamp(28px, 7vw, 44px);
+      min-height: 52px;
       cursor: pointer;
       text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
       box-shadow: 0 0 25px rgba(255, 143, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
@@ -911,6 +961,8 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     #btn-lobby-start:hover {
@@ -920,7 +972,9 @@
     }
 
     #btn-lobby-start:active {
-      transform: scale(0.98);
+      transform: scale(0.96) !important;
+      box-shadow: 0 0 12px rgba(255, 143, 0, 0.6) !important;
+      animation: none !important;
     }
 
     @keyframes pubgStartPulse {
@@ -938,6 +992,7 @@
     .pubg-squad-slot {
       width: 62px;
       height: 68px;
+      min-height: 68px;
       background: rgba(14, 20, 30, 0.75);
       border: 1.5px solid rgba(255, 255, 255, 0.16);
       border-radius: 6px;
@@ -950,12 +1005,19 @@
       transition: all 0.18s ease;
       backdrop-filter: blur(6px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .pubg-squad-slot:hover {
       border-color: #f5a623;
       background: rgba(245, 166, 35, 0.12);
       transform: translateY(-2px);
+    }
+
+    .pubg-squad-slot:active {
+      transform: scale(0.94) !important;
+      opacity: 0.8;
     }
 
     .pubg-squad-slot.active {
@@ -982,51 +1044,58 @@
       background: #faf8f2;
       border: 3px solid var(--ink-blue-dark);
       box-shadow: 8px 8px 0px rgba(22, 42, 104, 0.2);
-      padding: 28px 36px;
+      padding: clamp(16px, 4vw, 36px) clamp(18px, 5vw, 40px);
       max-width: 600px;
-      width: 90%;
-      max-height: 92vh;
+      width: 92%;
+      max-height: 92dvh;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       text-align: center;
       position: relative;
     }
 
     .sketch-title {
       font-family: var(--font-sketch);
-      font-size: 46px;
+      font-size: clamp(28px, 7vw, 46px);
       color: var(--ink-blue-dark);
       letter-spacing: 2px;
       margin-bottom: 4px;
     }
 
     .sketch-subtitle {
-      font-size: 18px;
+      font-size: clamp(11px, 3vw, 18px);
       font-weight: 700;
       color: var(--ink-red);
-      letter-spacing: 4px;
-      margin-bottom: 28px;
+      letter-spacing: clamp(2px, 1vw, 4px);
+      margin-bottom: clamp(16px, 4vw, 28px);
       text-transform: uppercase;
     }
 
     .sketch-btn-list {
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      margin-top: 24px;
+      gap: clamp(10px, 2.5vw, 14px);
+      margin-top: clamp(16px, 3vw, 24px);
     }
 
     .sketch-btn {
       font-family: var(--font-tech);
-      font-size: 17px;
+      font-size: clamp(13px, 3.5vw, 17px);
       font-weight: 700;
       color: var(--ink-blue-dark);
       background: transparent;
       border: 2px solid var(--ink-blue-dark);
-      padding: 12px 24px;
+      padding: clamp(10px, 2.5vw, 12px) clamp(14px, 4vw, 24px);
+      min-height: var(--touch-min);
       cursor: pointer;
       letter-spacing: 1.5px;
       transition: all 0.12s ease;
       position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
     }
 
     .sketch-btn:hover {
@@ -1037,11 +1106,15 @@
     }
 
     .sketch-btn:active {
-      transform: translate(1px, 1px);
-      box-shadow: 1px 1px 0px rgba(22, 42, 104, 0.3);
+      transform: translate(1px, 1px) scale(0.98) !important;
+      box-shadow: 1px 1px 0px rgba(22, 42, 104, 0.3) !important;
+      background: var(--ink-blue-dark) !important;
+      color: #faf8f2 !important;
+      opacity: 0.9;
     }
 
-    .sketch-btn.danger-btn:hover {
+    .sketch-btn.danger-btn:hover,
+    .sketch-btn.danger-btn:active {
       background: var(--ink-red);
       border-color: var(--ink-red);
     }
@@ -1049,11 +1122,12 @@
     /* Modal dialog styling */
     .modal-content {
       text-align: left;
-      font-size: 14px;
+      font-size: clamp(13px, 2.5vw, 14px);
       line-height: 1.6;
-      max-height: 60vh;
+      max-height: 60dvh;
       overflow-y: auto;
-      padding-right: 12px;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 8px;
       margin: 18px 0;
     }
 
@@ -1370,19 +1444,30 @@
     }
     .mode-select-pill {
       font-family: var(--font-tech);
-      font-size: 12px;
+      font-size: clamp(11px, 2.5vw, 12px);
       font-weight: 700;
-      padding: 8px 14px;
+      padding: clamp(8px, 2vw, 10px) clamp(8px, 2vw, 14px);
+      min-height: 44px;
       background: #faf8f2;
       border: 2px solid #162a68;
       color: #162a68;
       cursor: pointer;
       transition: all 0.12s ease;
       text-align: center;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
     .mode-select-pill:hover {
       transform: translateY(-1px);
       box-shadow: 2px 2px 0px rgba(22, 42, 104, 0.2);
+    }
+    .mode-select-pill:active {
+      transform: scale(0.96) !important;
+      opacity: 0.85;
     }
     .mode-select-pill.active {
       background: #162a68;
@@ -1617,7 +1702,9 @@
       100% { transform: rotate(0deg); }
     }
 
-    /* Mobile & Responsive Device Optimizations (Portrait & Landscape Phones/Tablets) */
+    /* ===================================================
+       MOBILE & RESPONSIVE — 950px / short screens
+       =================================================== */
     @media (max-width: 950px), (max-height: 540px) {
       /* Base touch adjustments */
       body {
@@ -1630,6 +1717,8 @@
         top: max(8px, env(safe-area-inset-top)) !important;
         left: max(10px, env(safe-area-inset-left)) !important;
         right: max(10px, env(safe-area-inset-right)) !important;
+        flex-wrap: wrap;
+        gap: 6px !important;
       }
       #lobby-profile-card {
         padding: 4px 8px !important;
@@ -1654,12 +1743,13 @@
         gap: 6px !important;
       }
       .pubg-nav-dock .pubg-icon-btn {
-        width: 42px !important;
-        height: 42px !important;
+        width: 46px !important;
+        height: 46px !important;
         padding: 0 !important;
         justify-content: center !important;
-        font-size: 17px !important;
+        font-size: 18px !important;
         border-radius: 8px !important;
+        min-height: 46px !important;
       }
       .pubg-nav-dock .dock-btn-label {
         display: none !important;
@@ -1669,19 +1759,22 @@
       .pubg-combat-cluster {
         bottom: max(12px, env(safe-area-inset-bottom)) !important;
         left: max(12px, env(safe-area-inset-left)) !important;
-        gap: 6px !important;
+        gap: 8px !important;
       }
       #btn-lobby-start {
-        font-size: 18px !important;
-        padding: 10px 26px !important;
+        font-size: clamp(16px, 4vw, 20px) !important;
+        padding: 12px 28px !important;
         letter-spacing: 2px !important;
-        height: 44px !important;
+        min-height: 52px !important;
+        width: 100% !important;
+        border-radius: 8px !important;
       }
       #btn-lobby-mode-select {
-        padding: 5px 10px !important;
+        padding: 6px 12px !important;
+        width: 100% !important;
       }
       #lobby-mode-title {
-        font-size: 11px !important;
+        font-size: 12px !important;
       }
 
       /* Squad Dock Scaling */
@@ -1690,12 +1783,13 @@
         gap: 6px !important;
       }
       .pubg-squad-slot {
-        width: 48px !important;
-        height: 52px !important;
-        font-size: 9px !important;
+        width: 52px !important;
+        height: 54px !important;
+        font-size: 10px !important;
+        min-height: 54px !important;
       }
 
-      /* Hide crowded recruitment ticker on small mobile screens to prevent overlap */
+      /* Hide crowded recruitment ticker on small mobile screens */
       #lobby-daily-ops {
         display: none !important;
       }
@@ -1718,72 +1812,255 @@
         transform-origin: bottom right !important;
       }
 
-      /* Modals Responsive Sizing */
+      /* Modals Responsive Sizing — uses clamp so no !important fight */
       .sketch-card {
-        padding: 16px 18px !important;
-        width: 95% !important;
+        padding: clamp(14px, 3vw, 20px) clamp(14px, 3.5vw, 22px) !important;
+        width: 96% !important;
         max-width: 580px !important;
-        max-height: 86vh !important;
+        max-height: 90dvh !important;
       }
       .modal-content {
-        max-height: 84vh !important;
-        padding: 14px 16px !important;
-      }
-      .sketch-title {
-        font-size: 26px !important;
-      }
-      .sketch-subtitle {
-        font-size: 11px !important;
-        margin-bottom: 12px !important;
-      }
-      .sketch-btn {
-        padding: 10px 14px !important;
-        font-size: 13px !important;
-        min-height: 42px !important;
+        max-height: 55dvh !important;
       }
 
       /* In-Game HUD Elements */
       .hud-top-left {
-        left: 88px;
-        top: 14px;
-        font-size: 14px;
+        left: calc(12px + env(safe-area-inset-left));
+        top: calc(12px + env(safe-area-inset-top));
+        font-size: 13px;
       }
       .hud-top-right {
-        right: 110px;
-        top: 14px;
+        right: calc(110px + env(safe-area-inset-right));
+        top: calc(12px + env(safe-area-inset-top));
       }
       .hud-bottom-left {
-        left: 14px;
-        bottom: 14px;
+        left: calc(12px + env(safe-area-inset-left));
+        bottom: calc(12px + env(safe-area-inset-bottom));
       }
       .hud-bottom-right {
-        right: 14px;
-        bottom: 14px;
+        right: calc(12px + env(safe-area-inset-right));
+        bottom: calc(12px + env(safe-area-inset-bottom));
       }
+      .hp-bar-container {
+        width: clamp(140px, 30vw, 220px);
+      }
+      .ammo-current { font-size: 26px; }
+      .ammo-reserve { font-size: 16px; }
+      .weapon-name-display { font-size: clamp(18px, 5vw, 28px); }
       .weapon-slots {
         display: none;
       }
       .cod-streak-hud {
-        bottom: 80px;
-        right: 14px;
+        bottom: calc(80px + env(safe-area-inset-bottom));
+        right: calc(12px + env(safe-area-inset-right));
       }
+      /* Tablet minimap — 128px */
       #minimap-container {
-        width: 96px;
-        height: 96px;
-        top: 10px;
-        right: 10px;
+        width: 128px;
+        height: 128px;
+        top: calc(12px + env(safe-area-inset-top));
+        right: calc(12px + env(safe-area-inset-right));
       }
       #minimap-canvas {
-        width: 96px;
-        height: 96px;
+        width: 128px;
+        height: 128px;
       }
       .hud-action-bar {
-        top: 112px;
-        right: 10px;
+        top: calc(148px + env(safe-area-inset-top));
+        right: calc(12px + env(safe-area-inset-right));
       }
       .hud-action-btn {
-        font-size: 9px;
-        padding: 2px 6px;
+        font-size: 10px;
+        padding: 4px 8px;
+        min-height: 36px;
+      }
+    }
+
+    /* ===================================================
+       SMALL PHONES — max 600px wide
+       =================================================== */
+    @media (max-width: 600px) {
+      /* Mode selection grid goes 2-col on phones */
+      #modal-mode-select .sketch-card {
+        padding: 14px 12px !important;
+      }
+      #modal-mode-select [style*="grid-template-columns: 1fr 1fr 1fr"] {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      /* Gunsmith: single col on small screens */
+      #modal-gunsmith [style*="grid-template-columns: 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+
+      /* Matchmaking squad cards wrap smaller */
+      .mm-slot-card {
+        width: 100px !important;
+      }
+
+      /* Profile stats: 2-col stays, but reduce font */
+      .stat-val { font-size: 20px !important; }
+
+      /* Post-match: 2-col grid on small phones */
+      #modal-post-match [style*="grid-template-columns: repeat(4, 1fr)"] {
+        grid-template-columns: 1fr 1fr !important;
+      }
+
+      /* Reduced minimap on phones */
+      #minimap-container {
+        width: 96px !important;
+        height: 96px !important;
+      }
+      #minimap-canvas {
+        width: 96px !important;
+        height: 96px !important;
+      }
+      .hud-action-bar {
+        top: calc(112px + env(safe-area-inset-top)) !important;
+      }
+
+      /* START button full-width on phone */
+      #btn-lobby-start {
+        min-width: 200px !important;
+      }
+
+      /* Auth card: single stack */
+      #screen-auth .sketch-card {
+        padding: 18px 14px !important;
+      }
+
+      /* Splash title scaling */
+      #screen-splash [style*="font-size: 38px"] {
+        font-size: clamp(24px, 8vw, 38px) !important;
+      }
+
+      /* Portrait Mobile Touch Controls Proportions */
+      .blueprint-touch-btn {
+        max-width: 64px !important;
+        max-height: 64px !important;
+      }
+      #btn-touch-fire-right {
+        max-width: 76px !important;
+        max-height: 76px !important;
+      }
+      #mobile-joy-container,
+      #mobile-joystick-ring {
+        width: 110px !important;
+        height: 110px !important;
+      }
+      #mobile-joystick-thumb {
+        width: 48px !important;
+        height: 48px !important;
+      }
+      #hud-weapon-bar {
+        bottom: max(8px, env(safe-area-inset-bottom)) !important;
+        transform: translateX(-50%) scale(0.9) !important;
+      }
+    }
+
+    /* ===================================================
+       VERY SMALL PHONES — max 400px wide
+       =================================================== */
+    @media (max-width: 400px) {
+      /* BGM widget: hide track name, keep controls */
+      #bgm-track-title, #bgm-track-hindi {
+        display: none !important;
+      }
+      /* Currency: icon-only */
+      .pubg-currency-chip span:last-child {
+        display: none !important;
+      }
+      /* Squad dock minimal */
+      .pubg-squad-slot {
+        width: 44px !important;
+        height: 46px !important;
+      }
+      /* HUD action buttons off-screen on tiny phones */
+      .hud-action-bar {
+        display: none !important;
+      }
+    }
+
+    /* ===================================================
+       LANDSCAPE MOBILE — short height (phone landscape)
+       =================================================== */
+    @media (max-height: 500px) and (orientation: landscape) {
+      /* Minimize HUD for short landscape */
+      .hud-top-left {
+        font-size: 11px;
+        top: max(6px, env(safe-area-inset-top));
+      }
+      .hud-bottom-left {
+        bottom: max(6px, env(safe-area-inset-bottom));
+      }
+      .hud-bottom-right {
+        bottom: max(6px, env(safe-area-inset-bottom));
+      }
+      .hp-bar-container { width: 130px; height: 14px; }
+      .ammo-current { font-size: 22px; }
+      #minimap-container {
+        width: 80px !important;
+        height: 80px !important;
+      }
+      /* Lobby: shrink start button in landscape */
+      #btn-lobby-start {
+        font-size: 14px !important;
+        padding: 8px 18px !important;
+        min-height: 44px !important;
+      }
+      /* Modals: reduce height in landscape */
+      .sketch-card {
+        max-height: 95dvh !important;
+        padding: 10px 14px !important;
+      }
+      .modal-content {
+        max-height: 50dvh !important;
+      }
+
+      /* Adaptive Mobile Touch Button Scaling (Prevents overlap on 360-450px landscape screens) */
+      .blueprint-touch-btn {
+        max-width: 66px !important;
+        max-height: 66px !important;
+      }
+      #btn-touch-fire-right {
+        max-width: 76px !important;
+        max-height: 76px !important;
+      }
+      #btn-touch-fire-left {
+        max-width: 62px !important;
+        max-height: 62px !important;
+      }
+      #btn-touch-aim,
+      #btn-touch-jump,
+      #btn-touch-slide,
+      #btn-touch-reload {
+        max-width: 56px !important;
+        max-height: 56px !important;
+      }
+      #btn-touch-prone,
+      #btn-touch-peek-left,
+      #btn-touch-peek-right,
+      #btn-touch-grenade,
+      #btn-touch-melee {
+        max-width: 46px !important;
+        max-height: 46px !important;
+      }
+      #mobile-joy-container,
+      #mobile-joystick-ring {
+        width: 104px !important;
+        height: 104px !important;
+      }
+      #mobile-joystick-thumb {
+        width: 46px !important;
+        height: 46px !important;
+      }
+      #btn-touch-sprint {
+        max-width: 44px !important;
+        max-height: 44px !important;
+      }
+      #hud-weapon-bar {
+        bottom: max(6px, env(safe-area-inset-bottom)) !important;
+        transform: translateX(-50%) scale(0.88) !important;
       }
     }
 
@@ -1847,9 +2124,9 @@
         <circle cx="50" cy="50" r="14" fill="none" stroke="#c9182b" stroke-width="3" />
         <circle cx="50" cy="50" r="5" fill="#c9182b" />
       </svg>
-      <div style="font-family: 'Space Mono', monospace; font-size: 38px; font-weight: 700; color: #162a68; letter-spacing: 8px;">NEXORA</div>
-      <div style="font-size: 13px; font-weight: 700; color: #c9182b; letter-spacing: 4px; margin-top: 6px;">INTERACTIVE STUDIOS</div>
-      <div style="font-size: 11px; opacity: 0.55; margin-top: 28px; letter-spacing: 2px;">CLICK ANYWHERE TO CONTINUE</div>
+      <div style="font-family: 'Space Mono', monospace; font-size: clamp(26px, 8vw, 38px); font-weight: 700; color: #162a68; letter-spacing: clamp(4px, 2vw, 8px);">NEXORA</div>
+      <div style="font-size: clamp(11px, 3vw, 13px); font-weight: 700; color: #c9182b; letter-spacing: clamp(2px, 1vw, 4px); margin-top: 6px;">INTERACTIVE STUDIOS</div>
+      <div style="font-size: 11px; opacity: 0.55; margin-top: 28px; letter-spacing: 2px;">TAP / CLICK ANYWHERE TO CONTINUE</div>
     </div>
   </div>
 
@@ -1895,9 +2172,9 @@
     </div>
 
     <!-- Foreground Loading Panel -->
-    <div style="text-align: center; width: 85%; max-width: 580px; position: relative; z-index: 2;">
-      <div style="font-family: 'Architects Daughter', cursive; font-size: 46px; color: #162a68; font-weight: 700; letter-spacing: 3px;">ASTRA: ONE SHOTTED</div>
-      <div style="font-size: 13px; color: #c9182b; font-weight: 700; letter-spacing: 4px; margin-bottom: 32px;">INITIALIZING TACTICAL BLUEPRINT</div>
+    <div style="text-align: center; width: 92%; max-width: 580px; position: relative; z-index: 2; padding: 0 8px;">
+      <div style="font-family: 'Architects Daughter', cursive; font-size: clamp(28px, 7vw, 46px); color: #162a68; font-weight: 700; letter-spacing: clamp(1px, 1vw, 3px);">ASTRA: ONE SHOTTED</div>
+      <div style="font-size: clamp(10px, 2.5vw, 13px); color: #c9182b; font-weight: 700; letter-spacing: clamp(2px, 1vw, 4px); margin-bottom: clamp(18px, 4vw, 32px);">INITIALIZING TACTICAL BLUEPRINT</div>
 
       <!-- Loading Progress Bar -->
       <div style="width: 100%; height: 24px; border: 2.5px solid #162a68; padding: 2px; background: rgba(255,255,255,0.75); position: relative; box-shadow: 4px 4px 0px rgba(22, 42, 104, 0.2);">
@@ -1967,8 +2244,19 @@
         </div>
 
         <!-- Guest Login with Nickname -->
-        <input type="text" id="input-guest-name" placeholder="ENTER OPERATOR CALLSIGN..." maxlength="16" style="padding: 10px; border: 2px solid #162a68; background: #fff; font-family: 'Space Mono', monospace; font-weight: 700; text-align: center;">
-        <button class="sketch-btn" id="btn-login-guest" style="background: #162a68; color: #fff;">PLAY AS GUEST</button>
+        <input
+          type="text"
+          id="input-guest-name"
+          placeholder="ENTER OPERATOR CALLSIGN..."
+          maxlength="16"
+          inputmode="text"
+          autocapitalize="characters"
+          autocomplete="off"
+          autocorrect="off"
+          spellcheck="false"
+          style="padding: 14px 10px; border: 2px solid #162a68; background: #fff; font-family: 'Space Mono', monospace; font-weight: 700; text-align: center; font-size: 14px; min-height: 48px; width: 100%;"
+        >
+        <button class="sketch-btn" id="btn-login-guest" style="background: #162a68; color: #fff; font-size: 16px;">▶ PLAY AS GUEST</button>
       </div>
     </div>
   </div>
@@ -2579,16 +2867,16 @@
     <div class="sketch-card" style="max-width: 640px;">
       <div class="sketch-title">ASTRA</div>
       <div class="sketch-subtitle">ONE SHOTTED</div>
-      <p style="font-size: 14px; opacity: 0.85; margin-bottom: 24px;">
-        Architectural Blueprint Arena FPS. Survive waves or engage in tactical 4v4, 8v8 & 12v12 TDM!
+      <p style="font-size: clamp(12px, 3vw, 14px); opacity: 0.85; margin-bottom: clamp(16px, 4vw, 24px); line-height: 1.5;">
+        Architectural Blueprint Arena FPS. Survive waves or engage in tactical 4v4, 8v8 &amp; 12v12 TDM!
       </p>
       <div class="sketch-btn-list">
-        <button class="sketch-btn" id="btn-play-menu" style="background: #162a68; color: #fff;">PLAY (SELECT MODE)</button>
-        <button class="sketch-btn" id="btn-open-gunsmith">GUNSMITH (WEAPON CUSTOMIZE)</button>
-        <button class="sketch-btn" id="btn-open-operator">OPERATOR (CHARACTER CUSTOMIZE)</button>
-        <button class="sketch-btn" id="btn-open-hud-custom">CUSTOMIZE BUTTONS (MOBILE HUD)</button>
-        <button class="sketch-btn" id="btn-how-to-play">HOW TO PLAY & INTEL</button>
-        <button class="sketch-btn" id="btn-settings">SETTINGS</button>
+        <button class="sketch-btn" id="btn-play-menu" style="background: #162a68; color: #fff;">▶ PLAY (SELECT MODE)</button>
+        <button class="sketch-btn" id="btn-open-gunsmith">🔫 GUNSMITH (WEAPON CUSTOMIZE)</button>
+        <button class="sketch-btn" id="btn-open-operator">👤 OPERATOR (CHARACTER CUSTOMIZE)</button>
+        <button class="sketch-btn" id="btn-open-hud-custom">📱 CUSTOMIZE BUTTONS (MOBILE HUD)</button>
+        <button class="sketch-btn" id="btn-how-to-play">📖 HOW TO PLAY &amp; INTEL</button>
+        <button class="sketch-btn" id="btn-settings">⚙️ SETTINGS</button>
       </div>
     </div>
   </div>

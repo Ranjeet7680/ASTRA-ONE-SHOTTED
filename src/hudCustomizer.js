@@ -21,6 +21,7 @@ export class HUDCustomizer {
     this.layouts = this.loadLayouts();
 
     this.buildEditorDOM();
+    this.applyActiveLayoutToControls();
   }
 
   getDefaultPresets() {

@@ -577,8 +577,12 @@ export class MobileControls {
     const el = this.controls[id];
     if (!el || !ctrl) return;
 
-    el.style.left = `${(ctrl.x * 100).toFixed(2)}%`;
-    el.style.top = `${(ctrl.y * 100).toFixed(2)}%`;
+    // Safety clamp within viewport bounds (5% to 95%) to prevent offscreen clipping
+    const safeX = Math.max(0.05, Math.min(0.95, ctrl.x));
+    const safeY = Math.max(0.05, Math.min(0.95, ctrl.y));
+
+    el.style.left = `${(safeX * 100).toFixed(2)}%`;
+    el.style.top = `${(safeY * 100).toFixed(2)}%`;
     el.style.opacity = ctrl.visible ? ctrl.opacity.toString() : '0.15';
     el.style.display = (ctrl.visible || this.isCustomizerEditing) ? 'flex' : 'none';
 
@@ -696,7 +700,7 @@ export class MobileControls {
       if (this.game.attemptShoot) this.game.attemptShoot();
     }, () => {
       this.player.isShooting = false;
-    });
+    }, 18);
 
     // Left Fire (Claw)
     this.setupButtonTouch(this.controls['btnFireLeft'], () => {
@@ -704,7 +708,7 @@ export class MobileControls {
       if (this.game.attemptShoot) this.game.attemptShoot();
     }, () => {
       this.player.isShooting = false;
-    });
+    }, 18);
 
     // ADS
     this.setupButtonTouch(this.controls['btnAds'], () => {
@@ -754,10 +758,14 @@ export class MobileControls {
       btn.style.color = isProne ? '#faf8f2' : '#162a68';
     });
 
-    // Reload
+    // Reload & Emergency Ammo Refill
     this.setupButtonTouch(this.controls['btnReload'], () => {
-      if (this.player.onReloadRequested) this.player.onReloadRequested();
-    });
+      if (this.player.onReloadRequested) {
+        this.player.onReloadRequested();
+      } else if (this.weapons) {
+        this.weapons.reload();
+      }
+    }, null, 18);
 
     // Peek Left
     this.setupButtonTouch(this.controls['btnPeekLeft'], () => {
@@ -802,12 +810,16 @@ export class MobileControls {
     this.setupButtonTouch(this.controls['btnPickRight'], handlePick);
   }
 
-  setupButtonTouch(el, onPress, onRelease = null) {
+  setupButtonTouch(el, onPress, onRelease = null, hapticMs = 12) {
     if (!el) return;
     el.addEventListener('pointerdown', (e) => {
       if (this.isCustomizerEditing) return;
       e.stopPropagation();
       el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, 'scale(0.92)');
+      // Haptic feedback for physical button feel
+      if (navigator.vibrate && hapticMs > 0) {
+        navigator.vibrate(hapticMs);
+      }
       if (onPress) onPress();
     });
 
@@ -825,7 +837,9 @@ export class MobileControls {
     const dx = clientX - this.joystick.baseX;
     const dy = clientY - this.joystick.baseY;
     const dist = Math.hypot(dx, dy);
-    const clampedDist = Math.min(dist, this.joystick.maxRadius);
+    const rect = this.joyRing.getBoundingClientRect();
+    const effectiveRadius = rect.width > 0 ? (rect.width * 0.42) : this.joystick.maxRadius;
+    const clampedDist = Math.min(dist, effectiveRadius);
     const angle = Math.atan2(dy, dx);
 
     const thumbX = Math.cos(angle) * clampedDist;
@@ -834,15 +848,15 @@ export class MobileControls {
     this.joyThumb.style.transform = `translate(calc(-50% + ${thumbX}px), calc(-50% + ${thumbY}px))`;
 
     // Check Upward Sprint Lock: dragging upwards past sprint threshold
-    if (dy < -this.joystick.maxRadius * 0.85 && Math.abs(dx) < 30) {
+    if (dy < -effectiveRadius * 0.85 && Math.abs(dx) < 32) {
       if (!this.isSprintLocked) {
         this.setSprintLocked(true);
       }
     }
 
     // Normalize to -1.0 .. +1.0
-    const normX = thumbX / this.joystick.maxRadius;
-    const normY = thumbY / this.joystick.maxRadius;
+    const normX = thumbX / effectiveRadius;
+    const normY = thumbY / effectiveRadius;
 
     this.joystick.vectorX = normX;
     this.joystick.vectorZ = normY;
@@ -855,7 +869,7 @@ export class MobileControls {
     this.player.keys.backward = normY > 0.28 && !this.isSprintLocked;
     this.player.keys.left = normX < -0.28;
     this.player.keys.right = normX > 0.28;
-    this.player.keys.sprint = dist >= this.joystick.maxRadius * 0.9 || this.isSprintLocked;
+    this.player.keys.sprint = dist >= effectiveRadius * 0.88 || this.isSprintLocked;
   }
 
   setSprintLocked(locked) {
