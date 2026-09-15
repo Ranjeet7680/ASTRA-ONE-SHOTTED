@@ -1,3 +1,5 @@
+import { weaponDatabase } from './weaponDatabase.js';
+
 export class GameStateManager {
   constructor(game) {
     this.game = game;
@@ -21,6 +23,14 @@ export class GameStateManager {
     this.modalCharacter = document.getElementById('modal-character');
     this.modalPlayerProfile = document.getElementById('modal-player-profile');
     this.modalPostMatch = document.getElementById('modal-post-match');
+    this.modalBattlePass = document.getElementById('modal-battle-pass');
+    this.modalMissions = document.getElementById('modal-missions');
+    this.modalStore = document.getElementById('modal-store');
+
+    // Gunsmith State
+    this.selectedGunsmithCategory = 'ar';
+    this.selectedGunsmithWeaponId = 'm4a1_carbine';
+    this.activeGunsmithLoadoutIndex = 0;
 
     // Loading Bar Elements
     this.loadingBar = document.getElementById('game-loading-bar');
@@ -72,6 +82,12 @@ export class GameStateManager {
 
     this.setupListeners();
     this.initStartup();
+  }
+
+  vibrate(ms = 12) {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      try { navigator.vibrate(ms); } catch (_) {}
+    }
   }
 
   initStartup() {
@@ -345,9 +361,12 @@ export class GameStateManager {
     if (btnAudioToggle) {
       let isMuted = false;
       btnAudioToggle.addEventListener('click', () => {
+        this.vibrate();
         isMuted = !isMuted;
         btnAudioToggle.textContent = isMuted ? '🔇' : '🔊';
+        btnAudioToggle.title = isMuted ? 'Unmute Master Audio' : 'Mute Master Audio';
         this.game.soundEngine.setMasterVolume(isMuted ? 0 : 0.8);
+        if (!isMuted && this.game.soundEngine) this.game.soundEngine.playUIClick();
       });
     }
 
@@ -525,42 +544,20 @@ export class GameStateManager {
       };
     }
 
-    // 5. Gunsmith Modal Handlers
-    const btnOpenGunsmith = document.getElementById('btn-open-gunsmith');
-    if (btnOpenGunsmith) {
-      btnOpenGunsmith.addEventListener('click', () => {
-        if (this.modalGunsmith) this.modalGunsmith.style.display = 'flex';
-        this.refreshGunsmithUI();
+    // 4.5 Main Menu Play Button
+    const btnPlayMenu = document.getElementById('btn-play-menu');
+    if (btnPlayMenu) {
+      btnPlayMenu.addEventListener('click', () => {
+        this.vibrate();
+        this.game.soundEngine.playUIClick();
+        if (this.screenMainMenu) this.screenMainMenu.style.display = 'none';
+        this.showLobby();
       });
     }
 
-    const btnCloseGunsmith = document.getElementById('btn-close-gunsmith');
-    if (btnCloseGunsmith) {
-      btnCloseGunsmith.addEventListener('click', () => {
-        this.saveGunsmithUI();
-        if (this.modalGunsmith) this.modalGunsmith.style.display = 'none';
-        if (this.currentState === 'LOBBY' && this.game.lobby) {
-          this.game.lobby.rebuildCharacter();
-        }
-      });
-    }
-
-    [0, 1, 2, 3].forEach(idx => {
-      const btn = document.getElementById(`gs-wep-${idx}`);
-      if (btn) {
-        btn.addEventListener('click', () => {
-          this.activeGunsmithWeapon = idx;
-          [0, 1, 2, 3].forEach(i => {
-            const b = document.getElementById(`gs-wep-${i}`);
-            if (b) {
-              b.style.background = i === idx ? '#162a68' : 'transparent';
-              b.style.color = i === idx ? '#fff' : '#162a68';
-            }
-          });
-          this.refreshGunsmithUI();
-        });
-      }
-    });
+    // 5. COD Mobile Navigation & Gunsmith Arsenal Setup
+    this.setupCODNavigation();
+    this.setupGunsmith();
 
     // 6. Operator Customization Modal Handlers
     const btnOpenOp = document.getElementById('btn-open-operator');
@@ -605,6 +602,8 @@ export class GameStateManager {
     const btnPauseCustomHud = document.getElementById('btn-pause-custom-hud');
     if (btnPauseCustomHud) {
       btnPauseCustomHud.addEventListener('click', () => {
+        this.vibrate();
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
         if (this.screenPause) this.screenPause.style.display = 'none';
         this.game.mobileControls.enterCustomizerMode();
       });
@@ -613,6 +612,8 @@ export class GameStateManager {
     const btnToggleTouch = document.getElementById('btn-toggle-touch-controls');
     if (btnToggleTouch) {
       btnToggleTouch.addEventListener('click', () => {
+        this.vibrate();
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
         this.game.mobileControls.toggle();
       });
     }
@@ -769,14 +770,16 @@ export class GameStateManager {
     const wepStatEl = document.getElementById('lobby-quick-wep-stat');
     wepPills.forEach(pill => {
       pill.addEventListener('click', () => {
-        const wepIdx = parseInt(pill.dataset.wep);
+        const wepIdx = parseInt(pill.dataset.wep, 10);
+        this.vibrate();
         if (this.game.soundEngine) this.game.soundEngine.playUIClick();
         wepPills.forEach(p => {
-          p.style.background = 'transparent';
-          p.style.color = '#162a68';
+          p.classList.remove('active');
+          p.style.background = '';
+          p.style.color = '';
+          p.style.borderColor = '';
         });
-        pill.style.background = '#162a68';
-        pill.style.color = '#fff';
+        pill.classList.add('active');
         if (this.game.lobby) {
           this.game.lobby.setEquippedWeapon(wepIdx);
         }
@@ -794,13 +797,15 @@ export class GameStateManager {
     camBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const camMode = btn.dataset.cam;
+        this.vibrate();
         if (this.game.soundEngine) this.game.soundEngine.playUIClick();
         camBtns.forEach(b => {
-          b.style.background = 'transparent';
-          b.style.color = '#162a68';
+          b.classList.remove('active');
+          b.style.background = '';
+          b.style.color = '';
+          b.style.borderColor = '';
         });
-        btn.style.background = '#162a68';
-        btn.style.color = '#fff';
+        btn.classList.add('active');
         if (this.game.lobby) {
           this.game.lobby.setCameraPreset(camMode);
         }
@@ -812,6 +817,7 @@ export class GameStateManager {
     emoteBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const emote = btn.dataset.emote;
+        this.vibrate();
         if (this.game.soundEngine) this.game.soundEngine.playUIClick();
         if (this.game.lobby) {
           this.game.lobby.playEmote(emote);
@@ -1059,6 +1065,24 @@ export class GameStateManager {
       });
     }
 
+    const btnPostMatchReplay = document.getElementById('btn-postmatch-replay');
+    if (btnPostMatchReplay) {
+      btnPostMatchReplay.addEventListener('click', () => {
+        this.vibrate();
+        if (this.modalPostMatch) this.modalPostMatch.style.display = 'none';
+        this.restartGame();
+      });
+    }
+
+    const btnPostMatchLobby = document.getElementById('btn-postmatch-lobby');
+    if (btnPostMatchLobby) {
+      btnPostMatchLobby.addEventListener('click', () => {
+        this.vibrate();
+        if (this.modalPostMatch) this.modalPostMatch.style.display = 'none';
+        this.showLobby();
+      });
+    }
+
     // 12. Global Keyboard Shortcuts (Escape for Pause)
     document.addEventListener('keydown', (e) => {
       if (e.code === 'Escape') {
@@ -1264,44 +1288,436 @@ export class GameStateManager {
     this.showLobby();
   }
 
-  // Gunsmith UI synchronization
+  // ==========================================
+  // COD MOBILE BOTTOM NAVIGATION & MODAL CONTROLLERS
+  // ==========================================
+  setupCODNavigation() {
+    const navItems = [
+      { id: 'btn-nav-play', action: () => this.closeAllModals() },
+      { id: 'btn-nav-loadout', action: () => this.openGunsmith() },
+      { id: 'btn-nav-operator', action: () => this.openOperator() },
+      { id: 'btn-nav-pass', action: () => this.openBattlePass() },
+      { id: 'btn-nav-missions', action: () => this.openMissions() },
+      { id: 'btn-nav-store', action: () => this.openStore() },
+      { id: 'btn-nav-hud', action: () => {
+        if (this.screenPubgLobby) this.screenPubgLobby.style.display = 'none';
+        this.game.mobileControls.enterCustomizerMode();
+      }}
+    ];
+
+    navItems.forEach(item => {
+      const el = document.getElementById(item.id);
+      if (el) {
+        el.addEventListener('click', () => {
+          this.vibrate();
+          if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+          document.querySelectorAll('.cod-dock-tab').forEach(b => b.classList.remove('active'));
+          el.classList.add('active');
+          item.action();
+        });
+      }
+    });
+
+    // Close buttons for new modals
+    const btnCloseBp = document.getElementById('btn-close-battle-pass');
+    if (btnCloseBp) {
+      btnCloseBp.addEventListener('click', () => {
+        this.vibrate();
+        if (this.modalBattlePass) this.modalBattlePass.style.display = 'none';
+        document.getElementById('btn-nav-play')?.classList.add('active');
+      });
+    }
+
+    const btnCloseMissions = document.getElementById('btn-close-missions');
+    if (btnCloseMissions) {
+      btnCloseMissions.addEventListener('click', () => {
+        this.vibrate();
+        if (this.modalMissions) this.modalMissions.style.display = 'none';
+        document.getElementById('btn-nav-play')?.classList.add('active');
+      });
+    }
+
+    const btnCloseStore = document.getElementById('btn-close-store');
+    if (btnCloseStore) {
+      btnCloseStore.addEventListener('click', () => {
+        this.vibrate();
+        if (this.modalStore) this.modalStore.style.display = 'none';
+        document.getElementById('btn-nav-play')?.classList.add('active');
+      });
+    }
+
+    const rpChip = document.getElementById('lobby-header-rp-chip');
+    if (rpChip) {
+      rpChip.addEventListener('click', () => this.openBattlePass());
+    }
+
+    // Party / Squad Invite Button
+    const btnPartyInvite = document.getElementById('btn-party-invite');
+    if (btnPartyInvite) {
+      let squadCount = 1;
+      const botNames = ['Ghost_99 (AI)', 'Phoenix_IN (AI)', 'Viper_TDM (AI)'];
+      btnPartyInvite.addEventListener('click', () => {
+        this.vibrate();
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        if (squadCount < 4) {
+          const slot = document.getElementById(`lobby-squad-${squadCount}`);
+          if (slot) {
+            slot.innerHTML = `<span>🛡️</span> <span style="font-weight:700; color:#fff;">${botNames[squadCount - 1]}</span>`;
+            slot.classList.add('active');
+          }
+          squadCount++;
+          const label = document.querySelector('#lobby-squad-drawer span');
+          if (label) label.textContent = `SQUAD (${squadCount}/4)`;
+        } else {
+          squadCount = 1;
+          [1, 2, 3].forEach(i => {
+            const slot = document.getElementById(`lobby-squad-${i}`);
+            if (slot) {
+              slot.innerHTML = `<span>+</span> <span>Team Slot ${i + 1}</span>`;
+              slot.classList.remove('active');
+            }
+          });
+          const label = document.querySelector('#lobby-squad-drawer span');
+          if (label) label.textContent = `SQUAD (1/4)`;
+        }
+      });
+    }
+
+    // Battle Pass Claim Buttons
+    const btnBpClaim = document.getElementById('btn-bp-claim-current');
+    if (btnBpClaim) {
+      btnBpClaim.addEventListener('click', () => {
+        this.vibrate();
+        btnBpClaim.textContent = '✓ CLAIMED';
+        btnBpClaim.style.background = '#34a853';
+        btnBpClaim.style.color = '#fff';
+      });
+    }
+
+    const btnBpClaimAll = document.getElementById('btn-bp-claim-all');
+    if (btnBpClaimAll) {
+      btnBpClaimAll.addEventListener('click', () => {
+        this.vibrate();
+        btnBpClaimAll.textContent = '✓ ALL REWARDS CLAIMED (500 💎 + 3 SKINS)';
+        btnBpClaimAll.style.background = '#34a853';
+      });
+    }
+
+    // Missions Claim Buttons
+    document.querySelectorAll('.mission-claim-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.vibrate();
+        btn.textContent = '✓ CLAIMED';
+        btn.style.background = '#64748b';
+        btn.disabled = true;
+      });
+    });
+
+    // Store Buy Buttons
+    document.querySelectorAll('.store-buy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.vibrate();
+        btn.textContent = '✓ UNLOCKED';
+        btn.style.background = '#34a853';
+        btn.disabled = true;
+      });
+    });
+  }
+
+  closeAllModals() {
+    if (this.modalGunsmith) this.modalGunsmith.style.display = 'none';
+    if (this.modalCharacter) this.modalCharacter.style.display = 'none';
+    if (this.modalBattlePass) this.modalBattlePass.style.display = 'none';
+    if (this.modalMissions) this.modalMissions.style.display = 'none';
+    if (this.modalStore) this.modalStore.style.display = 'none';
+    if (this.modalSettings) this.modalSettings.style.display = 'none';
+    if (this.modalHowToPlay) this.modalHowToPlay.style.display = 'none';
+    if (this.modalModeSelect) this.modalModeSelect.style.display = 'none';
+    if (this.modalPlayerProfile) this.modalPlayerProfile.style.display = 'none';
+    if (this.currentState === 'LOBBY' && this.screenPubgLobby) {
+      this.screenPubgLobby.style.display = 'block';
+    }
+  }
+
+  openGunsmith() {
+    this.closeAllModals();
+    if (this.modalGunsmith) this.modalGunsmith.style.display = 'flex';
+    this.refreshGunsmithUI();
+  }
+
+  openOperator() {
+    this.closeAllModals();
+    if (this.modalCharacter) this.modalCharacter.style.display = 'flex';
+    this.refreshCharacterUI();
+  }
+
+  openBattlePass() {
+    this.closeAllModals();
+    if (this.modalBattlePass) this.modalBattlePass.style.display = 'flex';
+  }
+
+  openMissions() {
+    this.closeAllModals();
+    if (this.modalMissions) this.modalMissions.style.display = 'flex';
+  }
+
+  openStore() {
+    this.closeAllModals();
+    if (this.modalStore) this.modalStore.style.display = 'flex';
+  }
+
+  // ==========================================
+  // COD MOBILE 50+ WEAPON GUNSMITH SYSTEM
+  // ==========================================
+  setupGunsmith() {
+    // 1. 5 Loadout Tabs
+    const loadoutTabs = document.querySelectorAll('.gs-loadout-tab');
+    loadoutTabs.forEach((tab, idx) => {
+      tab.addEventListener('click', () => {
+        this.vibrate();
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        this.activeGunsmithLoadoutIndex = idx;
+        weaponDatabase.activeLoadoutIndex = idx;
+        loadoutTabs.forEach(t => {
+          t.classList.remove('active');
+          t.style.background = 'transparent';
+          t.style.color = '#162a68';
+        });
+        tab.classList.add('active');
+        tab.style.background = '#162a68';
+        tab.style.color = '#fff';
+
+        const loadout = weaponDatabase.getActiveLoadout();
+        if (loadout) {
+          this.selectedGunsmithWeaponId = loadout.primaryWeaponId;
+          const def = weaponDatabase.getWeapon(loadout.primaryWeaponId);
+          if (def) {
+            this.selectedGunsmithCategory = def.category;
+            document.querySelectorAll('.gs-category-tab').forEach(ct => {
+              ct.classList.toggle('active', ct.dataset.cat === def.category);
+            });
+          }
+        }
+        this.refreshGunsmithUI();
+      });
+    });
+
+    // 2. 8 Category Tabs
+    const catTabs = document.querySelectorAll('.gs-category-tab');
+    catTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        this.vibrate();
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        catTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        this.selectedGunsmithCategory = tab.dataset.cat;
+        
+        const weps = weaponDatabase.getWeaponsByCategory(this.selectedGunsmithCategory);
+        if (weps.length > 0) {
+          this.selectedGunsmithWeaponId = weps[0].id;
+        }
+        this.renderGunsmithWeaponList();
+        this.updateGunsmithWeaponView();
+      });
+    });
+
+    // 3. Attachment Slot Dropdowns
+    document.querySelectorAll('.gs-slot-dropdown').forEach(select => {
+      select.addEventListener('change', () => {
+        this.vibrate();
+        this.updateGunsmithStats();
+      });
+    });
+
+    // 4. Camo Selector
+    const camoSelect = document.getElementById('gs-camo-select');
+    if (camoSelect) {
+      camoSelect.addEventListener('change', () => {
+        this.vibrate();
+        this.updateGunsmithWeaponView();
+      });
+    }
+
+    // 5. XP Upgrade Button
+    const btnUpgradeXp = document.getElementById('btn-gs-upgrade-xp');
+    if (btnUpgradeXp) {
+      btnUpgradeXp.addEventListener('click', () => {
+        this.vibrate();
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        weaponDatabase.addWeaponXp(this.selectedGunsmithWeaponId, 600);
+        this.updateGunsmithWeaponView();
+      });
+    }
+
+    // 6. Reset Defaults Button
+    const btnReset = document.getElementById('btn-gunsmith-reset');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        this.vibrate();
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        document.querySelectorAll('.gs-slot-dropdown').forEach(select => {
+          select.value = select.dataset.slot === 'optic' ? 'iron' : (select.dataset.slot === 'magazine' ? 'standard' : 'none');
+        });
+        this.updateGunsmithStats();
+      });
+    }
+
+    // 7. Save & Equip Button
+    const btnCloseGunsmith = document.getElementById('btn-close-gunsmith');
+    if (btnCloseGunsmith) {
+      btnCloseGunsmith.addEventListener('click', () => {
+        this.vibrate();
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        this.saveGunsmithUI();
+        if (this.modalGunsmith) this.modalGunsmith.style.display = 'none';
+        document.getElementById('btn-nav-play')?.classList.add('active');
+        if (this.currentState === 'LOBBY' && this.game.lobby) {
+          this.game.lobby.rebuildCharacter();
+        }
+      });
+    }
+  }
+
   refreshGunsmithUI() {
-    const wepConfig = this.game.customization.config.weapons[this.activeGunsmithWeapon] || {};
-    const opticEl = document.getElementById('gs-optic');
-    const muzzleEl = document.getElementById('gs-muzzle');
-    const gripEl = document.getElementById('gs-grip');
-    const magEl = document.getElementById('gs-mag');
-    const skinEl = document.getElementById('gs-skin');
+    this.renderGunsmithWeaponList();
+    this.updateGunsmithWeaponView();
+  }
 
-    if (opticEl) opticEl.value = wepConfig.optic || 'iron';
-    if (muzzleEl) muzzleEl.value = wepConfig.muzzle || 'default';
-    if (gripEl) gripEl.value = wepConfig.grip || 'none';
-    if (magEl) magEl.value = wepConfig.mag || 'standard';
-    if (skinEl) skinEl.value = wepConfig.skin || 'blue';
+  renderGunsmithWeaponList() {
+    const list = document.getElementById('gs-weapon-list');
+    if (!list) return;
+    list.innerHTML = '';
 
+    const weps = weaponDatabase.getWeaponsByCategory(this.selectedGunsmithCategory);
+    weps.forEach(w => {
+      const card = document.createElement('div');
+      card.className = `gs-weapon-card ${w.id === this.selectedGunsmithWeaponId ? 'active' : ''}`;
+      card.innerHTML = `
+        <div style="font-size: 11px; font-weight: 800;">${w.name}</div>
+        <div style="font-size: 9px; opacity: 0.7;">${w.tier.toUpperCase()} • LV.${weaponDatabase.getWeaponLevel(w.id).level}</div>
+        <div style="display: flex; gap: 4px; margin-top: 3px; font-size: 9px; font-weight: 700;">
+          <span style="color: #ffaa00;">${w.baseStats.damage} DMG</span>
+          <span style="opacity: 0.4;">|</span>
+          <span style="color: #38bdf8;">${w.baseStats.fireRate} RPM</span>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        this.vibrate();
+        if (this.game.soundEngine) this.game.soundEngine.playUIClick();
+        this.selectedGunsmithWeaponId = w.id;
+        document.querySelectorAll('.gs-weapon-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        this.updateGunsmithWeaponView();
+      });
+      list.appendChild(card);
+    });
+  }
+
+  updateGunsmithWeaponView() {
+    const wep = weaponDatabase.getWeapon(this.selectedGunsmithWeaponId);
+    if (!wep) return;
+
+    // Header info
+    const nameEl = document.getElementById('gs-preview-wep-name');
+    const descEl = document.getElementById('gs-preview-wep-desc');
+    const levelEl = document.getElementById('gs-wep-level');
+    const xpBarEl = document.getElementById('gs-wep-xp-bar');
+
+    const lvlData = weaponDatabase.getWeaponLevel(wep.id);
+    if (nameEl) nameEl.textContent = wep.name.toUpperCase();
+    if (descEl) descEl.textContent = `${wep.category.toUpperCase()} • ${wep.desc}`;
+    if (levelEl) levelEl.textContent = `LEVEL ${lvlData.level} / ${lvlData.maxLevel}`;
+    if (xpBarEl) {
+      const pct = Math.min(100, Math.round((lvlData.currentXp / lvlData.neededXp) * 100));
+      xpBarEl.style.width = `${pct}%`;
+    }
+
+    // Attachments from active loadout for this weapon
+    const loadout = weaponDatabase.getActiveLoadout();
+    const currentAtts = (loadout && loadout.primaryWeaponId === wep.id) ? loadout.attachments : {};
+    document.querySelectorAll('.gs-slot-dropdown').forEach(select => {
+      const slot = select.dataset.slot;
+      if (currentAtts && currentAtts[slot]) {
+        select.value = currentAtts[slot];
+      }
+    });
+
+    this.updateGunsmithStats();
+
+    // 3D Canvas Preview
     const canvas = document.getElementById('gunsmith-canvas');
-    if (canvas) {
+    if (canvas && this.game.customization) {
+      const catMap = {
+        ar: 2, smg: 2, lmg: 2, sniper: 3, marksman: 3, shotgun: 1, pistol: 0, melee: 4
+      };
+      const modelIdx = catMap[wep.category] ?? 2;
       setTimeout(() => {
-        this.game.customization.renderWeaponPreview(canvas, this.activeGunsmithWeapon);
+        this.game.customization.renderWeaponPreview(canvas, modelIdx);
       }, 50);
     }
   }
 
-  saveGunsmithUI() {
-    const opticEl = document.getElementById('gs-optic');
-    const muzzleEl = document.getElementById('gs-muzzle');
-    const gripEl = document.getElementById('gs-grip');
-    const magEl = document.getElementById('gs-mag');
-    const skinEl = document.getElementById('gs-skin');
+  updateGunsmithStats() {
+    const wep = weaponDatabase.getWeapon(this.selectedGunsmithWeaponId);
+    if (!wep) return;
 
-    this.game.customization.config.weapons[this.activeGunsmithWeapon] = {
-      optic: opticEl ? opticEl.value : 'iron',
-      muzzle: muzzleEl ? muzzleEl.value : 'default',
-      grip: gripEl ? gripEl.value : 'none',
-      mag: magEl ? magEl.value : 'standard',
-      skin: skinEl ? skinEl.value : 'blue'
+    // Read attachment values from dropdowns
+    const currentAtts = {};
+    document.querySelectorAll('.gs-slot-dropdown').forEach(select => {
+      const slot = select.dataset.slot;
+      if (select.value && select.value !== 'none' && select.value !== 'iron' && select.value !== 'standard') {
+        currentAtts[slot] = select.value;
+      }
+    });
+
+    const stats = weaponDatabase.calculateStats(this.selectedGunsmithWeaponId, currentAtts);
+
+    const updateBar = (barId, valId, val) => {
+      const bar = document.getElementById(barId);
+      const txt = document.getElementById(valId);
+      if (bar) bar.style.width = `${Math.min(100, Math.max(0, val))}%`;
+      if (txt) txt.textContent = val;
     };
-    this.game.customization.saveConfig();
+
+    updateBar('gs-stat-damage-bar', 'gs-stat-damage-val', stats.damage);
+    updateBar('gs-stat-firerate-bar', 'gs-stat-firerate-val', stats.fireRate);
+    updateBar('gs-stat-accuracy-bar', 'gs-stat-accuracy-val', stats.accuracy);
+    updateBar('gs-stat-mobility-bar', 'gs-stat-mobility-val', stats.mobility);
+    updateBar('gs-stat-range-bar', 'gs-stat-range-val', stats.range);
+    updateBar('gs-stat-control-bar', 'gs-stat-control-val', stats.control);
+  }
+
+  saveGunsmithUI() {
+    const wep = weaponDatabase.getWeapon(this.selectedGunsmithWeaponId);
+    if (!wep) return;
+
+    const currentAtts = {};
+    document.querySelectorAll('.gs-slot-dropdown').forEach(select => {
+      const slot = select.dataset.slot;
+      if (select.value && select.value !== 'none' && select.value !== 'iron' && select.value !== 'standard') {
+        currentAtts[slot] = select.value;
+      }
+    });
+
+    const camoSelect = document.getElementById('gs-camo-select');
+    const camoId = camoSelect ? camoSelect.value : 'camo_default';
+
+    const loadout = weaponDatabase.getActiveLoadout();
+    if (loadout) {
+      if (['pistol', 'melee'].includes(wep.category)) {
+        loadout.secondaryWeaponId = wep.id;
+      } else {
+        loadout.primaryWeaponId = wep.id;
+        loadout.attachments = currentAtts;
+      }
+      loadout.camoId = camoId;
+      weaponDatabase.saveLoadouts();
+
+      // Apply to in-game weapon system
+      if (this.game.weapons) {
+        this.game.weapons.applyLoadout(loadout);
+      }
+    }
   }
 
   // Character Customizer UI synchronization

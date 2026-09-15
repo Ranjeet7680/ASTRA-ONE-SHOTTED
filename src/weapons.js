@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { lerp, clamp } from './utilities.js';
+import { weaponDatabase } from './weaponDatabase.js';
 
 export class WeaponSystem {
   constructor(camera, materials, soundEngine, effects) {
@@ -177,6 +178,57 @@ export class WeaponSystem {
     this.muzzleFlash = new THREE.Mesh(flashGeom, flashMat);
     this.weaponHolder.add(this.muzzleFlash);
     this.muzzleFlashTimer = 0;
+
+    // Initialize with active loadout
+    try {
+      this.applyLoadout(weaponDatabase.getActiveLoadout());
+    } catch (e) {
+      console.warn('Failed to load initial active loadout:', e);
+    }
+  }
+
+  applyLoadout(loadout) {
+    if (!loadout) return;
+    this.currentLoadout = loadout;
+
+    // Primary weapon slot (index 2: Rifle/Primary)
+    const primDef = weaponDatabase.getWeapon(loadout.primaryWeaponId);
+    if (primDef) {
+      const primStats = weaponDatabase.calculateStats(loadout.primaryWeaponId, loadout.attachments);
+      const wPrimary = this.weapons[2];
+      if (wPrimary) {
+        wPrimary.name = primDef.name.toUpperCase();
+        wPrimary.desc = `${primDef.category.toUpperCase()} • ${primDef.desc}`;
+        wPrimary.damage = primStats.damage;
+        wPrimary.fireRate = primStats.fireRate;
+        wPrimary.magSize = primStats.magSize;
+        wPrimary.currentAmmo = primStats.magSize;
+        wPrimary.reloadTime = primStats.reloadTime;
+        wPrimary.maxReserve = primStats.magSize * 6;
+        wPrimary.reserveAmmo = primStats.magSize * 4;
+        wPrimary.headshotMult = primDef.headshotMult || 2.5;
+        wPrimary.camo = loadout.camoId;
+      }
+    }
+
+    // Secondary weapon slot (index 0: Pistol/Secondary)
+    const secDef = weaponDatabase.getWeapon(loadout.secondaryWeaponId);
+    if (secDef) {
+      const secStats = weaponDatabase.calculateStats(loadout.secondaryWeaponId, {});
+      const wSec = this.weapons[0];
+      if (wSec) {
+        wSec.name = secDef.name.toUpperCase();
+        wSec.desc = `${secDef.category.toUpperCase()} • ${secDef.desc}`;
+        wSec.damage = secStats.damage;
+        wSec.fireRate = secStats.fireRate;
+        wSec.magSize = secStats.magSize;
+        wSec.currentAmmo = secStats.magSize;
+        wSec.reloadTime = secStats.reloadTime;
+        wSec.maxReserve = secStats.magSize * 6;
+        wSec.reserveAmmo = secStats.magSize * 4;
+        wSec.camo = loadout.camoId;
+      }
+    }
   }
 
   get activeWeapon() {

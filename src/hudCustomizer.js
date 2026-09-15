@@ -82,6 +82,34 @@ export class HUDCustomizer {
           topScore: { x: 0.50, y: 0.05, size: 1.0, opacity: 0.95, visible: true, locked: false, style: 'tactical' }
         }
       },
+      threeFinger: {
+        id: 'preset_threefinger',
+        name: '3-FINGER CLAW (PRO)',
+        controls: {
+          joyContainer: { x: 0.16, y: 0.72, size: 1.1, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnSprint: { x: 0.16, y: 0.38, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnFireLeft: { x: 0.16, y: 0.18, size: 1.35, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnFireRight: { x: 0.76, y: 0.70, size: 1.1, opacity: 0.5, visible: false, locked: false, style: 'circle' },
+          btnAds: { x: 0.76, y: 0.60, size: 1.2, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnEyeLook: { x: 0.78, y: 0.28, size: 0.95, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          btnJump: { x: 0.91, y: 0.62, size: 1.05, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnCrouch: { x: 0.82, y: 0.88, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnProne: { x: 0.91, y: 0.88, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnReload: { x: 0.72, y: 0.85, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnPeekLeft: { x: 0.68, y: 0.44, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnPeekRight: { x: 0.77, y: 0.44, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnGrenade: { x: 0.65, y: 0.88, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnMelee: { x: 0.85, y: 0.50, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnRevive: { x: 0.50, y: 0.60, size: 1.1, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnPerspective: { x: 0.24, y: 0.85, size: 0.85, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          btnBackpack: { x: 0.09, y: 0.90, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnPickLeft: { x: 0.36, y: 0.50, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          btnPickRight: { x: 0.64, y: 0.50, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          weaponBar: { x: 0.50, y: 0.90, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          minimap: { x: 0.88, y: 0.12, size: 0.95, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          topScore: { x: 0.50, y: 0.05, size: 1.0, opacity: 0.95, visible: true, locked: false, style: 'tactical' }
+        }
+      },
       twoFinger: {
         id: 'preset_twofinger',
         name: '2-FINGER CASUAL',
@@ -163,11 +191,12 @@ export class HUDCustomizer {
       console.warn('Failed to load custom HUD layouts, using defaults', e);
     }
 
-    // Initialize 3 default layouts
+    // Initialize default layouts
     return {
       layout_1: { id: 'layout_1', name: 'LAYOUT 1 (4-FINGER CLAW)', controls: JSON.parse(JSON.stringify(this.presets.claw4.controls)) },
       layout_2: { id: 'layout_2', name: 'LAYOUT 2 (CLASSIC DEFAULT)', controls: JSON.parse(JSON.stringify(this.presets.default.controls)) },
-      layout_3: { id: 'layout_3', name: 'LAYOUT 3 (TWO-THUMB)', controls: JSON.parse(JSON.stringify(this.presets.twoFinger.controls)) }
+      layout_3: { id: 'layout_3', name: 'LAYOUT 3 (TWO-THUMB)', controls: JSON.parse(JSON.stringify(this.presets.twoFinger.controls)) },
+      layout_4: { id: 'layout_4', name: 'LAYOUT 4 (3-FINGER PRO)', controls: JSON.parse(JSON.stringify(this.presets.threeFinger.controls)) }
     };
   }
 
@@ -194,41 +223,40 @@ export class HUDCustomizer {
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 100;
+      z-index: 9999;
+      pointer-events: none;
       display: none;
       user-select: none;
       -webkit-user-select: none;
-      touch-action: none;
-      background: rgba(15, 28, 72, 0.55);
-      backdrop-filter: blur(4px);
+      overflow: hidden;
     `;
     document.body.appendChild(editor);
     this.editor = editor;
 
-    // 2. Alignment Guide Center Lines & Grid
+    // 2. Alignment Guides (Crosshair guidelines when moving controls)
     const guideH = document.createElement('div');
-    guideH.id = 'editor-center-h';
+    guideH.className = 'hud-guide-h';
     guideH.style.cssText = `
       position: absolute;
-      top: 50%;
       left: 0;
-      width: 100%;
+      right: 0;
       height: 1px;
-      border-top: 1px dashed rgba(248, 246, 240, 0.35);
-      pointer-events: none;
+      background: rgba(255, 170, 0, 0.4);
       display: none;
+      pointer-events: none;
+      z-index: 100;
     `;
     const guideV = document.createElement('div');
-    guideV.id = 'editor-center-v';
+    guideV.className = 'hud-guide-v';
     guideV.style.cssText = `
       position: absolute;
       top: 0;
-      left: 50%;
+      bottom: 0;
       width: 1px;
-      height: 100%;
-      border-left: 1px dashed rgba(248, 246, 240, 0.35);
-      pointer-events: none;
+      background: rgba(255, 170, 0, 0.4);
       display: none;
+      pointer-events: none;
+      z-index: 100;
     `;
     editor.appendChild(guideH);
     editor.appendChild(guideV);
@@ -266,6 +294,7 @@ export class HUDCustomizer {
           <option value="layout_1" style="background: #16263e; color: #fff;">1 (4-Finger Claw)</option>
           <option value="layout_2" style="background: #16263e; color: #fff;">2 (Classic Default)</option>
           <option value="layout_3" style="background: #16263e; color: #fff;">3 (Two-Thumb)</option>
+          <option value="layout_4" style="background: #16263e; color: #fff;">4 (3-Finger Pro)</option>
         </select>
       </div>
 

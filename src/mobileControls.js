@@ -981,17 +981,28 @@ export class MobileControls {
     el.addEventListener('pointerdown', (e) => {
       if (this.isCustomizerEditing) return;
       e.stopPropagation();
-      el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, 'scale(0.92)');
+      if (/scale\([^)]+\)/.test(el.style.transform)) {
+        el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, 'scale(0.92)');
+      } else {
+        el.style.transform = (el.style.transform ? el.style.transform + ' ' : '') + 'scale(0.92)';
+      }
       // Haptic feedback for physical button feel
-      if (navigator.vibrate && hapticMs > 0) {
-        navigator.vibrate(hapticMs);
+      if (typeof navigator !== 'undefined' && navigator.vibrate && hapticMs > 0) {
+        try { navigator.vibrate(hapticMs); } catch (_) {}
+      }
+      if (this.game && this.game.soundEngine) {
+        this.game.soundEngine.playUIClick();
       }
       if (onPress) onPress();
     });
 
     const release = (e) => {
       if (this.isCustomizerEditing) return;
-      el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, 'scale(1.0)');
+      if (/scale\([^)]+\)/.test(el.style.transform)) {
+        el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, 'scale(1.0)');
+      } else {
+        el.style.transform = (el.style.transform ? el.style.transform + ' ' : '') + 'scale(1.0)';
+      }
       if (onRelease) onRelease();
     };
 
