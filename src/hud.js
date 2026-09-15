@@ -546,6 +546,54 @@ export class HUD {
     }
   }
 
+  showKillAmmoReward(reward) {
+    if (!reward) return;
+
+    // 1. Highlight Ammo Counters in glowing green
+    const flashEls = [this.ammoCurrent, this.weaponPillAmmo, this.ammoReserve];
+    flashEls.forEach(el => {
+      if (el) {
+        el.style.transition = 'color 0.15s ease, transform 0.15s ease';
+        el.style.color = '#00aa55';
+        el.style.fontWeight = '900';
+        setTimeout(() => {
+          el.style.color = '';
+        }, 900);
+      }
+    });
+
+    // 2. Add floating Scavenger Ammo reward popup to killfeed / center
+    if (this.killFeed) {
+      const item = document.createElement('div');
+      item.className = 'kill-item ammo-reward';
+      item.style.cssText = `
+        background: rgba(0, 170, 85, 0.92);
+        color: #ffffff;
+        border: 2px solid #162a68;
+        box-shadow: 0 3px 8px rgba(0, 170, 85, 0.45);
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-family: 'Space Mono', monospace;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: killSlideIn 0.25s ease-out;
+      `;
+      const headBonus = reward.isHeadshot ? ' (HEADSHOT +50%)' : '';
+      item.innerHTML = `
+        <span style="font-size: 14px;">⚡</span>
+        <div>
+          <div style="font-size: 11px; font-weight: 800; letter-spacing: 1px;">AMMO REPLENISHED${headBonus}</div>
+          <div style="font-size: 13px; font-weight: 800;">+${reward.totalActiveGain} ${reward.weaponName} ROUNDS</div>
+        </div>
+      `;
+      this.killFeed.appendChild(item);
+      setTimeout(() => {
+        if (item.parentNode) item.parentNode.removeChild(item);
+      }, 1400);
+    }
+  }
+
   getWeaponIconHtml(weaponName) {
     const w = (weaponName || '').toLowerCase();
     if (w.includes('sniper')) {

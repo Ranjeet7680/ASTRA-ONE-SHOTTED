@@ -104,18 +104,20 @@ export class LootSystem {
 
   // Handle enemy drop upon elimination
   handleEnemyDrop(enemyPos) {
+    // Guaranteed or heavily prioritized ammo drops from fallen hostiles
     const types = [
-      { type: 'AMMO_556', name: '5.56 AMMO', sub: 'CARBINE 45 ROUNDS' },
-      { type: 'AMMO_SHELLS', name: '12G SHELLS', sub: '12 GAUGE 12 ROUNDS' },
-      { type: 'AMMO_SNIPER', name: '7.62 AMMO', sub: 'SNIPER 8 ROUNDS' },
-      { type: 'MEDKIT', name: 'STIM PACK', sub: 'RESTORES 40 HP' },
+      { type: 'AMMO_556', name: '5.56mm AMMO', sub: 'CARBINE +45 ROUNDS' },
+      { type: 'AMMO_556', name: '7.62mm AMMO', sub: 'RIFLE +45 ROUNDS' },
+      { type: 'AMMO_SHELLS', name: '12G BUCKSHOT', sub: '12 GAUGE +12 SHELLS' },
+      { type: 'AMMO_SNIPER', name: '.300 MAGNUM', sub: 'SNIPER +8 ROUNDS' },
+      { type: 'MEDKIT', name: 'TACTICAL STIM', sub: 'RESTORES 40 HP' },
       { type: 'GRENADE', name: 'FRAG GRENADE', sub: 'EXPLOSIVE x1' }
     ];
 
     const pick = types[Math.floor(Math.random() * types.length)];
     const dropPos = enemyPos.clone();
     dropPos.y = 0.15;
-    this.spawnLoot(dropPos, pick.type, pick.name, pick.sub);
+    return this.spawnLoot(dropPos, pick.type, pick.name, pick.sub);
   }
 
   // Pickup an item by item object or ID

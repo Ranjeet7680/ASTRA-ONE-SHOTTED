@@ -98,6 +98,14 @@ export class Player {
 
     // Jump Landing Compression & Damage Flinch
     this.landingOffset = 0;
+
+    // Camera Perspective Mode (FPP / TPP)
+    this.perspectiveMode = 'fpp';
+    this.tppCameraDistance = 2.4;
+    this.tppShoulderOffset = 0.45;
+    this.tppHeightOffset = 0.25;
+    this.tppAlpha = 0.0;
+    this.onPerspectiveChange = null;
     this.flinchPitch = 0;
     this.flinchRoll = 0;
 
@@ -210,6 +218,9 @@ export class Player {
           break;
         case 'KeyI':
           this.inspectWeapon();
+          break;
+        case 'KeyV':
+          this.togglePerspective();
           break;
         case 'F11':
           e.preventDefault();
@@ -426,6 +437,18 @@ export class Player {
   toggleFullscreen() {
     if (document.fullscreenElement) this.exitFullscreen();
     else this.requestFullscreen();
+  }
+
+  setPerspective(mode) {
+    this.perspectiveMode = mode === 'tpp' ? 'tpp' : 'fpp';
+    if (this.onPerspectiveChange) {
+      this.onPerspectiveChange(this.perspectiveMode);
+    }
+    return this.perspectiveMode;
+  }
+
+  togglePerspective() {
+    return this.setPerspective(this.perspectiveMode === 'fpp' ? 'tpp' : 'fpp');
   }
 
   getPlayerStateForWeapon() {
@@ -770,15 +793,34 @@ export class Player {
     this.flinchRoll = lerp(this.flinchRoll || 0, 0, delta * 12);
     this.landingOffset = lerp(this.landingOffset || 0, 0, delta * 12);
 
-    // 6. Camera Position & Rotation with Screen Shake, Landing, Omnimovement Tilts, Peek & Flinch
+    // 6. Camera Position & Rotation with Screen Shake, Landing, Omnimovement Tilts, Peek, Flinch & TPP
     const shake = this.effects.shakeOffset;
     const peekRightX = Math.cos(this.yaw) * this.currentPeekOffset;
     const peekRightZ = -Math.sin(this.yaw) * this.currentPeekOffset;
 
+    const targetTppAlpha = this.perspectiveMode === 'tpp' ? 1.0 : 0.0;
+    this.tppAlpha = lerp(this.tppAlpha || 0, targetTppAlpha, delta * 12);
+
+    const fppX = this.position.x + bobOffsetX + shake.x + peekRightX;
+    const fppY = this.position.y + this.currentEyeHeight + bobOffsetY + shake.y + this.landingOffset;
+    const fppZ = this.position.z + peekRightZ;
+
+    // TPP camera calculation: offset backward along view direction, shifted over right shoulder
+    const cosPitch = Math.cos(this.pitch);
+    const camDirX = -Math.sin(this.yaw) * cosPitch;
+    const camDirY = -Math.sin(this.pitch);
+    const camDirZ = -Math.cos(this.yaw) * cosPitch;
+    const camRightX = Math.cos(this.yaw);
+    const camRightZ = -Math.sin(this.yaw);
+
+    const tppX = fppX - camDirX * this.tppCameraDistance + camRightX * this.tppShoulderOffset;
+    const tppY = fppY - camDirY * (this.tppCameraDistance * 0.7) + this.tppHeightOffset;
+    const tppZ = fppZ - camDirZ * this.tppCameraDistance + camRightZ * this.tppShoulderOffset;
+
     this.camera.position.set(
-      this.position.x + bobOffsetX + shake.x + peekRightX,
-      this.position.y + this.currentEyeHeight + bobOffsetY + shake.y + this.landingOffset,
-      this.position.z + peekRightZ
+      lerp(fppX, tppX, this.tppAlpha),
+      lerp(fppY, tppY, this.tppAlpha),
+      lerp(fppZ, tppZ, this.tppAlpha)
     );
 
     const euler = new THREE.Euler(

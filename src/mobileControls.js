@@ -182,6 +182,35 @@ export class MobileControls {
     joyContainer.appendChild(sprintLockLine);
     this.sprintLockLine = sprintLockLine;
 
+    // Sprint Cancel Circle (matching PUBG Mobile layout reference)
+    const btnCancelSprint = document.createElement('div');
+    btnCancelSprint.id = 'mobile-sprint-cancel';
+    btnCancelSprint.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(22, 42, 104, 0.6);
+      background: rgba(248, 246, 240, 0.92);
+      color: #162a68;
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      pointer-events: auto;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      letter-spacing: 0.3px;
+    `;
+    btnCancelSprint.textContent = 'Cancel';
+    sprintLockLine.appendChild(btnCancelSprint);
+    this.btnCancelSprint = btnCancelSprint;
+
     // Joystick Ring Base
     const joyRing = document.createElement('div');
     joyRing.id = 'mobile-joystick-ring';
@@ -247,80 +276,86 @@ export class MobileControls {
     this.controls['btnSprint'] = btnSprint;
 
     // 5. Combat Buttons (Diamond Cluster + Extra Tactical Controls)
-    // SVG Icons
+    // SVG Icons matching PUBG Mobile / BGMI reference
     const fireSvg = `
-      <svg viewBox="0 0 36 36" width="46" height="46" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 5 L22 13 L22 28 L14 28 L14 13 Z" fill="rgba(255,255,255,0.2)"/>
-        <line x1="14" y1="24" x2="22" y2="24"/>
-        <line x1="14" y1="28" x2="22" y2="28" stroke-width="2.8"/>
-        <line x1="18" y1="1" x2="18" y2="3"/>
-        <line x1="11" y1="5" x2="13" y2="7"/>
-        <line x1="25" y1="5" x2="23" y2="7"/>
-        <line x1="8" y1="12" x2="11" y2="13"/>
-        <line x1="28" y1="12" x2="25" y2="13"/>
-        <line x1="11" y1="20" x2="8" y2="24"/>
-        <line x1="25" y1="20" x2="28" y2="24"/>
+      <svg viewBox="0 0 54 54" width="48" height="48" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <g transform="rotate(-45 27 27)">
+          <!-- Bullet Head -->
+          <path d="M23 11 C23 6 27 2.5 27 2.5 C27 2.5 31 6 31 11 L31 21 L23 21 Z" fill="currentColor" opacity="0.95"/>
+          <!-- Cartridge Body -->
+          <rect x="22.5" y="21.5" width="9" height="21" rx="1.5" stroke="currentColor" stroke-width="2" fill="currentColor" fill-opacity="0.25"/>
+          <line x1="22.5" y1="38" x2="31.5" y2="38" stroke="currentColor" stroke-width="1.8"/>
+          <!-- Rim Base -->
+          <path d="M21 42.5 L33 42.5 L33 44.5 L21 44.5 Z" fill="currentColor"/>
+          <!-- Concentric guidance ring -->
+          <circle cx="27" cy="27" r="23" stroke="currentColor" stroke-width="1.6" stroke-dasharray="4 5" opacity="0.4"/>
+        </g>
       </svg>
     `;
 
     const adsSvg = `
-      <svg viewBox="0 0 32 32" width="38" height="38" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="16" cy="16" r="12" stroke-width="1.8"/>
-        <circle cx="16" cy="16" r="5" stroke-dasharray="2 2" stroke-width="1.4"/>
-        <circle cx="16" cy="16" r="1.6" fill="currentColor"/>
-        <line x1="16" y1="2" x2="16" y2="9"/>
-        <line x1="16" y1="23" x2="16" y2="30"/>
-        <line x1="2" y1="16" x2="9" y2="16"/>
-        <line x1="23" y1="16" x2="30" y2="16"/>
+      <svg viewBox="0 0 44 44" width="42" height="42" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="22" cy="22" r="16" stroke-width="2"/>
+        <circle cx="22" cy="22" r="8.5" stroke-dasharray="3 3" stroke-width="1.5"/>
+        <circle cx="22" cy="22" r="2.2" fill="currentColor"/>
+        <line x1="22" y1="2" x2="22" y2="9.5" stroke-width="2.2"/>
+        <line x1="22" y1="34.5" x2="22" y2="42" stroke-width="2.2"/>
+        <line x1="2" y1="22" x2="9.5" y2="22" stroke-width="2.2"/>
+        <line x1="34.5" y1="22" x2="42" y2="22" stroke-width="2.2"/>
+        <line x1="22" y1="12" x2="22" y2="14" stroke-width="1.6"/>
+        <line x1="22" y1="30" x2="22" y2="32" stroke-width="1.6"/>
+        <line x1="12" y1="22" x2="14" y2="22" stroke-width="1.6"/>
+        <line x1="30" y1="22" x2="32" y2="22" stroke-width="1.6"/>
       </svg>
     `;
 
     const jumpSvg = `
       <svg viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M8 17 L16 9 L24 17"/>
-        <path d="M10 23 L16 17 L22 23"/>
-        <line x1="9" y1="28" x2="23" y2="28" stroke-width="2"/>
+        <path d="M7 17 L16 8 L25 17"/>
+        <path d="M9 23 L16 16 L23 23"/>
+        <line x1="8" y1="28" x2="24" y2="28" stroke-width="2.2"/>
       </svg>
     `;
 
     const crouchSvg = `
       <svg viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M7 10 L16 19 L25 10"/>
-        <path d="M9 16 L16 23 L23 16"/>
-        <line x1="7" y1="27" x2="25" y2="27" stroke-width="2" stroke-dasharray="4 2"/>
+        <circle cx="16" cy="7" r="3.2" fill="currentColor" fill-opacity="0.3"/>
+        <path d="M10 14 L16 19 L22 14"/>
+        <path d="M8 23 L16 28 L24 23"/>
+        <line x1="6" y1="29" x2="26" y2="29" stroke-width="2" stroke-dasharray="3 2"/>
       </svg>
     `;
 
     const proneSvg = `
       <svg viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <ellipse cx="7" cy="18" rx="2.5" ry="2.5"/>
-        <path d="M10 18 L24 18 L27 24"/>
-        <line x1="5" y1="26" x2="27" y2="26" stroke-width="2" stroke-dasharray="3 2"/>
+        <ellipse cx="6" cy="18" rx="2.5" ry="2.5" fill="currentColor" fill-opacity="0.3"/>
+        <path d="M9 18 L24 18 L27 23"/>
+        <line x1="4" y1="26" x2="28" y2="26" stroke-width="2" stroke-dasharray="3 2"/>
       </svg>
     `;
 
     const reloadSvg = `
-      <svg viewBox="0 0 32 32" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M26 13 A11 11 0 1 0 25 21"/>
-        <polyline points="22 13 26 13 26 9"/>
-        <rect x="13.5" y="10" width="5" height="12" rx="1" fill="currentColor" opacity="0.25"/>
-        <line x1="13.5" y1="14" x2="18.5" y2="14"/>
+      <svg viewBox="0 0 34 34" width="36" height="36" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M27 14 A12 12 0 1 0 26 22"/>
+        <polyline points="23 14 27 14 27 10"/>
+        <rect x="14.5" y="11" width="5" height="12" rx="1.2" fill="currentColor" opacity="0.3"/>
+        <line x1="14.5" y1="15" x2="19.5" y2="15"/>
       </svg>
     `;
 
     const peekLeftSvg = `
       <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 6 C10 6 6 10 6 15 L6 22 L22 22 L22 15 C22 10 18 6 14 6 Z"/>
-        <line x1="10" y1="14" x2="6" y2="10"/>
-        <polyline points="6 14 10 14 10 10"/>
+        <line x1="10" y1="14" x2="5" y2="10"/>
+        <polyline points="5 14 9 14 9 10"/>
       </svg>
     `;
 
     const peekRightSvg = `
       <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M14 6 C10 6 6 10 6 15 L6 22 L22 22 L22 15 C22 10 18 6 14 6 Z"/>
-        <line x1="18" y1="14" x2="22" y2="10"/>
-        <polyline points="22 14 18 14 18 10"/>
+        <line x1="18" y1="14" x2="23" y2="10"/>
+        <polyline points="23 14 19 14 19 10"/>
       </svg>
     `;
 
@@ -344,18 +379,59 @@ export class MobileControls {
       </div>
     `;
 
+    const reviveSvg = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+        <svg viewBox="0 0 32 32" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="16" cy="16" r="13" stroke-dasharray="3 2" opacity="0.45"/>
+          <line x1="16" y1="9" x2="16" y2="23" stroke-width="3.2"/>
+          <line x1="9" y1="16" x2="23" y2="16" stroke-width="3.2"/>
+        </svg>
+        <span style="font-size: 8px; font-weight: 800; letter-spacing: 0.5px; margin-top: -2px;">Revive</span>
+      </div>
+    `;
+
+    const eyeSvg = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+        <svg viewBox="0 0 32 32" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 16 S7 8 16 8 S30 16 30 16 S25 24 16 24 S2 16 2 16 Z"/>
+          <circle cx="16" cy="16" r="4" fill="currentColor" fill-opacity="0.3"/>
+          <circle cx="16" cy="16" r="1.6" fill="currentColor"/>
+          <path d="M22 8 A12 12 0 0 1 26 13" stroke-width="1.8"/>
+          <polyline points="23 13 26 13 26 10" stroke-width="1.8"/>
+        </svg>
+        <span style="font-size: 8px; font-weight: 800; letter-spacing: 0.5px; margin-top: -2px;">Side</span>
+      </div>
+    `;
+
+    const perspectiveSvg = `
+      <span id="mobile-perspective-label" style="font-family:'Space Mono',monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;">FPP</span>
+    `;
+
+    const backpackSvg = `
+      <svg viewBox="0 0 28 28" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 9 C7 5 10 3 14 3 C18 3 21 5 21 9 L21 23 C21 25 19 26 17 26 L11 26 C9 26 7 25 7 23 Z"/>
+        <path d="M4 11 L7 11 L7 21 L4 21 Z"/>
+        <path d="M21 11 L24 11 L24 21 L21 21 Z"/>
+        <rect x="10" y="13" width="8" height="7" rx="1.5" fill="currentColor" fill-opacity="0.25"/>
+      </svg>
+    `;
+
     // Instantiate Individual Customizable Controls
     const btnFireRight = this.createHudButton('btn-touch-fire-right', fireSvg, 96, true);
-    const btnFireLeft = this.createHudButton('btn-touch-fire-left', fireSvg, 76, true);
-    const btnAds = this.createHudButton('btn-touch-aim', adsSvg, 72, false);
-    const btnJump = this.createHudButton('btn-touch-jump', jumpSvg, 72, false);
-    const btnCrouch = this.createHudButton('btn-touch-slide', crouchSvg, 70, false);
-    const btnProne = this.createHudButton('btn-touch-prone', proneSvg, 66, false);
-    const btnReload = this.createHudButton('btn-touch-reload', reloadSvg, 70, false);
-    const btnPeekLeft = this.createHudButton('btn-touch-peek-left', peekLeftSvg, 56, false);
-    const btnPeekRight = this.createHudButton('btn-touch-peek-right', peekRightSvg, 56, false);
+    const btnFireLeft = this.createHudButton('btn-touch-fire-left', fireSvg, 80, true);
+    const btnAds = this.createHudButton('btn-touch-aim', adsSvg, 76, false);
+    const btnJump = this.createHudButton('btn-touch-jump', jumpSvg, 70, false);
+    const btnCrouch = this.createHudButton('btn-touch-slide', crouchSvg, 68, false);
+    const btnProne = this.createHudButton('btn-touch-prone', proneSvg, 64, false);
+    const btnReload = this.createHudButton('btn-touch-reload', reloadSvg, 68, false);
+    const btnPeekLeft = this.createHudButton('btn-touch-peek-left', peekLeftSvg, 54, false);
+    const btnPeekRight = this.createHudButton('btn-touch-peek-right', peekRightSvg, 54, false);
     const btnGrenade = this.createHudButton('btn-touch-grenade', grenadeSvg, 56, false);
-    const btnMelee = this.createHudButton('btn-touch-melee', meleeSvg, 56, false);
+    const btnMelee = this.createHudButton('btn-touch-melee', meleeSvg, 54, false);
+    const btnRevive = this.createHudButton('btn-touch-revive', reviveSvg, 68, false);
+    const btnEyeLook = this.createHudButton('btn-touch-eye-look', eyeSvg, 56, false);
+    const btnPerspective = this.createHudButton('btn-touch-perspective', perspectiveSvg, 52, false);
+    const btnBackpack = this.createHudButton('btn-touch-backpack', backpackSvg, 48, false);
 
     container.appendChild(btnFireRight);
     container.appendChild(btnFireLeft);
@@ -368,6 +444,10 @@ export class MobileControls {
     container.appendChild(btnPeekRight);
     container.appendChild(btnGrenade);
     container.appendChild(btnMelee);
+    container.appendChild(btnRevive);
+    container.appendChild(btnEyeLook);
+    container.appendChild(btnPerspective);
+    container.appendChild(btnBackpack);
 
     this.controls['btnFireRight'] = btnFireRight;
     this.controls['btnFireLeft'] = btnFireLeft;
@@ -380,6 +460,10 @@ export class MobileControls {
     this.controls['btnPeekRight'] = btnPeekRight;
     this.controls['btnGrenade'] = btnGrenade;
     this.controls['btnMelee'] = btnMelee;
+    this.controls['btnRevive'] = btnRevive;
+    this.controls['btnEyeLook'] = btnEyeLook;
+    this.controls['btnPerspective'] = btnPerspective;
+    this.controls['btnBackpack'] = btnBackpack;
 
     // 6. Contextual Pickup Buttons (Left & Right)
     const btnPickLeft = this.createPickupButton('btn-touch-pick-left', 'PICK');
@@ -795,6 +879,88 @@ export class MobileControls {
         if (this.game.attemptShoot) this.game.attemptShoot();
       }
     });
+
+    // Revive / Tactical Stim Button
+    this.setupButtonTouch(this.controls['btnRevive'], () => {
+      if (this.player) {
+        const healAmt = 45;
+        this.player.heal(healAmt);
+        if (this.player.soundEngine && this.player.soundEngine.playHealthRegen) {
+          this.player.soundEngine.playHealthRegen();
+        }
+        if (this.game && this.game.hudCustomizer) {
+          this.game.hudCustomizer.showToast('💉 FIELD STIM REVIVE (+45 HP)');
+        }
+      }
+    });
+
+    // Eye / Free Look Button (rotate camera without altering player movement direction)
+    const btnEye = this.controls['btnEyeLook'];
+    if (btnEye) {
+      const eyeState = { active: false, pointerId: null, lastX: 0, lastY: 0 };
+      btnEye.addEventListener('pointerdown', (e) => {
+        if (this.isCustomizerEditing) return;
+        e.stopPropagation();
+        eyeState.active = true;
+        eyeState.pointerId = e.pointerId;
+        eyeState.lastX = e.clientX;
+        eyeState.lastY = e.clientY;
+        btnEye.setPointerCapture(e.pointerId);
+        btnEye.style.background = '#162a68';
+        btnEye.style.color = '#faf8f2';
+      });
+
+      btnEye.addEventListener('pointermove', (e) => {
+        if (this.isCustomizerEditing || !eyeState.active || e.pointerId !== eyeState.pointerId) return;
+        const dx = e.clientX - eyeState.lastX;
+        const dy = e.clientY - eyeState.lastY;
+        eyeState.lastX = e.clientX;
+        eyeState.lastY = e.clientY;
+
+        const factor = 0.0036 * this.player.mouseSensitivity;
+        this.player.yaw -= dx * factor;
+        this.player.pitch -= dy * factor;
+        this.player.pitch = Math.max(-1.48, Math.min(1.48, this.player.pitch));
+      });
+
+      const endEye = (e) => {
+        if (e.pointerId === eyeState.pointerId) {
+          eyeState.active = false;
+          eyeState.pointerId = null;
+          btnEye.style.background = 'rgba(248, 246, 240, 0.9)';
+          btnEye.style.color = '#162a68';
+        }
+      };
+      btnEye.addEventListener('pointerup', endEye);
+      btnEye.addEventListener('pointercancel', endEye);
+    }
+
+    // Perspective FPP / TPP Switcher Button
+    this.setupButtonTouch(this.controls['btnPerspective'], () => {
+      if (this.player && this.player.togglePerspective) {
+        const mode = this.player.togglePerspective();
+        const lbl = document.getElementById('mobile-perspective-label');
+        if (lbl) lbl.textContent = mode.toUpperCase();
+        if (this.game && this.game.hudCustomizer) {
+          this.game.hudCustomizer.showToast(`PERSPECTIVE: ${mode.toUpperCase()} VIEW`);
+        }
+      }
+    });
+
+    // Backpack / Inventory Stack Button
+    this.setupButtonTouch(this.controls['btnBackpack'], () => {
+      this.toggleLootStack();
+    });
+
+    // Sprint Cancel Button
+    if (this.btnCancelSprint) {
+      this.setupButtonTouch(this.btnCancelSprint, () => {
+        this.setSprintLocked(false);
+        this.player.keys.sprint = false;
+        this.player.keys.forward = false;
+        if (this.inputManager) this.inputManager.setMoveVector(0, 0);
+      });
+    }
 
     // Contextual Pickups
     const handlePick = () => {

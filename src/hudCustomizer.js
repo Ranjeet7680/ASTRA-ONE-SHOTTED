@@ -28,62 +28,71 @@ export class HUDCustomizer {
     return {
       default: {
         id: 'preset_default',
-        name: 'DEFAULT',
+        name: 'CLASSIC DEFAULT',
         controls: {
-          joyContainer: { x: 0.12, y: 0.72, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnSprint: { x: 0.12, y: 0.44, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnFireRight: { x: 0.84, y: 0.72, size: 1.15, opacity: 0.95, visible: true, locked: false, style: 'circle' },
-          btnFireLeft: { x: 0.14, y: 0.26, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnAds: { x: 0.82, y: 0.42, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnJump: { x: 0.92, y: 0.54, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnCrouch: { x: 0.76, y: 0.86, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnProne: { x: 0.87, y: 0.88, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnReload: { x: 0.72, y: 0.68, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnPeekLeft: { x: 0.74, y: 0.32, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
-          btnPeekRight: { x: 0.84, y: 0.32, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
-          btnGrenade: { x: 0.26, y: 0.76, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
-          btnMelee: { x: 0.92, y: 0.74, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnPickLeft: { x: 0.34, y: 0.52, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
-          btnPickRight: { x: 0.66, y: 0.52, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
-          weaponBar: { x: 0.50, y: 0.92, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          joyContainer: { x: 0.16, y: 0.72, size: 1.05, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnSprint: { x: 0.16, y: 0.38, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnFireRight: { x: 0.76, y: 0.70, size: 1.15, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnFireLeft: { x: 0.16, y: 0.20, size: 1.2, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnAds: { x: 0.76, y: 0.16, size: 1.2, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnEyeLook: { x: 0.78, y: 0.28, size: 0.95, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          btnJump: { x: 0.92, y: 0.65, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnCrouch: { x: 0.82, y: 0.88, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnProne: { x: 0.91, y: 0.88, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnReload: { x: 0.74, y: 0.88, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnPeekLeft: { x: 0.68, y: 0.48, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnPeekRight: { x: 0.77, y: 0.48, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnGrenade: { x: 0.65, y: 0.88, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnMelee: { x: 0.85, y: 0.52, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnRevive: { x: 0.50, y: 0.60, size: 1.1, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnPerspective: { x: 0.24, y: 0.85, size: 0.85, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          btnBackpack: { x: 0.09, y: 0.90, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnPickLeft: { x: 0.36, y: 0.50, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          btnPickRight: { x: 0.64, y: 0.50, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          weaponBar: { x: 0.50, y: 0.90, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
           minimap: { x: 0.88, y: 0.12, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'circle' },
           topScore: { x: 0.50, y: 0.05, size: 1.0, opacity: 0.95, visible: true, locked: false, style: 'tactical' }
         }
       },
       claw4: {
         id: 'preset_claw4',
-        name: '4-FINGER CLAW',
+        name: '4-FINGER CLAW (BGMI/PUBG)',
         controls: {
-          joyContainer: { x: 0.12, y: 0.74, size: 1.05, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnSprint: { x: 0.12, y: 0.44, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnFireRight: { x: 0.82, y: 0.74, size: 1.15, opacity: 0.95, visible: true, locked: false, style: 'circle' },
-          btnFireLeft: { x: 0.12, y: 0.16, size: 1.25, opacity: 0.95, visible: true, locked: false, style: 'circle' }, // Top left for index finger!
-          btnAds: { x: 0.86, y: 0.16, size: 1.2, opacity: 0.95, visible: true, locked: false, style: 'circle' }, // Top right for index finger!
-          btnJump: { x: 0.92, y: 0.54, size: 1.05, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnCrouch: { x: 0.74, y: 0.84, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnProne: { x: 0.86, y: 0.88, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnReload: { x: 0.70, y: 0.68, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnPeekLeft: { x: 0.72, y: 0.28, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
-          btnPeekRight: { x: 0.80, y: 0.28, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
-          btnGrenade: { x: 0.26, y: 0.76, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
-          btnMelee: { x: 0.92, y: 0.74, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnPickLeft: { x: 0.32, y: 0.52, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
-          btnPickRight: { x: 0.68, y: 0.52, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
-          weaponBar: { x: 0.50, y: 0.92, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
-          minimap: { x: 0.90, y: 0.12, size: 0.95, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          joyContainer: { x: 0.16, y: 0.72, size: 1.1, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnSprint: { x: 0.16, y: 0.36, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnFireLeft: { x: 0.16, y: 0.18, size: 1.3, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnFireRight: { x: 0.75, y: 0.68, size: 1.2, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnAds: { x: 0.76, y: 0.14, size: 1.25, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnEyeLook: { x: 0.78, y: 0.28, size: 0.95, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          btnJump: { x: 0.93, y: 0.71, size: 1.05, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnCrouch: { x: 0.83, y: 0.91, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnProne: { x: 0.92, y: 0.91, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnReload: { x: 0.77, y: 0.91, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnPeekLeft: { x: 0.69, y: 0.48, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnPeekRight: { x: 0.78, y: 0.48, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnGrenade: { x: 0.65, y: 0.88, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnMelee: { x: 0.85, y: 0.51, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnRevive: { x: 0.50, y: 0.60, size: 1.1, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnPerspective: { x: 0.24, y: 0.85, size: 0.85, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          btnBackpack: { x: 0.09, y: 0.90, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
+          btnPickLeft: { x: 0.36, y: 0.50, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          btnPickRight: { x: 0.64, y: 0.50, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          weaponBar: { x: 0.50, y: 0.90, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          minimap: { x: 0.88, y: 0.12, size: 0.95, opacity: 0.9, visible: true, locked: false, style: 'circle' },
           topScore: { x: 0.50, y: 0.05, size: 1.0, opacity: 0.95, visible: true, locked: false, style: 'tactical' }
         }
       },
       twoFinger: {
         id: 'preset_twofinger',
-        name: '2-FINGER',
+        name: '2-FINGER CASUAL',
         controls: {
-          joyContainer: { x: 0.14, y: 0.74, size: 1.1, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnSprint: { x: 0.14, y: 0.44, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          joyContainer: { x: 0.16, y: 0.74, size: 1.1, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnSprint: { x: 0.16, y: 0.44, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
           btnFireRight: { x: 0.82, y: 0.72, size: 1.25, opacity: 0.95, visible: true, locked: false, style: 'circle' },
-          btnFireLeft: { x: 0.14, y: 0.24, size: 0.9, opacity: 0.5, visible: false, locked: false, style: 'circle' },
+          btnFireLeft: { x: 0.16, y: 0.22, size: 0.9, opacity: 0.4, visible: false, locked: false, style: 'circle' },
           btnAds: { x: 0.70, y: 0.60, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnJump: { x: 0.90, y: 0.52, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnEyeLook: { x: 0.78, y: 0.28, size: 0.95, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          btnJump: { x: 0.90, y: 0.54, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
           btnCrouch: { x: 0.82, y: 0.88, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
           btnProne: { x: 0.92, y: 0.86, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'circle' },
           btnReload: { x: 0.68, y: 0.76, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
@@ -91,9 +100,12 @@ export class HUDCustomizer {
           btnPeekRight: { x: 0.74, y: 0.44, size: 0.9, opacity: 0.8, visible: true, locked: false, style: 'rounded' },
           btnGrenade: { x: 0.28, y: 0.76, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
           btnMelee: { x: 0.92, y: 0.70, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnRevive: { x: 0.50, y: 0.60, size: 1.1, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnPerspective: { x: 0.24, y: 0.85, size: 0.85, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          btnBackpack: { x: 0.09, y: 0.90, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
           btnPickLeft: { x: 0.35, y: 0.52, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
           btnPickRight: { x: 0.65, y: 0.52, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
-          weaponBar: { x: 0.50, y: 0.92, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          weaponBar: { x: 0.50, y: 0.90, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
           minimap: { x: 0.88, y: 0.12, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'circle' },
           topScore: { x: 0.50, y: 0.05, size: 1.0, opacity: 0.95, visible: true, locked: false, style: 'tactical' }
         }
@@ -102,11 +114,12 @@ export class HUDCustomizer {
         id: 'preset_left',
         name: 'LEFT-HANDED',
         controls: {
-          joyContainer: { x: 0.86, y: 0.74, size: 1.05, opacity: 0.85, visible: true, locked: false, style: 'circle' },
-          btnSprint: { x: 0.86, y: 0.44, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          joyContainer: { x: 0.84, y: 0.72, size: 1.05, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnSprint: { x: 0.84, y: 0.38, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
           btnFireRight: { x: 0.16, y: 0.72, size: 1.2, opacity: 0.95, visible: true, locked: false, style: 'circle' },
-          btnFireLeft: { x: 0.84, y: 0.24, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnFireLeft: { x: 0.84, y: 0.20, size: 1.2, opacity: 0.85, visible: true, locked: false, style: 'circle' },
           btnAds: { x: 0.18, y: 0.42, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnEyeLook: { x: 0.22, y: 0.28, size: 0.95, opacity: 0.9, visible: true, locked: false, style: 'circle' },
           btnJump: { x: 0.08, y: 0.54, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
           btnCrouch: { x: 0.24, y: 0.86, size: 1.0, opacity: 0.85, visible: true, locked: false, style: 'circle' },
           btnProne: { x: 0.13, y: 0.88, size: 0.95, opacity: 0.85, visible: true, locked: false, style: 'circle' },
@@ -115,9 +128,12 @@ export class HUDCustomizer {
           btnPeekRight: { x: 0.16, y: 0.32, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
           btnGrenade: { x: 0.74, y: 0.76, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
           btnMelee: { x: 0.08, y: 0.74, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'circle' },
+          btnRevive: { x: 0.50, y: 0.60, size: 1.1, opacity: 0.95, visible: true, locked: false, style: 'circle' },
+          btnPerspective: { x: 0.76, y: 0.85, size: 0.85, opacity: 0.9, visible: true, locked: false, style: 'circle' },
+          btnBackpack: { x: 0.91, y: 0.90, size: 0.9, opacity: 0.85, visible: true, locked: false, style: 'rounded' },
           btnPickLeft: { x: 0.34, y: 0.52, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
           btnPickRight: { x: 0.66, y: 0.52, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
-          weaponBar: { x: 0.50, y: 0.92, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
+          weaponBar: { x: 0.50, y: 0.90, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'tactical' },
           minimap: { x: 0.12, y: 0.12, size: 1.0, opacity: 0.9, visible: true, locked: false, style: 'circle' },
           topScore: { x: 0.50, y: 0.05, size: 1.0, opacity: 0.95, visible: true, locked: false, style: 'tactical' }
         }
@@ -129,7 +145,19 @@ export class HUDCustomizer {
     try {
       const saved = localStorage.getItem('astra_hud_layouts_v2');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // Ensure new controls (btnRevive, btnEyeLook, btnPerspective, btnBackpack) exist in each layout
+        const fallbackControls = this.presets.claw4.controls;
+        for (const layoutKey of Object.keys(parsed)) {
+          if (parsed[layoutKey] && parsed[layoutKey].controls) {
+            for (const [ctrlKey, defaultVal] of Object.entries(fallbackControls)) {
+              if (!parsed[layoutKey].controls[ctrlKey]) {
+                parsed[layoutKey].controls[ctrlKey] = JSON.parse(JSON.stringify(defaultVal));
+              }
+            }
+          }
+        }
+        return parsed;
       }
     } catch (e) {
       console.warn('Failed to load custom HUD layouts, using defaults', e);
@@ -207,81 +235,82 @@ export class HUDCustomizer {
     this.guideH = guideH;
     this.guideV = guideV;
 
-    // 3. Top Navigation Bar (PUBG / BGMI style)
+    // 3. Centered Top Navigation Bar (matching the uploaded PUBG Mobile / BGMI reference image)
     const topBar = document.createElement('div');
     topBar.id = 'editor-top-bar';
     topBar.style.cssText = `
       position: absolute;
-      top: calc(12px + env(safe-area-inset-top));
-      left: calc(16px + env(safe-area-inset-left));
-      right: calc(16px + env(safe-area-inset-right));
+      top: calc(8px + env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      align-items: center;
+      background: rgba(22, 38, 62, 0.95);
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      border-radius: 6px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
       pointer-events: auto;
       z-index: 110;
+      backdrop-filter: blur(8px);
+      width: 440px;
+      max-width: 88vw;
+      transition: transform 0.2s ease, opacity 0.2s ease;
     `;
 
-    // Row 1: Back, Title, Grid Toggle, Reset, Save, Preview
-    const topNavRow = document.createElement('div');
-    topNavRow.style.cssText = `
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(248, 246, 240, 0.94);
-      border: 2px solid #162a68;
-      border-radius: 8px;
-      padding: 6px 14px;
-      box-shadow: 3px 3px 0px rgba(22, 42, 104, 0.3);
-    `;
-
-    topNavRow.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <button class="sketch-btn" id="btn-editor-back" style="padding: 5px 12px; font-size: 12px; font-weight: 700;">← EXIT</button>
-        <span style="font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px; color: #162a68; letter-spacing: 1.5px;">CUSTOMIZE HUD</span>
-        <button class="sketch-btn" id="btn-editor-grid" style="padding: 4px 10px; font-size: 11px;">GRID OFF</button>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="sketch-btn" id="btn-editor-preview" style="padding: 5px 14px; font-size: 12px; font-weight: 700; background: #2255bb; color: #fff;">👁 TEST HUD</button>
-        <button class="sketch-btn" id="btn-editor-reset" style="padding: 5px 12px; font-size: 12px; font-weight: 700;">RESET</button>
-        <button class="sketch-btn" id="btn-editor-save" style="padding: 5px 16px; font-size: 12px; font-weight: 700; background: #162a68; color: #fff;">💾 SAVE</button>
-      </div>
-    `;
-    topBar.appendChild(topNavRow);
-
-    // Row 2: Layout Switcher Tabs & Preset Selector
-    const tabRow = document.createElement('div');
-    tabRow.style.cssText = `
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(15, 28, 72, 0.85);
-      border: 1.5px solid #faf8f2;
-      border-radius: 6px;
-      padding: 4px 10px;
-    `;
-
-    tabRow.innerHTML = `
-      <div id="editor-layout-tabs" style="display: flex; gap: 6px;">
-        <button class="sketch-btn layout-tab active" data-layout="layout_1" style="padding: 4px 10px; font-size: 11px;">LAYOUT 1</button>
-        <button class="sketch-btn layout-tab" data-layout="layout_2" style="padding: 4px 10px; font-size: 11px;">LAYOUT 2</button>
-        <button class="sketch-btn layout-tab" data-layout="layout_3" style="padding: 4px 10px; font-size: 11px;">LAYOUT 3</button>
-      </div>
-
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <span style="color: #faf8f2; font-size: 10px; font-weight: 700;">PRESETS:</span>
-        <select id="editor-preset-select" style="font-family: 'Space Mono', monospace; font-size: 11px; padding: 3px 6px; border: 1.5px solid #162a68; background: #faf8f2;">
-          <option value="claw4">4-FINGER CLAW (PRO)</option>
-          <option value="default">BALANCED DEFAULT</option>
-          <option value="twoFinger">2-FINGER CASUAL</option>
-          <option value="leftHand">LEFT-HANDED</option>
+    topBar.innerHTML = `
+      <!-- Title & Layout Selector Row -->
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 4px 12px 2px;">
+        <span style="font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px;">Classic</span>
+        <select id="editor-layout-select" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.3); border-radius: 3px; color: #ffd566; font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 800; padding: 1px 6px; cursor: pointer; outline: none;">
+          <option value="layout_1" style="background: #16263e; color: #fff;">1 (4-Finger Claw)</option>
+          <option value="layout_2" style="background: #16263e; color: #fff;">2 (Classic Default)</option>
+          <option value="layout_3" style="background: #16263e; color: #fff;">3 (Two-Thumb)</option>
         </select>
-        <button class="sketch-btn" id="btn-apply-preset" style="padding: 3px 8px; font-size: 11px;">APPLY</button>
+      </div>
+
+      <!-- TPP / FPP Perspective Buttons -->
+      <div style="display: flex; width: 92%; margin: 3px 0 6px; background: rgba(10, 18, 30, 0.7); border-radius: 4px; border: 1px solid rgba(255,255,255,0.18); overflow: hidden;">
+        <button id="btn-customizer-tpp" style="flex: 1; padding: 4px 0; border: none; background: #2c739e; color: #ffffff; font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 800; cursor: pointer;">TPP</button>
+        <button id="btn-customizer-fpp" style="flex: 1; padding: 4px 0; border: none; background: transparent; color: rgba(255,255,255,0.65); font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 800; cursor: pointer;">FPP</button>
+      </div>
+
+      <!-- Actions Row: Large Icons, Exit, Reset, Save -->
+      <div style="display: flex; align-items: center; justify-content: space-between; width: 92%; padding-bottom: 7px; gap: 6px;">
+        <button class="sketch-btn" id="btn-editor-large-icons" style="padding: 4px 8px; font-size: 10px; font-weight: 700; background: #233b5c; color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px;">Large Icons ⚙</button>
+        <button class="sketch-btn" id="btn-editor-back" style="padding: 4px 10px; font-size: 11px; font-weight: 700; background: #2a4366; color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px;">Exit</button>
+        <button class="sketch-btn" id="btn-editor-reset" style="padding: 4px 10px; font-size: 11px; font-weight: 700; background: #2a4366; color: #fff; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px;">Reset</button>
+        <button class="sketch-btn" id="btn-editor-save" style="padding: 4px 16px; font-size: 11px; font-weight: 800; background: #ffaa00; color: #162438; border: 1.5px solid #ffd566; border-radius: 3px; box-shadow: 0 0 10px rgba(255,170,0,0.4);">Save</button>
+      </div>
+
+      <!-- Down / Up Chevron Tab -->
+      <div id="btn-collapse-top-bar" style="position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); width: 36px; height: 18px; background: rgba(22, 38, 62, 0.95); border: 1.5px solid rgba(255, 255, 255, 0.28); border-top: none; border-radius: 0 0 4px 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #fff; font-size: 11px; font-weight: 900;">
+        <span id="chevron-symbol">∨</span>
       </div>
     `;
-    topBar.appendChild(tabRow);
     editor.appendChild(topBar);
+    this.topBar = topBar;
+
+    // Top Right Corner Tools (Report, Settings, Speaker, Mic)
+    const cornerTools = document.createElement('div');
+    cornerTools.id = 'editor-corner-tools';
+    cornerTools.style.cssText = `
+      position: absolute;
+      top: calc(8px + env(safe-area-inset-top));
+      right: calc(14px + env(safe-area-inset-right));
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      z-index: 110;
+      pointer-events: auto;
+    `;
+    cornerTools.innerHTML = `
+      <button class="sketch-btn" id="btn-customizer-report" style="padding: 3px 8px; font-size: 10px; font-weight: 700; background: rgba(22,38,62,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.25); border-radius: 3px;">Report</button>
+      <button class="sketch-btn" id="btn-customizer-settings" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(22,38,62,0.85); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 13px; display: flex; align-items: center; justify-content: center;">⚙</button>
+      <button class="sketch-btn" id="btn-customizer-speaker" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(22,38,62,0.85); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center;">🔊</button>
+      <button class="sketch-btn" id="btn-customizer-mic" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(22,38,62,0.85); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center;">🎙️</button>
+    `;
+    editor.appendChild(cornerTools);
 
     // 4. Floating Control Inspector Panel (Bottom-Center or Top-Center depending on touch)
     const inspector = document.createElement('div');
@@ -485,32 +514,103 @@ export class HUDCustomizer {
       });
     }
 
-    // Layout Switcher Tabs
-    const tabButtons = this.editor.querySelectorAll('.layout-tab');
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        tabButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        this.activeLayoutId = btn.dataset.layout;
+    // Layout Select Dropdown
+    const layoutSelect = document.getElementById('editor-layout-select');
+    if (layoutSelect) {
+      layoutSelect.value = this.activeLayoutId;
+      layoutSelect.addEventListener('change', () => {
+        this.activeLayoutId = layoutSelect.value;
         this.applyActiveLayoutToControls();
         this.refreshInspector();
-        this.showToast(`Switched to ${btn.textContent}`);
+        this.showToast(`Switched to Layout ${layoutSelect.value.replace('layout_', '')}`);
       });
-    });
+    }
 
-    // Preset Apply Button
-    const btnApplyPreset = document.getElementById('btn-apply-preset');
-    const selectPreset = document.getElementById('editor-preset-select');
-    if (btnApplyPreset && selectPreset) {
-      btnApplyPreset.addEventListener('click', () => {
-        const key = selectPreset.value;
-        const p = this.presets[key];
-        if (p) {
-          this.layouts[this.activeLayoutId].controls = JSON.parse(JSON.stringify(p.controls));
-          this.applyActiveLayoutToControls();
-          this.refreshInspector();
-          this.showToast(`Applied ${p.name} preset`);
+    // TPP / FPP Perspective Switch
+    const btnTpp = document.getElementById('btn-customizer-tpp');
+    const btnFpp = document.getElementById('btn-customizer-fpp');
+    const updatePerspUI = (mode) => {
+      if (btnTpp && btnFpp) {
+        btnTpp.style.background = mode === 'tpp' ? '#2c739e' : 'transparent';
+        btnTpp.style.color = mode === 'tpp' ? '#ffffff' : 'rgba(255,255,255,0.65)';
+        btnFpp.style.background = mode === 'fpp' ? '#2c739e' : 'transparent';
+        btnFpp.style.color = mode === 'fpp' ? '#ffffff' : 'rgba(255,255,255,0.65)';
+      }
+    };
+    if (btnTpp) {
+      btnTpp.addEventListener('click', () => {
+        if (this.game && this.game.player) {
+          this.game.player.setPerspective('tpp');
+          updatePerspUI('tpp');
+          this.showToast('Perspective: TPP');
         }
+      });
+    }
+    if (btnFpp) {
+      btnFpp.addEventListener('click', () => {
+        if (this.game && this.game.player) {
+          this.game.player.setPerspective('fpp');
+          updatePerspUI('fpp');
+          this.showToast('Perspective: FPP');
+        }
+      });
+    }
+
+    // Top Bar Collapse / Expand Chevron
+    const btnCollapse = document.getElementById('btn-collapse-top-bar');
+    const chevronSymbol = document.getElementById('chevron-symbol');
+    let isCollapsed = false;
+    if (btnCollapse && this.topBar) {
+      btnCollapse.addEventListener('click', () => {
+        isCollapsed = !isCollapsed;
+        if (isCollapsed) {
+          this.topBar.style.transform = 'translateX(-50%) translateY(calc(-100% + 22px))';
+          if (chevronSymbol) chevronSymbol.textContent = '∧';
+        } else {
+          this.topBar.style.transform = 'translateX(-50%) translateY(0)';
+          if (chevronSymbol) chevronSymbol.textContent = '∨';
+        }
+      });
+    }
+
+    // Large Icons Button
+    const btnLargeIcons = document.getElementById('btn-editor-large-icons');
+    if (btnLargeIcons) {
+      btnLargeIcons.addEventListener('click', () => {
+        if (this.inspector) {
+          const isVis = this.inspector.style.display === 'flex';
+          if (isVis) {
+            this.deselectControl();
+          } else {
+            this.selectControl(this.selectedControlId || 'btnFireRight');
+          }
+        }
+      });
+    }
+
+    // Corner Widgets
+    const btnReport = document.getElementById('btn-customizer-report');
+    if (btnReport) {
+      btnReport.addEventListener('click', () => {
+        this.showToast('Report & Feedback Logged ✓');
+      });
+    }
+    const btnSettings = document.getElementById('btn-customizer-settings');
+    if (btnSettings) {
+      btnSettings.addEventListener('click', () => {
+        this.showToast('Customizer Settings Active');
+      });
+    }
+    const btnSpeaker = document.getElementById('btn-customizer-speaker');
+    if (btnSpeaker) {
+      btnSpeaker.addEventListener('click', () => {
+        this.showToast('Audio Settings');
+      });
+    }
+    const btnMic = document.getElementById('btn-customizer-mic');
+    if (btnMic) {
+      btnMic.addEventListener('click', () => {
+        this.showToast('Mic: Ready for Team Voice Chat');
       });
     }
 
@@ -620,6 +720,20 @@ export class HUDCustomizer {
     this.isPreviewMode = false;
     if (this.editor) this.editor.style.display = 'block';
     if (this.previewExit) this.previewExit.style.display = 'none';
+
+    // Sync layout selector and perspective buttons
+    const layoutSelect = document.getElementById('editor-layout-select');
+    if (layoutSelect) layoutSelect.value = this.activeLayoutId;
+
+    const btnTpp = document.getElementById('btn-customizer-tpp');
+    const btnFpp = document.getElementById('btn-customizer-fpp');
+    const currentPersp = (this.game && this.game.player) ? this.game.player.perspectiveMode : 'fpp';
+    if (btnTpp && btnFpp) {
+      btnTpp.style.background = currentPersp === 'tpp' ? '#2c739e' : 'transparent';
+      btnTpp.style.color = currentPersp === 'tpp' ? '#ffffff' : 'rgba(255,255,255,0.65)';
+      btnFpp.style.background = currentPersp === 'fpp' ? '#2c739e' : 'transparent';
+      btnFpp.style.color = currentPersp === 'fpp' ? '#ffffff' : 'rgba(255,255,255,0.65)';
+    }
 
     // Show mobile controls layer
     if (this.mobileControls) {
@@ -747,6 +861,10 @@ export class HUDCustomizer {
       btnPeekRight: 'PEEK RIGHT',
       btnGrenade: 'GRENADE',
       btnMelee: 'COMBAT KNIFE',
+      btnRevive: 'REVIVE / FIELD STIM',
+      btnEyeLook: 'FREE LOOK / EYE',
+      btnPerspective: 'PERSPECTIVE (FPP/TPP)',
+      btnBackpack: 'TACTICAL BACKPACK',
       btnPickLeft: 'LEFT PICKUP',
       btnPickRight: 'RIGHT PICKUP',
       weaponBar: 'WEAPON SELECTOR',

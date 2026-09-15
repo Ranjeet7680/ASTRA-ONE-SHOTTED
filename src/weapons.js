@@ -544,6 +544,68 @@ export class WeaponSystem {
     });
   }
 
+  // Reward gun ammo immediately upon eliminating an enemy
+  receiveKillAmmo(isHeadshot = false) {
+    const active = this.activeWeapon;
+    let awardedActiveMag = 0;
+    let awardedActiveReserve = 0;
+
+    // 1. Direct magazine top-up for active weapon (no reload downtime during combat!)
+    if (active && active.type !== 'melee') {
+      const magReplenishRatio = isHeadshot ? 0.6 : 0.4;
+      const magGain = Math.max(1, Math.round(active.magSize * magReplenishRatio));
+      const spaceInMag = active.magSize - active.currentAmmo;
+      awardedActiveMag = Math.min(spaceInMag, magGain);
+      active.currentAmmo += awardedActiveMag;
+    }
+
+    // 2. Reserve ammo replenishment for all carried weapons
+    this.weapons.forEach(w => {
+      if (w.type === 'melee') return;
+      let baseGain = 30;
+      switch (w.id) {
+        case 0: // Pistol
+          baseGain = isHeadshot ? 25 : 18;
+          break;
+        case 1: // Shotgun
+          baseGain = isHeadshot ? 12 : 8;
+          break;
+        case 2: // Rifle
+          baseGain = isHeadshot ? 45 : 30;
+          break;
+        case 3: // Sniper
+          baseGain = isHeadshot ? 6 : 4;
+          break;
+        default:
+          baseGain = isHeadshot ? 40 : 25;
+      }
+      w.reserveAmmo = Math.min(w.maxReserve, w.reserveAmmo + baseGain);
+      if (w === active) {
+        awardedActiveReserve = baseGain;
+      }
+    });
+
+    // Speed up 10s auto-fill pulse timer
+    this.ammoFillTimer = Math.min(this.ammoFillInterval, this.ammoFillTimer + (isHeadshot ? 4.0 : 2.5));
+
+    // Play ammo rack audio
+    if (this.soundEngine && this.soundEngine.playReload) {
+      this.soundEngine.playReload();
+    }
+
+    if (this.onAmmoFilled) {
+      this.onAmmoFilled(true);
+    }
+
+    return {
+      weaponName: active ? active.name : 'GUN',
+      magGain: awardedActiveMag,
+      reserveGain: awardedActiveReserve,
+      totalActiveGain: awardedActiveMag + awardedActiveReserve,
+      isHeadshot
+    };
+  }
+
   update(delta, playerState = {}) {
     const wep = this.activeWeapon;
 

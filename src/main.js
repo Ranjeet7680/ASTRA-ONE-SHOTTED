@@ -204,8 +204,16 @@ class Game {
       );
     };
 
-    // Combat -> Wave Manager kill count & Tactical Ground Loot Drops
+    // Combat -> Wave Manager kill count & Tactical Ground Loot Drops & Gun Ammo Rewards
     this.combat.onEnemyKilled = (enemy, isHeadshot) => {
+      // Instant Gun Ammo Replenishment on Enemy Elimination
+      if (this.weapons && this.weapons.receiveKillAmmo) {
+        const ammoReward = this.weapons.receiveKillAmmo(isHeadshot);
+        if (this.hud && this.hud.showKillAmmoReward) {
+          this.hud.showKillAmmoReward(ammoReward);
+        }
+      }
+
       if (this.currentMode === 'wave') {
         this.waves.handleEnemyKilled(enemy, isHeadshot);
       }
